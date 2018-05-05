@@ -43,9 +43,9 @@
     * Opcode:  0b0101
 * <b>inv</b> rA, rB
     * Opcode:  0b0110
-* <b>lsl</b> rA, rB, rC
-    * Opcode:  0b0111
 * <b>lsr</b> rA, rB, rC
+    * Opcode:  0b0111
+* <b>asr</b> rA, rB, rC
     * Opcode:  0b1000
 * <b>addsi</b> rA, rB, simm16
     * Opcode:  0b1001
