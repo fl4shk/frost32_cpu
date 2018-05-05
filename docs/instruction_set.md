@@ -15,20 +15,20 @@
 
 
 * General Purpose Registers (32-bit):
-    * `r0' (always zero), `r1', `r2', `r3', 
-    `r4', `r5', `r6', `r7',
-    `r8', `r9', `r10', `r11',
-    `r12', `lr', `fp', `sp'
+    * <code>r0</code> (always zero), <code>r1</code>, <code>r2</code>, <code>r3</code>, 
+    <code>r4</code>, <code>r5</code>, <code>r6</code>, <code>r7</code>,
+    <code>r8</code>, <code>r9</code>, <code>r10</code>, <code>r11</code>,
+    <code>r12</code>, <code>lr</code>, <code>fp</code>, <code>sp</code>
 * Special Purpose Registers (32-bit)
-    * `pc'
+    * <code>pc</code>
 <br><br>
 * Instructions
-    * Encoding:  `oooo aaaa bbbb cccc  iiii iiii iiii iiii'
-        * `o':  Opcode
-        * `a':  rA
-        * `b':  rB
-        * `c':  rC <b>or</b> extended opcode
-        * `i':  16-bit immediate <b>or</b> extended opcode
+    * Encoding:  <code>oooo aaaa bbbb cccc  iiii iiii iiii iiii</code>
+        * <code>o</code>:  Opcode
+        * <code>a</code>:  rA
+        * <code>b</code>:  rB
+        * <code>c</code>:  rC <b>or</b> extended opcode
+        * <code>i</code>:  16-bit immediate <b>or</b> extended opcode
 <br><br>
 * Opcode:  0b0000
     * <b>add</b> rA, rB, rC
@@ -98,9 +98,9 @@
 <br><br>
 * Opcode:  0b0011
     * <b>bne</b> rA, simm16
-        * Extended Opcode (rc):  :  0x0
+        * Extended Opcode (rc):  0x0
     * <b>beq</b> rA, simm16
-        * Extended Opcode (rc):  :  0x1
+        * Extended Opcode (rc):  0x1
 <br><br>
 * Opcode:  0b0111
     * <b>ldr</b> rA, rB
@@ -119,106 +119,3 @@
         * Extended Opcode (Immediate Field):  0x0006
     * <b>stb</b> rA, rB
         * Extended Opcode (Immediate Field):  0x0007
-<br><br>
-    * <b>ldria</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0010
-        * Effect:  <code>ldr rA</code>
-    * <b>ldhia</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0011
-        * Effect:  <code>ldh rA</code>
-    * <b>ldshia</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0012
-        * Effect:  <code>ldsh rA</code>
-    * <b>ldbia</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0013
-        * Effect:  <code>ldb rA</code>
-    * <b>ldsbia</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0014
-        * Effect:  <code>ldsb rA</code>
-    * <b>stria</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0015
-        * Effect:  <code>str rA</code>
-    * <b>sthia</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0016
-        * Effect:  <code>sth rA</code>
-    * <b>stbia</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0017
-        * Effect:  <code>stb rA</code>
-<br><br>
-    * <b>ldrib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0020
-        * Effect:  <code>rB <= rB + 4; ldr rA</code>
-    * <b>ldhib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0021
-        * Effect:  <code>rB <= rB + 2; ldh rA</code>
-    * <b>ldshib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0022
-        * Effect:  <code>rB <= rB + 2; ldsh rA</code>
-    * <b>ldbib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0023
-        * Effect:  <code>rB <= rB + 1; ldb rA</code>
-    * <b>ldsbib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0024
-        * Effect:  <code>rB <= rB + 1; ldsb rA</code>
-    * <b>strib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0025
-        * Effect:  <code>rB <= rB + 1; str rA</code>
-    * <b>sthib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0026
-        * Effect:  <code>rB <= rB + 1; sth rA</code>
-    * <b>stbib</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0027
-        * Effect:  <code>rB <= rB + 1; stb rA</code>
-    * <b>ldrib</b> rA, pc
-        * Extended Opcode (Immediate Field):  0x0028
-        * Effect:  <code>pc <= pc + 1; ldr rA</code>
-<br><br>
-    * <b>ldrda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0030
-        * Effect:  <code>ldr rA</code>
-    * <b>ldhda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0031
-        * Effect:  <code>ldh rA</code>
-    * <b>ldshda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0032
-        * Effect:  <code>ldsh rA</code>
-    * <b>ldbda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0033
-        * Effect:  <code>ldb rA</code>
-    * <b>ldsbda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0034
-        * Effect:  <code>ldsb rA</code>
-    * <b>strda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0035
-        * Effect:  <code>str rA</code>
-    * <b>sthda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0036
-        * Effect:  <code>sth rA</code>
-    * <b>stbda</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0037
-        * Effect:  <code>stb rA</code>
-<br><br>
-    * <b>ldrdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0040
-        * Effect:  <code>rB <= rB - 4; ldr rA</code>
-    * <b>ldhdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0041
-        * Effect:  <code>rB <= rB - 2; ldh rA</code>
-    * <b>ldshdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0042
-        * Effect:  <code>rB <= rB - 2; ldsh rA</code>
-    * <b>ldbdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0043
-        * Effect:  <code>rB <= rB - 1; ldb rA</code>
-    * <b>ldsbdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0044
-        * Effect:  <code>rB <= rB - 1; ldsb rA</code>
-    * <b>strdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0045
-        * Effect:  <code>rB <= rB - 1; str rA</code>
-    * <b>sthdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0046
-        * Effect:  <code>rB <= rB - 1; sth rA</code>
-    * <b>stbdb</b> rA, rB
-        * Extended Opcode (Immediate Field):  0x0047
-        * Effect:  <code>rB <= rB - 1; stb rA</code>
