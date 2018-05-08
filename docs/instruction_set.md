@@ -1,4 +1,4 @@
-# Small RISC Thing Instruction Set
+# Frost32 Instruction Set
 <!-- Vim Note:  Use @g to update notes.pdf -->
 <!-- Vim Note:  Use @h to update notes.html -->
 <!-- Vim Note:  Use @j to update notes.pdf and notes.html -->
@@ -15,107 +15,105 @@
 
 
 * General Purpose Registers (32-bit):
-    * <code>r0</code> (always zero), <code>r1</code>, <code>r2</code>, <code>r3</code>, 
-    <code>r4</code>, <code>r5</code>, <code>r6</code>, <code>r7</code>,
-    <code>r8</code>, <code>r9</code>, <code>r10</code>, <code>r11</code>,
-    <code>r12</code>, <code>lr</code>, <code>fp</code>, <code>sp</code>
+    * ``r0`` (always zero), ``r1``, ``r2``, ``r3``, 
+    ``r4``, ``r5``, ``r6``, ``r7``,
+    ``r8``, ``r9``, ``r10``, ``r11``,
+    ``r12``, ``lr``, ``fp``, ``sp``
 * Special Purpose Registers (32-bit)
-    * <code>pc</code>
-<br><br>
+    * CODE(pc)
+NEWLINE()NEWLINE()
 * Instructions
-    * Encoding:  <code>gggg aaaa bbbb cccc  iiii iiii iiii iiii</code>
-        * <code>g</code>:  Opcode Group
-        * <code>a</code>:  rA
-        * <code>b</code>:  rB
-        * <code>c</code>:  rC <b>or</b> opcode
-        * <code>i</code>:  16-bit immediate <b>or</b> opcode
-<br><br>
-* Opcode Group:  0b0000
-    * <b>add</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0000
-    * <b>sub</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0001
-    * <b>sltu</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0002
-    * <b>slts</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0003
-    * <b>mul</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0004
-    * <b>and</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0005
-    * <b>orr</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0006
-    * <b>xor</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0007
-    * <b>inv</b> rA, rB
-        * Opcode (Immediate Field):  0x0008
-    * <b>lsl</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x0009
-    * <b>lsr</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x000a
-    * <b>asr</b> rA, rB, rC
-        * Opcode (Immediate Field):  0x000b
-<br><br>
-* Opcode Group:  0b0001
-    * <b>addi</b> rA, rB, imm16
-        * Opcode (rC Field):  0x0
-    * <b>subi</b> rA, rB, imm16
-        * Opcode (rC Field):  0x1
-    * <b>sltui</b> rA, rB, imm16
-        * Opcode (rC Field):  0x2
-    * <b>sltsi</b> rA, rB, simm16
-        * Opcode (rC Field):  0x3
-    * <b>muli</b> rA, rB, imm16
-        * Opcode (rC Field):  0x4
-    * <b>andi</b> rA, rB, imm16
-        * Opcode (rC Field):  0x5
-    * <b>orri</b> rA, rB, imm16
-        * Opcode (rC Field):  0x6
-    * <b>xori</b> rA, rB, imm16
-        * Opcode (rC Field):  0x7
-    * <b>invi</b> rA, imm16
-        * Opcode (rC Field):  0x8
-    * <b>lsli</b> rA, rB, imm16
-        * Opcode (rC Field):  0x9
-    * <b>lsri</b> rA, rB, imm16
-        * Opcode (rC Field):  0xa
-    * <b>asri</b> rA, rB, imm16
-        * Opcode (rC Field):  0xb
-    * <b>addsi</b> rA, pc, simm16
-        * Opcode (rC Field):  0xc
-    * <b>cpyhi</b> rA, imm16
-        * Opcode (rC Field):  0xd
-<br><br>
-* Opcode Group:  0b0010
-    * <b>jne</b> rA, rB
-        * Opcode (Immediate Field):  0x0000
-    * <b>jeq</b> rA, rB
-        * Opcode (Immediate Field):  0x0001
-    * <b>callne</b> rA, rB
-        * Opcode (Immediate Field):  0x0002
-    * <b>calleq</b> rA, rB
-        * Opcode (Immediate Field):  0x0003
-<br><br>
-* Opcode Group:  0b0011
-    * <b>bne</b> rA, simm16
-        * Opcode (rC Field):  0x0
-    * <b>beq</b> rA, simm16
-        * Opcode (rC Field):  0x1
-<br><br>
-* Opcode Group:  0b0111
-    * <b>ldr</b> rA, rB
-        * Opcode (Immediate Field):  0x0000
-    * <b>ldh</b> rA, rB
-        * Opcode (Immediate Field):  0x0001
-    * <b>ldsh</b> rA, rB
-        * Opcode (Immediate Field):  0x0002
-    * <b>ldb</b> rA, rB
-        * Opcode (Immediate Field):  0x0003
-    * <b>ldsb</b> rA, rB
-        * Opcode (Immediate Field):  0x0004
-    * <b>str</b> rA, rB
-        * Opcode (Immediate Field):  0x0005
-    * <b>sth</b> rA, rB
-        * Opcode (Immediate Field):  0x0006
-    * <b>stb</b> rA, rB
-        * Opcode (Immediate Field):  0x0007
+    * Encoding:  ``gggg aaaa bbbb cccc  iiii iiii iiii iiii``
+        * ``g``:  Opcode Group
+        * ``a``:  rA
+        * ``b``:  rB
+        * ``c``:  rC BOLD(or) opcode
+        * ``i``:  16-bit immediate BOLD(or) opcode
+NEWLINE()NEWLINE()
+* OPCODE_GROUP(0b0000)
+    * BOLD(add) rA, rB, rC
+        * OP_IMMFIELD(0x0000)
+    * BOLD(sub) rA, rB, rC
+        * OP_IMMFIELD(0x0001)
+    * BOLD(sltu) rA, rB, rC
+        * OP_IMMFIELD(0x0002)
+    * BOLD(slts) rA, rB, rC
+        * OP_IMMFIELD(0x0003)
+    * BOLD(mul) rA, rB, rC
+        * OP_IMMFIELD(0x0004)
+    * BOLD(and) rA, rB, rC
+        * OP_IMMFIELD(0x0005)
+    * BOLD(orr) rA, rB, rC
+        * OP_IMMFIELD(0x0006)
+    * BOLD(xor) rA, rB, rC
+        * OP_IMMFIELD(0x0007)
+    * BOLD(inv) rA, rB
+        * OP_IMMFIELD(0x0008)
+    * BOLD(lsl) rA, rB, rC
+        * OP_IMMFIELD(0x0009)
+    * BOLD(lsr) rA, rB, rC
+        * OP_IMMFIELD(0x000a)
+    * BOLD(asr) rA, rB, rC
+        * OP_IMMFIELD(0x000b)
+NEWLINE()NEWLINE()
+* OPCODE_GROUP(0b0001)
+    * BOLD(addi) rA, rB, imm16
+        * OP_RC(0x0)
+    * BOLD(subi) rA, rB, imm16
+        * OP_RC(0x1)
+    * BOLD(sltui) rA, rB, imm16
+        * OP_RC(0x2)
+    * BOLD(sltsi) rA, rB, simm16
+        * OP_RC(0x3)
+    * BOLD(muli) rA, rB, imm16
+        * OP_RC(0x4)
+    * BOLD(andi) rA, rB, imm16
+        * OP_RC(0x5)
+    * BOLD(orri) rA, rB, imm16
+        * OP_RC(0x6)
+    * BOLD(xori) rA, rB, imm16
+        * OP_RC(0x7)
+    * BOLD(invi) rA, imm16
+        * OP_RC(0x8)
+    * BOLD(lsli) rA, rB, imm16
+        * OP_RC(0x9)
+    * BOLD(lsri) rA, rB, imm16
+        * OP_RC(0xa)
+    * BOLD(asri) rA, rB, imm16
+        * OP_RC(0xb)
+    * BOLD(addsi) rA, pc, simm16
+        * OP_RC(0xc)
+    * BOLD(cpyhi) rA, imm16
+        * OP_RC(0xd)
+    * BOLD(bne) rA, simm16
+        * OP_RC(0xe)
+    * BOLD(beq) rA, simm16
+        * OP_RC(0xf)
+NEWLINE()NEWLINE()
+* OPCODE_GROUP(0b0010)
+    * BOLD(jne) rA, rB
+        * OP_IMMFIELD(0x0000)
+    * BOLD(jeq) rA, rB
+        * OP_IMMFIELD(0x0001)
+    * BOLD(callne) rA, rB
+        * OP_IMMFIELD(0x0002)
+    * BOLD(calleq) rA, rB
+        * OP_IMMFIELD(0x0003)
+NEWLINE()NEWLINE()
+* OPCODE_GROUP(0b0011)
+    * BOLD(ldr) rA, rB
+        * OP_IMMFIELD(0x0000)
+    * BOLD(ldh) rA, rB
+        * OP_IMMFIELD(0x0001)
+    * BOLD(ldsh) rA, rB
+        * OP_IMMFIELD(0x0002)
+    * BOLD(ldb) rA, rB
+        * OP_IMMFIELD(0x0003)
+    * BOLD(ldsb) rA, rB
+        * OP_IMMFIELD(0x0004)
+    * BOLD(str) rA, rB
+        * OP_IMMFIELD(0x0005)
+    * BOLD(sth) rA, rB
+        * OP_IMMFIELD(0x0006)
+    * BOLD(stb) rA, rB
+        * OP_IMMFIELD(0x0007)

@@ -1,7 +1,6 @@
-define(`LQ',`changequote(<,>)`dnl'
+define(`BACKTICK',`changequote(<,>)`dnl'
 changequote`'')dnl
-define(`RQ',`changequote(<,>)dnl`
-'changequote`'')dnl
+define(`MDCODE',changequote(⋀,⋁)``$1``changequote())dnl (Unicode quote characters, eh?.  There's no way I'd ever use these characters in normal text, which is why I'm using them in changequote here)
 define(`CONCAT',$1$2)dnl
 define(`CONCAT3',CONCAT(CONCAT($1,$2),$3))dnl
 define(`CODE',CONCAT3(`<code>',$1,`</code>'))dnl
@@ -11,10 +10,8 @@ define(`UNDERLINE',CONCAT3(`<u>',$1,`</u>'))dnl
 define(`OPCODE_GROUP',CONCAT(`Opcode Group:  ',$1))dnl
 define(`OP_IMMFIELD',CONCAT(`Opcode (Immediate Field):  ',$1))dnl
 define(`OP_RC',CONCAT(`Opcode (rC Field):  ',$1))dnl
-define(`LESS',`<')dnl
-define(`GREATER',`>')dnl
 define(`NEWLINE',`<br>')dnl
-# Small RISC Thing Instruction Set
+# Frost32 Instruction Set
 <!-- Vim Note:  Use @g to update notes.pdf -->
 <!-- Vim Note:  Use @h to update notes.html -->
 <!-- Vim Note:  Use @j to update notes.pdf and notes.html -->
@@ -31,21 +28,21 @@ define(`NEWLINE',`<br>')dnl
 
 
 * General Purpose Registers (32-bit):
-    * CODE(r0) (always zero), CODE(r1), CODE(r2), CODE(r3), 
-    CODE(r4), CODE(r5), CODE(r6), CODE(r7),
-    CODE(r8), CODE(r9), CODE(r10), CODE(r11),
-    CODE(r12), CODE(lr), CODE(fp), CODE(sp)
+    * MDCODE(r0) (always zero), MDCODE(r1), MDCODE(r2), MDCODE(r3), 
+    MDCODE(r4), MDCODE(r5), MDCODE(r6), MDCODE(r7),
+    MDCODE(r8), MDCODE(r9), MDCODE(r10), MDCODE(r11),
+    MDCODE(r12), MDCODE(lr), MDCODE(fp), MDCODE(sp)
 * Special Purpose Registers (32-bit)
     * CODE(pc)
-<br><br>
+NEWLINE()NEWLINE()
 * Instructions
-    * Encoding:  CODE(gggg aaaa bbbb cccc  iiii iiii iiii iiii)
-        * CODE(g):  Opcode Group
-        * CODE(a):  rA
-        * CODE(b):  rB
-        * CODE(c):  rC BOLD(or) opcode
-        * CODE(i):  16-bit immediate BOLD(or) opcode
-<br><br>
+    * Encoding:  MDCODE(gggg aaaa bbbb cccc  iiii iiii iiii iiii)
+        * MDCODE(g):  Opcode Group
+        * MDCODE(a):  rA
+        * MDCODE(b):  rB
+        * MDCODE(c):  rC BOLD(or) opcode
+        * MDCODE(i):  16-bit immediate BOLD(or) opcode
+NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0000)
     * BOLD(add) rA, rB, rC
         * OP_IMMFIELD(0x0000)
@@ -71,7 +68,7 @@ define(`NEWLINE',`<br>')dnl
         * OP_IMMFIELD(0x000a)
     * BOLD(asr) rA, rB, rC
         * OP_IMMFIELD(0x000b)
-<br><br>
+NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0001)
     * BOLD(addi) rA, rB, imm16
         * OP_RC(0x0)
@@ -101,7 +98,11 @@ define(`NEWLINE',`<br>')dnl
         * OP_RC(0xc)
     * BOLD(cpyhi) rA, imm16
         * OP_RC(0xd)
-<br><br>
+    * BOLD(bne) rA, simm16
+        * OP_RC(0xe)
+    * BOLD(beq) rA, simm16
+        * OP_RC(0xf)
+NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0010)
     * BOLD(jne) rA, rB
         * OP_IMMFIELD(0x0000)
@@ -111,14 +112,8 @@ define(`NEWLINE',`<br>')dnl
         * OP_IMMFIELD(0x0002)
     * BOLD(calleq) rA, rB
         * OP_IMMFIELD(0x0003)
-<br><br>
+NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0011)
-    * BOLD(bne) rA, simm16
-        * OP_RC(0x0)
-    * BOLD(beq) rA, simm16
-        * OP_RC(0x1)
-<br><br>
-* OPCODE_GROUP(0b0111)
     * BOLD(ldr) rA, rB
         * OP_IMMFIELD(0x0000)
     * BOLD(ldh) rA, rB
