@@ -38,10 +38,30 @@ void AsmErrorListener::reportContextSensitivity
 	antlr4::atn::ATNConfigSet *configs)
 {
 }
+
+
+#define ANY_JUST_ACCEPT_BASIC(arg) \
+	arg->accept(this)
+
+#define ANY_ACCEPT_IF_BASIC(arg) \
+	if (arg) \
+	{ \
+		ANY_JUST_ACCEPT_BASIC(arg); \
+	}
+
+#define ANY_PUSH_TOK_IF(arg) \
+	if (arg) \
+	{ \
+		push_str(cstm_strdup(arg->toString())); \
+	}
+
 Assembler::Assembler(GrammarParser& parser, bool s_show_ws)
 	: __show_ws(s_show_ws)
 {
 	__program_ctx = parser.program();
+
+
+	// Encoding stuff (opcode field, register fields)
 
 	// Registers
 	u16 temp = 0;
@@ -179,16 +199,14 @@ void Assembler::gen_no_ws(u16 data)
 {
 	if (__pass)
 	{
-		if (__pc.has_changed())
-		{
-			printout(std::hex);
-			printout("@");
-			printout(__pc.curr);
-			printout(std::dec);
-		}
-
 		// Output big endian
 		printout(std::hex);
+
+		if (__pc.has_changed())
+		{
+			printout("@", __pc.curr, "\n");
+		}
+
 		//printout(get_bits_with_range(data, 15, 8), "");
 		//printout(get_bits_with_range(data, 7, 0), "\n");
 		const u32 a = get_bits_with_range(data, 15, 8);
@@ -216,15 +234,12 @@ void Assembler::gen_8(u8 data)
 {
 	if (__pass)
 	{
+		printout(std::hex);
+
 		if (__pc.has_changed())
 		{
-			printout(std::hex);
-			printout("@");
-			printout(__pc.curr);
-			printout(std::dec);
+			printout("@", __pc.curr, "\n");
 		}
-
-		printout(std::hex);
 
 		const u32 a = data;
 
@@ -272,9 +287,19 @@ antlrcpp::Any Assembler::visitProgram
 antlrcpp::Any Assembler::visitLine
 	(GrammarParser::LineContext *ctx)
 {
+	ANY_ACCEPT_IF_BASIC(ctx->scopedLines())
+	else ANY_ACCEPT_IF_BASIC(ctx->label())
+	else ANY_ACCEPT_IF_BASIC(ctx->instruction())
+	else ANY_ACCEPT_IF_BASIC(ctx->directive())
+	else
+	{
+		// Blank line or a line comment
+	}
 
 	return nullptr;
 }
+
+// line:
 antlrcpp::Any Assembler::visitScopedLines
 	(GrammarParser::ScopedLinesContext *ctx)
 {
@@ -315,3 +340,635 @@ antlrcpp::Any Assembler::visitScopedLines
 	return nullptr;
 }
 
+antlrcpp::Any Assembler::visitLabel
+	(GrammarParser::LabelContext *ctx)
+{
+	ANY_JUST_ACCEPT_BASIC(ctx->identName());
+
+	auto name = pop_str();
+
+	// What's up with "sym->found_as_label()", you may ask?
+	// This disallows duplicate labels in the same scope.
+	// Note that this check only needs to be performed in the first pass
+	// (pass zero).
+	{
+	auto sym = sym_tbl().find_in_this_blklev(__curr_scope_node, name);
+	if ((sym != nullptr) && !__pass && sym->found_as_label())
+	{
+		err(ctx, sconcat("Error:  Cannot have two identical identifers!  ",
+			"The offending identifier is \"", *name, "\"\n"));
+	}
+	}
+	auto sym = sym_tbl().find_or_insert(__curr_scope_node, name);
+
+	sym->set_found_as_label(true);
+	sym->set_addr(pc().curr);
+
+	//printout("visitLabel():  ", pc().curr, "\n");
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstruction
+	(GrammarParser::InstructionContext *ctx)
+{
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitDirective
+	(GrammarParser::DirectiveContext *ctx)
+{
+	ANY_ACCEPT_IF_BASIC(ctx->dotOrgDirective())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotSpaceDirective())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotDbDirective())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotDb16UDirective())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotDb16SDirective())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotDb8UDirective())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotDb8SDirective())
+	else
+	{
+		err(ctx, "visitDirective():  Eek!");
+	}
+	return nullptr;
+}
+
+// instruction:
+antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
+	(GrammarParser::InstrOpGrp0ThreeRegsContext *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
+	(GrammarParser::InstrOpGrp0TwoRegsContext *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
+	(GrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneSimm
+	(GrammarParser::InstrOpGrp1TwoRegsOneSimmContext *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOnePcOneSimm
+	(GrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOneImm
+	(GrammarParser::InstrOpGrp1OneRegOneImmContext *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp1Branch
+	(GrammarParser::InstrOpGrp1BranchContext *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp2
+	(GrammarParser::InstrOpGrp2Context *ctx)
+{
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp3
+	(GrammarParser::InstrOpGrp3Context *ctx)
+{
+
+	return nullptr;
+}
+
+// directive:
+antlrcpp::Any Assembler::visitDotOrgDirective
+	(GrammarParser::DotOrgDirectiveContext *ctx)
+{
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	__pc.curr = pop_num();
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitDotSpaceDirective
+	(GrammarParser::DotSpaceDirectiveContext *ctx)
+{
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	__pc.curr += pop_num();
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitDotDbDirective
+	(GrammarParser::DotDbDirectiveContext *ctx)
+{
+	auto&& expressions = ctx->expr();
+
+	for (auto expr : expressions)
+	{
+		expr->accept(this);
+		gen_32(pop_num());
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitDotDb16UDirective
+	(GrammarParser::DotDb16UDirectiveContext *ctx)
+{
+	auto&& expressions = ctx->expr();
+
+	for (auto expr : expressions)
+	{
+		expr->accept(this);
+		gen_16((u16)pop_num());
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitDotDb16SDirective
+	(GrammarParser::DotDb16SDirectiveContext *ctx)
+{
+	auto&& expressions = ctx->expr();
+
+	for (auto expr : expressions)
+	{
+		expr->accept(this);
+		gen_16((s16)pop_num());
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitDotDb8UDirective
+	(GrammarParser::DotDb8UDirectiveContext *ctx)
+{
+	auto&& expressions = ctx->expr();
+
+	for (auto expr : expressions)
+	{
+		expr->accept(this);
+		gen_8((u8)pop_num());
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitDotDb8SDirective
+	(GrammarParser::DotDb8SDirectiveContext *ctx)
+{
+	auto&& expressions = ctx->expr();
+
+	for (auto expr : expressions)
+	{
+		expr->accept(this);
+		gen_8((s8)pop_num());
+	}
+
+	return nullptr;
+}
+
+// Expression parsing
+antlrcpp::Any Assembler::visitExpr
+	(GrammarParser::ExprContext *ctx)
+{
+	if (ctx->expr())
+	{
+		//ctx->expr()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		const auto left = pop_num();
+
+		//ctx->exprLogical()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprLogical());
+		const auto right = pop_num();
+
+		auto&& op = ctx->TokOpLogical()->toString();
+
+		if (op == "&&")
+		{
+			push_num(left && right);
+		}
+		else if (op == "||")
+		{
+			push_num(left || right);
+		}
+		else
+		{
+			//printerr("visitExpr():  Eek!\n");
+			//exit(1);
+			err(ctx, "visitExpr():  Eek!");
+		}
+	}
+	else
+	{
+		//ctx->exprLogical()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprLogical());
+	}
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprLogical
+	(GrammarParser::ExprLogicalContext *ctx)
+{
+	if (ctx->exprLogical())
+	{
+		//ctx->exprLogical()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprLogical());
+		const auto left = pop_num();
+
+		//ctx->exprCompare()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprCompare());
+		const auto right = pop_num();
+
+		auto&& op = ctx->TokOpCompare()->toString();
+
+		if (op == "==")
+		{
+			push_num(left == right);
+		}
+		else if (op == "!=")
+		{
+			push_num(left != right);
+		}
+		else if (op == "<")
+		{
+			push_num(left < right);
+		}
+		else if (op == ">")
+		{
+			push_num(left > right);
+		}
+		else if (op == "<=")
+		{
+			push_num(left <= right);
+		}
+		else if (op == ">=")
+		{
+			push_num(left >= right);
+		}
+		else
+		{
+			//printerr("visitExprLogical():  Eek!\n");
+			//exit(1);
+			err(ctx, "visitExprLogical():  Eek!");
+		}
+	}
+	else
+	{
+		//ctx->exprCompare()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprCompare());
+	}
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprCompare
+	(GrammarParser::ExprCompareContext *ctx)
+{
+	ANY_ACCEPT_IF_BASIC(ctx->exprAddSub())
+	else ANY_ACCEPT_IF_BASIC(ctx->exprJustAdd())
+	else ANY_ACCEPT_IF_BASIC(ctx->exprJustSub())
+	else
+	{
+		//printerr("visitExprCompare():  Eek!\n");
+		//exit(1);
+		err(ctx, "visitExprCompare():  Eek!");
+	}
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprJustAdd
+	(GrammarParser::ExprJustAddContext *ctx)
+{
+	//ctx->exprAddSub()->accept(this);
+	ANY_JUST_ACCEPT_BASIC(ctx->exprAddSub());
+	const auto left = pop_num();
+
+	//ctx->exprCompare()->accept(this);
+	ANY_JUST_ACCEPT_BASIC(ctx->exprCompare());
+	const auto right = pop_num();
+
+	push_num(left + right);
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprJustSub
+	(GrammarParser::ExprJustSubContext *ctx)
+{
+	//ctx->exprAddSub()->accept(this);
+	ANY_JUST_ACCEPT_BASIC(ctx->exprAddSub());
+	const auto left = pop_num();
+
+	//ctx->exprCompare()->accept(this);
+	ANY_JUST_ACCEPT_BASIC(ctx->exprCompare());
+	const auto right = pop_num();
+
+	push_num(left - right);
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprAddSub
+	(GrammarParser::ExprAddSubContext *ctx)
+{
+	if (ctx->exprAddSub())
+	{
+		//ctx->exprAddSub()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprAddSub());
+		const auto left = pop_num();
+
+		//ctx->exprMulDivModEtc()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprMulDivModEtc());
+		const auto right = pop_num();
+
+		//auto&& op = ctx->TokOpAddSub()->toString();
+		std::string op;
+
+		if (ctx->TokOpMulDivMod())
+		{
+			op = ctx->TokOpMulDivMod()->toString();
+		}
+		else if (ctx->TokOpBitwise())
+		{
+			op = ctx->TokOpBitwise()->toString();
+		}
+		else
+		{
+			//printerr("visitExprAddSub():  no op thing eek!\n");
+			//exit(1);
+			err(ctx, "visitExprAddSub():  no op thing eek!");
+		}
+
+		if (op == "*")
+		{
+			push_num(left * right);
+		}
+		else if (op == "/")
+		{
+			if (right != 0)
+			{
+				push_num(left / right);
+			}
+			else
+			{
+				if (__pass)
+				{
+					//printerr("Error:  Cannot divide by zero!\n");
+					//exit(1);
+					err(ctx, "Error:  Cannot divide by zero!");
+				}
+				else
+				{
+					push_num(0);
+				}
+			}
+		}
+		else if (op == "%")
+		{
+			push_num(left % right);
+		}
+		else if (op == "<<")
+		{
+			push_num(left << right);
+		}
+		else if (op == ">>")
+		{
+			// Logical shift right is special
+			const u64 left_u = left;
+			const u64 right_u = right;
+			const u64 to_push = left_u >> right_u;
+			push_num(to_push);
+		}
+		else if (op == ">>>")
+		{
+			// This relies upon C++ compilers **usually** performing
+			// arithmetic right shifting one signed integer by another
+			// 
+			// Those C++ compilers that don't support this are not
+			// supported for building this assembler!
+			push_num(left >> right);
+		}
+		else
+		{
+			//printerr("visitExprAddSub():  Eek!\n");
+			//exit(1);
+			err(ctx, "visitExprAddSub():  Eek!");
+		}
+	}
+	else
+	{
+		//ctx->exprMulDivModEtc()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->exprMulDivModEtc());
+	}
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprMulDivModEtc
+	(GrammarParser::ExprMulDivModEtcContext *ctx)
+{
+	ANY_ACCEPT_IF_BASIC(ctx->exprUnary())
+	else ANY_ACCEPT_IF_BASIC(ctx->numExpr())
+	else if (ctx->identName())
+	{
+		//ctx->identName()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->identName());
+
+		if (!__pass)
+		{
+			pop_str();
+			push_num(0);
+		}
+		else
+		{
+			auto sym = sym_tbl().find_or_insert(__curr_scope_node, 
+				pop_str());
+			push_num(sym->addr());
+		}
+	}
+	else ANY_ACCEPT_IF_BASIC(ctx->currPc())
+	else
+	{
+		//ctx->expr()->accept(this);
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprUnary
+	(GrammarParser::ExprUnaryContext *ctx)
+{
+	ANY_ACCEPT_IF_BASIC(ctx->exprBitInvert())
+	else ANY_ACCEPT_IF_BASIC(ctx->exprNegate())
+	else ANY_ACCEPT_IF_BASIC(ctx->exprLogNot())
+	else
+	{
+		printerr("visitExprUnary():  Eek!\n");
+		exit(1);
+	}
+	return nullptr;
+}
+
+antlrcpp::Any Assembler::visitExprBitInvert
+	(GrammarParser::ExprBitInvertContext *ctx)
+{
+	//ctx->expr()->accept(this);
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	push_num(~pop_num());
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprNegate
+	(GrammarParser::ExprNegateContext *ctx)
+{
+	//ctx->expr()->accept(this);
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	push_num(-pop_num());
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitExprLogNot
+	(GrammarParser::ExprLogNotContext *ctx)
+{
+	//ctx->expr()->accept(this);
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	push_num(!pop_num());
+	return nullptr;
+}
+
+
+// Last set of token stuff
+antlrcpp::Any Assembler::visitIdentName
+	(GrammarParser::IdentNameContext *ctx)
+{
+	ANY_PUSH_TOK_IF(ctx->TokIdent())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrName())
+	else ANY_PUSH_TOK_IF(ctx->TokReg())
+	else ANY_PUSH_TOK_IF(ctx->TokPcReg())
+	else
+	{
+		err(ctx, "visitIdentName():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrName
+	(GrammarParser::InstrNameContext *ctx)
+{
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameAdd())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSub())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSltu())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSlts())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameMul())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAnd())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameOrr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameXor())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameInv())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsl())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsr())
+
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAddi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSubi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSltui())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSltsi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameMuli())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAndi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameOrri())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameXori())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameInvi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsli())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsri())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsri())
+
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAddsi())
+
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCpyhi())
+
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameBne())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameBeq())
+
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameJne())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameJeq())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCallne())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCalleq())
+
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdh())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdsh())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdb())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdsb())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameStr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSth())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameStb())
+
+	else
+	{
+		err(ctx, "visitInstrName():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitNumExpr
+	(GrammarParser::NumExprContext *ctx)
+{
+	s64 to_push;
+
+	std::stringstream sstm;
+	if (ctx->TokDecNum())
+	{
+		sstm << ctx->TokDecNum()->toString();
+		sstm >> to_push;
+	}
+	else if (ctx->TokHexNum())
+	{
+		u64 temp = 0;
+		auto&& str = ctx->TokHexNum()->toString();
+
+		for (size_t i=2; i<str.size(); ++i)
+		{
+			if ((str.at(i) >= '0') && (str.at(i) <= '9'))
+			{
+				temp |= (str.at(i) - '0');
+			}
+			else if ((str.at(i) >= 'a') && (str.at(i) <= 'f'))
+			{
+				temp |= (str.at(i) - 'a' + 0xa);
+			}
+			else if ((str.at(i) >= 'A') && (str.at(i) <= 'F'))
+			{
+				temp |= (str.at(i) - 'A' + 0xa);
+			}
+			else
+			{
+				err(ctx, "visitNumExpr():  Eek!");
+			}
+
+			if ((i + 1) < str.size())
+			{
+				temp <<= 4;
+			}
+		}
+
+		to_push = temp;
+		//sstm << ctx->TokHexNum()->toString();
+		//sstm >> to_push;
+	}
+	//else if (ctx->TokChar())
+	//{
+	//	std::string temp;
+	//	sstm << ctx->TokChar()->toString();
+	//	sstm >> temp;
+
+	//	to_push = temp.at(1);
+	//}
+	else if (ctx->TokBinNum())
+	{
+		err(ctx, "Sorry, binary literal numbers are not supported yet.");
+	}
+	else
+	{
+		err(ctx, "visitNumExpr():  Eek!");
+	}
+
+	push_num(to_push);
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitCurrPc
+	(GrammarParser::CurrPcContext *ctx)
+{
+	push_num(__pc.curr);
+	return nullptr;
+}

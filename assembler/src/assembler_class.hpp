@@ -46,6 +46,7 @@ private:		// variables
 	liborangepower::containers::PrevCurrPair<u64> __pc;
 
 	std::stack<s64> __num_stack;
+	std::stack<bool> __enable_signed_expr_stack;
 	std::stack<s64> __scope_child_num_stack;
 	std::stack<std::string*> __str_stack;
 
@@ -171,10 +172,14 @@ private:		// visitor functions
 		(GrammarParser::DotSpaceDirectiveContext *ctx);
 	antlrcpp::Any visitDotDbDirective
 		(GrammarParser::DotDbDirectiveContext *ctx);
-	antlrcpp::Any visitDotDb16Directive
-		(GrammarParser::DotDb16DirectiveContext *ctx);
-	antlrcpp::Any visitDotDb8Directive
-		(GrammarParser::DotDb8DirectiveContext *ctx);
+	antlrcpp::Any visitDotDb16UDirective
+		(GrammarParser::DotDb16UDirectiveContext *ctx);
+	antlrcpp::Any visitDotDb16SDirective
+		(GrammarParser::DotDb16SDirectiveContext *ctx);
+	antlrcpp::Any visitDotDb8UDirective
+		(GrammarParser::DotDb8UDirectiveContext *ctx);
+	antlrcpp::Any visitDotDb8SDirective
+		(GrammarParser::DotDb8SDirectiveContext *ctx);
 
 	// Expression parsing
 	antlrcpp::Any visitExpr
