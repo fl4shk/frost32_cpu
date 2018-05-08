@@ -41,11 +41,40 @@ class Assembler : public GrammarVisitor
 private:		// variables
 	SymbolTable __sym_tbl;
 
-	u64 __pc;
+	//u64 __pc;
+
+	liborangepower::containers::PrevCurrPair<u64> __pc;
 
 	std::stack<s64> __num_stack;
 	std::stack<s64> __scope_child_num_stack;
 	std::stack<std::string*> __str_stack;
+
+	struct
+	{
+		std::map<std::string*, u16> reg_names_map;
+		struct
+		{
+			std::map<std::string*, u16> three_regs_map;
+			std::map<std::string*, u16> two_regs_map;
+		} instr_op_grp_0;
+		struct
+		{
+			std::map<std::string*, u16> two_regs_one_imm_map;
+			std::map<std::string*, u16> two_regs_one_simm_map;
+			std::map<std::string*, u16> one_reg_one_pc_one_simm_map;
+			std::map<std::string*, u16> one_reg_one_imm_map;
+			std::map<std::string*, u16> branch_map;
+		} instr_op_grp_1;
+		struct
+		{
+			std::map<std::string*, u16> all_names_map;
+		} instr_op_grp_2;
+		struct
+		{
+			std::map<std::string*, u16> all_names_map;
+		} instr_op_grp_3;
+
+	} __encoding_stuff;
 
 	GrammarParser::ProgramContext* __program_ctx;
 	int __pass;
@@ -118,10 +147,14 @@ private:		// visitor functions
 	// instruction:
 	antlrcpp::Any visitInstrOpGrp0ThreeRegs
 		(GrammarParser::InstrOpGrp0ThreeRegsContext *ctx);
+	antlrcpp::Any visitInstrOpGrp0TwoRegs
+		(GrammarParser::InstrOpGrp0TwoRegsContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1TwoRegsOneImm
 		(GrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx);
-	antlrcpp::Any visitInstrOpGrp1OneRegOnePcOneImm
-		(GrammarParser::InstrOpGrp1OneRegOnePcOneImmContext *ctx);
+	antlrcpp::Any visitInstrOpGrp1TwoRegsOneSimm
+		(GrammarParser::InstrOpGrp1TwoRegsOneSimmContext *ctx);
+	antlrcpp::Any visitInstrOpGrp1OneRegOnePcOneSimm
+		(GrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1OneRegOneImm
 		(GrammarParser::InstrOpGrp1OneRegOneImmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1Branch
@@ -132,8 +165,16 @@ private:		// visitor functions
 		(GrammarParser::InstrOpGrp3Context *ctx);
 
 	// directive:
+	antlrcpp::Any visitDotOrgDirective
+		(GrammarParser::DotOrgDirectiveContext *ctx);
+	antlrcpp::Any visitDotSpaceDirective
+		(GrammarParser::DotSpaceDirectiveContext *ctx);
 	antlrcpp::Any visitDotDbDirective
 		(GrammarParser::DotDbDirectiveContext *ctx);
+	antlrcpp::Any visitDotDb16Directive
+		(GrammarParser::DotDb16DirectiveContext *ctx);
+	antlrcpp::Any visitDotDb8Directive
+		(GrammarParser::DotDb8DirectiveContext *ctx);
 
 	// Expression parsing
 	antlrcpp::Any visitExpr

@@ -25,10 +25,14 @@ label:
 
 instruction:
 	instrOpGrp0ThreeRegs
+	| instrOpGrp0TwoRegs
+
 	| instrOpGrp1TwoRegsOneImm
-	| instrOpGrp1OneRegOnePcOneImm
+	| instrOpGrp1TwoRegsOneSimm
+	| instrOpGrp1OneRegOnePcOneSimm
 	| instrOpGrp1OneRegOneImm
 	| instrOpGrp1Branch
+
 	| instrOpGrp2
 	| instrOpGrp3
 	;
@@ -38,28 +42,36 @@ instrOpGrp0ThreeRegs:
 	| TokInstrNameSltu | TokInstrNameSlts
 	| TokInstrNameMul | TokInstrNameAnd 
 	| TokInstrNameOrr | TokInstrNameXor
-	| TokInstrNameInv | TokInstrNameLsl 
+	| TokInstrNameLsl 
 	| TokInstrNameLsr | TokInstrNameAsr)
 	TokReg ',' TokReg ',' TokReg
 	;
+instrOpGrp0TwoRegs:
+	TokInstrNameInv
+	TokReg ',' TokReg
+	;
 
 instrOpGrp1TwoRegsOneImm:
-	(TokInstrNameAddi | TokInstrNameSubi 
-	| TokInstrNameSltui | TokInstrNameSltsi
-	| TokInstrNameMuli | TokInstrNameAndi 
+	(TokInstrNameAddi | TokInstrNameSubi
+	| TokInstrNameSltui 
+	| TokInstrNameMuli | TokInstrNameAndi
 	| TokInstrNameOrri | TokInstrNameXori
-	| TokInstrNameInvi | TokInstrNameLsli 
+	| TokInstrNameLsli 
 	| TokInstrNameLsri | TokInstrNameAsri)
 	TokReg ',' TokReg ',' expr
 	;
 
-instrOpGrp1OneRegOnePcOneImm:
+instrOpGrp1TwoRegsOneSimm:
+	TokInstrNameSltsi
+	TokReg ',' TokReg ',' expr
+	;
+
+instrOpGrp1OneRegOnePcOneSimm:
 	TokInstrNameAddsi
 	TokReg ',' TokPcReg ',' expr
 	;
-
 instrOpGrp1OneRegOneImm:
-	TokInstrNameCpyhi 
+	(TokInstrNameInvi | TokInstrNameCpyhi)
 	TokReg ',' expr
 	;
 
@@ -85,42 +97,32 @@ instrOpGrp3:
 
 
 directive:
-	// dotOrgDirective
-	// | dotSpaceDirective
-	/*|*/ dotDbDirective
-	// | dotDbU16Directive
-	// | dotDbS16Directive
-	// | dotDbU8Directive
-	// | dotDbS8Directive
+	dotOrgDirective
+	| dotSpaceDirective
+	| dotDbDirective
+	| dotDb16Directive
+	| dotDb8Directive
 	;
 
 
-//dotOrgDirective:
-//	'.org' expr
-//	;
-//
-//dotSpaceDirective:
-//	'.space' expr
-//	;
+dotOrgDirective:
+	'.org' expr
+	;
+
+dotSpaceDirective:
+	'.space' expr
+	;
 
 dotDbDirective:
-	//'.db' expr ((',' expr)*)
-	'.db' expr
+	'.db' expr ((',' expr)*)
 	;
 
-//dotDbU16Directive:
-//	'.db_u16' expr ((',' expr)*)
-//	;
-//dotDbS16Directive:
-//	'.db_s16' expr ((',' expr)*)
-//	;
-//
-//dotDbU8Directive:
-//	'.db_u8' expr ((',' expr)*)
-//	;
-//dotDbS8Directive:
-//	'.db_s8' expr ((',' expr)*)
-//	;
+dotDb16Directive:
+	'.db16' expr ((',' expr)*)
+	;
+dotDb8Directive:
+	'.db8' expr ((',' expr)*)
+	;
 
 // Expression parsing
 expr:

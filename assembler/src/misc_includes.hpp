@@ -5,6 +5,7 @@
 
 
 #include <stack>
+#include <map>
 
 
 #include "liborangepower_src/misc_includes.hpp"
@@ -16,6 +17,7 @@
 #include "liborangepower_src/misc_defines.hpp"
 #include "liborangepower_src/gen_getter_setter_defines.hpp"
 #include "liborangepower_src/json_stuff.hpp"
+#include "liborangepower_src/prev_curr_pair_class.hpp"
 
 using namespace liborangepower::printout_etc;
 using namespace liborangepower::misc_input;
