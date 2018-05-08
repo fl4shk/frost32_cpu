@@ -10,6 +10,7 @@ assembler/objs_dis*/*
 assembler/asmouts*/*
 assembler/preprocs*/*
 assembler/frost32_cpu_assembler*
+assembler/src/gen_src/*
 assembler/*.elf
 *.s.ignore
 *.s
