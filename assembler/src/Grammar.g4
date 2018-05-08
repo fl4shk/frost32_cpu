@@ -100,10 +100,8 @@ directive:
 	dotOrgDirective
 	| dotSpaceDirective
 	| dotDbDirective
-	| dotDb16UDirective
-	| dotDb16SDirective
-	| dotDb8UDirective
-	| dotDb8SDirective
+	| dotDb16Directive
+	| dotDb8Directive
 	;
 
 
@@ -119,17 +117,11 @@ dotDbDirective:
 	'.db' expr ((',' expr)*)
 	;
 
-dotDb16UDirective:
-	'.db16u' expr ((',' expr)*)
+dotDb16Directive:
+	'.db16' expr ((',' expr)*)
 	;
-dotDb16SDirective:
-	'.db16s' expr ((',' expr)*)
-	;
-dotDb8UDirective:
-	'.db8u' expr ((',' expr)*)
-	;
-dotDb8SDirective:
-	'.db8s' expr ((',' expr)*)
+dotDb8Directive:
+	'.db8' expr ((',' expr)*)
 	;
 
 // Expression parsing

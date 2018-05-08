@@ -204,7 +204,7 @@ void Assembler::gen_no_ws(u16 data)
 
 		if (__pc.has_changed())
 		{
-			printout("@", __pc.curr, "\n");
+			printout("\n@", __pc.curr, "\n");
 		}
 
 		//printout(get_bits_with_range(data, 15, 8), "");
@@ -238,7 +238,7 @@ void Assembler::gen_8(u8 data)
 
 		if (__pc.has_changed())
 		{
-			printout("@", __pc.curr, "\n");
+			printout("\n@", __pc.curr, "\n");
 		}
 
 		const u32 a = data;
@@ -250,6 +250,7 @@ void Assembler::gen_8(u8 data)
 		printout(a);
 		printout(std::dec);
 	}
+
 	//__pc += sizeof(data);
 	__pc.curr += sizeof(data);
 	__pc.back_up();
@@ -379,10 +380,8 @@ antlrcpp::Any Assembler::visitDirective
 	ANY_ACCEPT_IF_BASIC(ctx->dotOrgDirective())
 	else ANY_ACCEPT_IF_BASIC(ctx->dotSpaceDirective())
 	else ANY_ACCEPT_IF_BASIC(ctx->dotDbDirective())
-	else ANY_ACCEPT_IF_BASIC(ctx->dotDb16UDirective())
-	else ANY_ACCEPT_IF_BASIC(ctx->dotDb16SDirective())
-	else ANY_ACCEPT_IF_BASIC(ctx->dotDb8UDirective())
-	else ANY_ACCEPT_IF_BASIC(ctx->dotDb8SDirective())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotDb16Directive())
+	else ANY_ACCEPT_IF_BASIC(ctx->dotDb8Directive())
 	else
 	{
 		err(ctx, "visitDirective():  Eek!");
@@ -476,54 +475,28 @@ antlrcpp::Any Assembler::visitDotDbDirective
 
 	return nullptr;
 }
-antlrcpp::Any Assembler::visitDotDb16UDirective
-	(GrammarParser::DotDb16UDirectiveContext *ctx)
+antlrcpp::Any Assembler::visitDotDb16Directive
+	(GrammarParser::DotDb16DirectiveContext *ctx)
 {
 	auto&& expressions = ctx->expr();
 
 	for (auto expr : expressions)
 	{
 		expr->accept(this);
-		gen_16((u16)pop_num());
+		gen_16(pop_num());
 	}
 
 	return nullptr;
 }
-antlrcpp::Any Assembler::visitDotDb16SDirective
-	(GrammarParser::DotDb16SDirectiveContext *ctx)
+antlrcpp::Any Assembler::visitDotDb8Directive
+	(GrammarParser::DotDb8DirectiveContext *ctx)
 {
 	auto&& expressions = ctx->expr();
 
 	for (auto expr : expressions)
 	{
 		expr->accept(this);
-		gen_16((s16)pop_num());
-	}
-
-	return nullptr;
-}
-antlrcpp::Any Assembler::visitDotDb8UDirective
-	(GrammarParser::DotDb8UDirectiveContext *ctx)
-{
-	auto&& expressions = ctx->expr();
-
-	for (auto expr : expressions)
-	{
-		expr->accept(this);
-		gen_8((u8)pop_num());
-	}
-
-	return nullptr;
-}
-antlrcpp::Any Assembler::visitDotDb8SDirective
-	(GrammarParser::DotDb8SDirectiveContext *ctx)
-{
-	auto&& expressions = ctx->expr();
-
-	for (auto expr : expressions)
-	{
-		expr->accept(this);
-		gen_8((s8)pop_num());
+		gen_8(pop_num());
 	}
 
 	return nullptr;
