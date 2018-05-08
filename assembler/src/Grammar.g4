@@ -34,77 +34,55 @@ instruction:
 	;
 
 instrOpGrp0ThreeRegs:
-	(instrNameAdd | instrNameSub | instrNameSltu | instrNameSlts
-	| instrNameMul | instrNameAnd | instrNameOrr | instrNameXor
-	| instrNameInv | instrNameLsl | instrNameLsr | instrNameAsr)
+	(TokInstrNameAdd | TokInstrNameSub 
+	| TokInstrNameSltu | TokInstrNameSlts
+	| TokInstrNameMul | TokInstrNameAnd 
+	| TokInstrNameOrr | TokInstrNameXor
+	| TokInstrNameInv | TokInstrNameLsl 
+	| TokInstrNameLsr | TokInstrNameAsr)
 	TokReg ',' TokReg ',' TokReg
 	;
 
 instrOpGrp1TwoRegsOneImm:
-	(instrNameAddi | instrNameSubi | instrNameSltui | instrNameSltsi
-	| instrNameMuli | instrNameAndi | instrNameOrri | instrNameXori
-	| instrNameInvi | instrNameLsli | instrNameLsri | instrNameAsri)
+	(TokInstrNameAddi | TokInstrNameSubi 
+	| TokInstrNameSltui | TokInstrNameSltsi
+	| TokInstrNameMuli | TokInstrNameAndi 
+	| TokInstrNameOrri | TokInstrNameXori
+	| TokInstrNameInvi | TokInstrNameLsli 
+	| TokInstrNameLsri | TokInstrNameAsri)
 	TokReg ',' TokReg ',' expr
 	;
 
 instrOpGrp1OneRegOnePcOneImm:
-	instrNameAddsi
+	TokInstrNameAddsi
 	TokReg ',' TokPcReg ',' expr
 	;
 
 instrOpGrp1OneRegOneImm:
-	instrNameCpyhi 
+	TokInstrNameCpyhi 
 	TokReg ',' expr
 	;
 
 // Branches must be separate because they're pc-relative
 instrOpGrp1Branch:
-	(instrNameBne | instrNameBeq)
+	(TokInstrNameBne | TokInstrNameBeq)
 	TokReg ',' expr
 	;
 
 instrOpGrp2:
-	(instrNameJne | instrNameJeq | instrNameCallne | instrNameCalleq)
+	(TokInstrNameJne | TokInstrNameJeq 
+	| TokInstrNameCallne | TokInstrNameCalleq)
 	TokReg ',' TokReg
 	;
 
 instrOpGrp3:
-	(instrNameLdr
-	| instrNameLdh | instrNameLdsh
-	| instrNameLdb | instrNameLdsb
-	| instrNameStr | instrNameSth | instrNameStb)
+	(TokInstrNameLdr
+	| TokInstrNameLdh | TokInstrNameLdsh
+	| TokInstrNameLdb | TokInstrNameLdsb
+	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
 	TokReg ',' TokReg
 	;
 
-instrNameAdd: 'add' ; instrNameSub: 'sub' ;
-instrNameSltu: 'sltu' ; instrNameSlts: 'slts' ;
-instrNameMul: 'mul' ; instrNameAnd: 'and' ;
-instrNameOrr: 'orr' ; instrNameXor: 'xor' ;
-instrNameInv: 'inv' ; instrNameLsl: 'lsl' ;
-instrNameLsr: 'lsr' ; instrNameAsr: 'asr' ;
-
-instrNameAddi: 'addi' ; instrNameSubi: 'subi' ;
-instrNameSltui: 'sltui' ; instrNameSltsi: 'sltsi' ;
-instrNameMuli: 'muli' ; instrNameAndi: 'andi' ;
-instrNameOrri: 'orri' ; instrNameXori: 'xori' ;
-instrNameInvi: 'invi' ; instrNameLsli: 'lsli' ;
-instrNameLsri: 'lsri' ; instrNameAsri: 'asri' ;
-
-instrNameAddsi: 'addsi' ;
-
-instrNameCpyhi: 'cpyhi' ;
-
-instrNameBne: 'bne' ; instrNameBeq: 'beq' ;
-
-instrNameJne: 'jne' ; instrNameJeq: 'jeq' ;
-instrNameCallne: 'callne' ; instrNameCalleq: 'calleq' ;
-
-instrNameLdr: 'ldr' ;
-instrNameLdh: 'ldh' ; instrNameLdsh: 'ldsh' ;
-instrNameLdb: 'ldb' ; instrNameLdsb: 'ldsb' ;
-instrNameStr: 'str' ;
-instrNameSth: 'sth' ;
-instrNameStb: 'stb' ;
 
 directive:
 	// dotOrgDirective
@@ -126,7 +104,8 @@ directive:
 //	;
 
 dotDbDirective:
-	'.db' expr ((',' expr)*)
+	//'.db' expr ((',' expr)*)
+	'.db' expr
 	;
 
 //dotDbU16Directive:
@@ -188,7 +167,37 @@ exprBitInvert: '~' expr ;
 exprNegate: '-' expr ;
 exprLogNot: '!' expr ;
 
-identName: TokIdent | TokInstrName | TokReg | TokSpecReg;
+identName: TokIdent | instrName | TokReg | TokPcReg ;
+
+instrName:
+	(TokInstrNameAdd | TokInstrNameSub
+	| TokInstrNameSltu | TokInstrNameSlts
+	| TokInstrNameMul | TokInstrNameAnd
+	| TokInstrNameOrr | TokInstrNameXor
+	| TokInstrNameInv | TokInstrNameLsl
+	| TokInstrNameLsr | TokInstrNameAsr
+
+	| TokInstrNameAddi | TokInstrNameSubi
+	| TokInstrNameSltui | TokInstrNameSltsi
+	| TokInstrNameMuli | TokInstrNameAndi
+	| TokInstrNameOrri | TokInstrNameXori
+	| TokInstrNameInvi | TokInstrNameLsli
+	| TokInstrNameLsri | TokInstrNameAsri
+
+	| TokInstrNameAddsi
+
+	| TokInstrNameCpyhi
+
+	| TokInstrNameBne | TokInstrNameBeq
+
+	| TokInstrNameJne | TokInstrNameJeq
+	| TokInstrNameCallne | TokInstrNameCalleq
+
+	| TokInstrNameLdr
+	| TokInstrNameLdh | TokInstrNameLdsh
+	| TokInstrNameLdb | TokInstrNameLdsb
+	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
+	;
 
 numExpr: TokDecNum | TokHexNum | TokBinNum;
 
@@ -208,19 +217,53 @@ TokDecNum: [0-9] ([0-9]*) ;
 TokHexNum: '0x' ([0-9A-Za-z]+);
 TokBinNum: '0b' ([0-1]+);
 
-TokInstrName:
-	('add' | 'sub' | 'sltu' | 'stls'
-	| 'mul' | 'and' | 'orr' | 'xor'
-	| 'inv' | 'lsl' | 'lsr' | 'asr'
-	| 'addi' | 'subi' | 'sltui' | 'stlsi'
-	| 'muli' | 'andi' | 'orri' | 'xori'
-	| 'invi' | 'lsli' | 'lsri' | 'asri'
-	| 'addsi'
-	| 'cpyhi' | 'bne' | 'beq'
-	| 'jne' | 'jeq' | 'callne' | 'calleq'
-	| 'ldr' | 'ldh' | 'ldsh' | 'ldb' | 'ldsb'
-	| 'str' | 'sth' | 'stb')
-	;
+TokInstrNameAdd: 'add' ;
+TokInstrNameSub: 'sub' ;
+TokInstrNameSltu: 'sltu' ;
+TokInstrNameSlts: 'slts' ;
+TokInstrNameMul: 'mul' ;
+TokInstrNameAnd: 'and' ;
+TokInstrNameOrr: 'orr' ;
+TokInstrNameXor: 'xor' ;
+TokInstrNameInv: 'inv' ;
+TokInstrNameLsl: 'lsl' ;
+TokInstrNameLsr: 'lsr' ;
+TokInstrNameAsr: 'asr' ;
+
+TokInstrNameAddi: 'addi' ;
+TokInstrNameSubi: 'subi' ;
+TokInstrNameSltui: 'sltui' ;
+TokInstrNameSltsi: 'sltsi' ;
+TokInstrNameMuli: 'muli' ;
+TokInstrNameAndi: 'andi' ;
+TokInstrNameOrri: 'orri' ;
+TokInstrNameXori: 'xori' ;
+TokInstrNameInvi: 'invi' ;
+TokInstrNameLsli: 'lsli' ;
+TokInstrNameLsri: 'lsri' ;
+TokInstrNameAsri: 'asri' ;
+
+TokInstrNameAddsi: 'addsi' ;
+
+TokInstrNameCpyhi: 'cpyhi' ;
+
+TokInstrNameBne: 'bne' ;
+TokInstrNameBeq: 'beq' ;
+
+TokInstrNameJne: 'jne' ;
+TokInstrNameJeq: 'jeq' ;
+TokInstrNameCallne: 'callne' ;
+TokInstrNameCalleq: 'calleq' ;
+
+TokInstrNameLdr: 'ldr' ;
+TokInstrNameLdh: 'ldh' ;
+TokInstrNameLdsh: 'ldsh' ;
+TokInstrNameLdb: 'ldb' ;
+TokInstrNameLdsb: 'ldsb' ;
+TokInstrNameStr: 'str' ;
+TokInstrNameSth: 'sth' ;
+TokInstrNameStb: 'stb' ;
+
 
 TokReg:
 	('r0' | 'r1' | 'r2' | 'r3'
