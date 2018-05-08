@@ -4,6 +4,13 @@ objs*/*
 objs_dis*/*
 asmouts*/*
 preprocs*/*
+assembler/deps*/*
+assembler/objs*/*
+assembler/objs_dis*/*
+assembler/asmouts*/*
+assembler/preprocs*/*
+assembler/frost32_cpu_assembler*
+assembler/*.elf
 *.s.ignore
 *.s
 *.gdb_history*
