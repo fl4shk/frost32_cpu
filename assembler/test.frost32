@@ -1,41 +1,19 @@
-//.org 0x9000000a
-//aaa:
-//	.db16 -8
-//
-//.org 0x9000
-//.db 0xabcd
-//.db aaa
-//
-//some_global_var:
-//.space 0x20
-//// add r1, r2, r3
-//// addi r1, r3, some_global_var
-//
-//some_extra_data:
-//.db 0xcafe,0xface9001
-//.db some_extra_data
+.org 0x1000
+data_0:
+	.space 0x90
+
+data_1:
+	.space 0x100
+
 
 .org 0x9000
-r0:
+main:
 {
-	//.db r0
-	r1:
-		.db r1
-	{
-		r1:
-			.db r1
-	}
-	{
-		r1:
-			.db r1
-		{
-			r1:
-				.db r1
+	//addi r1, r0, 9
+	//cpyhi r1, 8
+	addi r1, r0, (infin & 0xffff)
+	cpyhi r1, (infin >> 16)
 
-		}
-		.db r1
-	}
+infin:
+	beq r0, infin
 }
-
-.org 0x9000
-.db r0

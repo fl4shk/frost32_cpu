@@ -46,7 +46,7 @@ private:		// variables
 	liborangepower::containers::PrevCurrPair<u64> __pc;
 
 	std::stack<s64> __num_stack;
-	std::stack<bool> __enable_signed_expr_stack;
+	//std::stack<bool> __enable_signed_expr_stack;
 	std::stack<s64> __scope_child_num_stack;
 	std::stack<std::string*> __str_stack;
 
@@ -122,6 +122,68 @@ private:		// functions
 			printout(some_ws);
 		}
 	}
+
+	template<typename CtxType>
+	auto get_reg_encodings(CtxType *ctx) const;
+
+	inline auto get_one_reg_encoding(const std::string& reg_name) const;
+
+	inline void encode_instr_opcode_group_0(u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index, u32 opcode)
+	{
+		u64 to_gen = 0;
+
+		// clear_and_set_bits_with_range(to_gen, 0b0000, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
+		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+
+		gen_32(to_gen);
+	}
+
+	inline void encode_instr_opcode_group_1(u32 reg_a_index,
+		u32 reg_b_index, u32 opcode, u32 immediate)
+	{
+		u64 to_gen = 0;
+
+		clear_and_set_bits_with_range(to_gen, 0b0001, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, opcode, 19, 16);
+		clear_and_set_bits_with_range(to_gen, immediate, 15, 0);
+
+		gen_32(to_gen);
+	}
+
+	inline void encode_instr_opcode_group_2(u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index, u32 opcode)
+	{
+		u64 to_gen = 0;
+
+		clear_and_set_bits_with_range(to_gen, 0b0010, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
+		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+
+		gen_32(to_gen);
+	}
+
+	inline void encode_instr_opcode_group_3(u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index, u32 opcode)
+	{
+		u64 to_gen = 0;
+
+		clear_and_set_bits_with_range(to_gen, 0b0011, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
+		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+
+		gen_32(to_gen);
+	}
+
 	// Generate data
 	void gen_no_ws(u16 data);
 	void gen_8(u8 data);

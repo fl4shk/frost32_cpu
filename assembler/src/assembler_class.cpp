@@ -195,6 +195,28 @@ int Assembler::run()
 	return 0;
 }
 
+template<typename CtxType>
+auto Assembler::get_reg_encodings(CtxType *ctx) const
+{
+	std::vector<u16> ret;
+
+	auto&& regs = ctx->TokReg();
+
+	for (auto reg : regs)
+	{
+		ret.push_back(__encoding_stuff.reg_names_map.at
+			(cstm_strdup(reg->toString())));
+	}
+
+	return ret;
+}
+
+inline auto Assembler::get_one_reg_encoding(const std::string& reg_name) 
+	const
+{
+	return __encoding_stuff.reg_names_map.at(cstm_strdup(reg_name));
+}
+
 void Assembler::gen_no_ws(u16 data)
 {
 	if (__pass)
@@ -372,6 +394,22 @@ antlrcpp::Any Assembler::visitLabel
 antlrcpp::Any Assembler::visitInstruction
 	(GrammarParser::InstructionContext *ctx)
 {
+	ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp0ThreeRegs())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp0TwoRegs())
+
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1TwoRegsOneImm())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1TwoRegsOneSimm())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1OneRegOnePcOneSimm())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1OneRegOneImm())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1Branch())
+
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp2())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp3())
+
+	else
+	{
+		err(ctx, "visitInstruction();  Eek!");
+	}
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitDirective
@@ -393,54 +431,231 @@ antlrcpp::Any Assembler::visitDirective
 antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
 	(GrammarParser::InstrOpGrp0ThreeRegsContext *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameAdd())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSub())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSltu())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSlts())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameMul())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAnd())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameOrr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameXor())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsl ())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsr())
+	else
+	{
+		err(ctx, "visitInstrOpGrp0ThreeRegs():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_0.three_regs_map.at
+		(pop_str());
+
+	auto&& reg_encodings = get_reg_encodings(ctx);
+
+	encode_instr_opcode_group_0(reg_encodings.at(0), reg_encodings.at(1),
+		reg_encodings.at(2), opcode);
+
 
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
 	(GrammarParser::InstrOpGrp0TwoRegsContext *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameInv())
+	else
+	{
+		err(ctx, "visitInstrOpGrp0TwoRegs():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_0.two_regs_map.at
+		(pop_str());
+
+	auto&& reg_encodings = get_reg_encodings(ctx);
+
+	encode_instr_opcode_group_0(reg_encodings.at(0), reg_encodings.at(1),
+		0x0, opcode);
 
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
 	(GrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameAddi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSubi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSltui())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameMuli())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAndi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameOrri())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameXori())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsli())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsri())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsri())
+	else
+	{
+		err(ctx, "visitInstrOpGrp1TwoRegsOneImm():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_1
+		.two_regs_one_imm_map.at(pop_str());
+
+	auto&& reg_encodings = get_reg_encodings(ctx);
+
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	const auto immediate = pop_num();
+
+	encode_instr_opcode_group_1(reg_encodings.at(0), reg_encodings.at(1),
+		opcode, immediate);
 
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneSimm
 	(GrammarParser::InstrOpGrp1TwoRegsOneSimmContext *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameSltsi())
+	else
+	{
+		err(ctx, "visitInstrOpGrp1TwoRegsOneSimm():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_1
+		.two_regs_one_simm_map.at(pop_str());
+
+	auto&& reg_encodings = get_reg_encodings(ctx);
+
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	const auto immediate = pop_num();
+
+	encode_instr_opcode_group_1(reg_encodings.at(0), reg_encodings.at(1),
+		opcode, immediate);
 
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOnePcOneSimm
 	(GrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameAddsi())
+	else
+	{
+		err(ctx, "visitInstrOpGrp1OneRegOnePcOneSimm():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_1
+		.one_reg_one_pc_one_simm_map.at(pop_str());
+
+	//auto&& reg_encodings = get_reg_encodings(ctx);
+
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	const auto immediate = pop_num();
+
+	//encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode, 
+	//	immediate);
+	encode_instr_opcode_group_1(get_one_reg_encoding
+		(ctx->TokReg()->toString()), 0x0, opcode,
+		immediate);
 
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOneImm
 	(GrammarParser::InstrOpGrp1OneRegOneImmContext *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameInvi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCpyhi())
+	else
+	{
+		err(ctx, "visitInstrOpGrp1OneRegOneImm():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_1
+		.one_reg_one_imm_map.at(pop_str());
+
+	//auto&& reg_encodings = get_reg_encodings(ctx);
+
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	const auto immediate = pop_num();
+
+	//encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
+	//	immediate);
+	encode_instr_opcode_group_1(get_one_reg_encoding
+		(ctx->TokReg()->toString()), 0x0, opcode,
+		immediate);
 
 	return nullptr;
 }
+// Branches must be separate because they're pc-relative
 antlrcpp::Any Assembler::visitInstrOpGrp1Branch
 	(GrammarParser::InstrOpGrp1BranchContext *ctx)
 {
+	//gen_64(pop_num() - pc() - sizeof(s64));
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameBne())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameBeq())
+	else
+	{
+		err(ctx, "visitInstrOpGrp1Branch():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_1.branch_map
+		.at(pop_str());
+
+	//auto&& reg_encodings = get_reg_encodings(ctx);
+
+	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+
+	// This may need to be adjusted
+	const auto immediate = pop_num() - __pc.curr - sizeof(s32);
+
+	//encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
+	//	immediate);
+	encode_instr_opcode_group_1(get_one_reg_encoding
+		(ctx->TokReg()->toString()), 0x0, opcode,
+		immediate);
 
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp2
 	(GrammarParser::InstrOpGrp2Context *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameJne())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameJeq())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCallne())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCalleq())
+	else
+	{
+		err(ctx, "visitInstrOpGrp2():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_2.all_names_map
+		.at(pop_str());
+
+	auto&& reg_encodings = get_reg_encodings(ctx);
+
+	encode_instr_opcode_group_2(reg_encodings.at(0), reg_encodings.at(1),
+		0x0, opcode);
 
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp3
 	(GrammarParser::InstrOpGrp3Context *ctx)
 {
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameLdr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdh())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdsh())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdb())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdsb())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameStr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSth())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameStb())
+	else
+	{
+		err(ctx, "visitInstrOpGrp3():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.instr_op_grp_3.all_names_map
+		.at(pop_str());
+
+	auto&& reg_encodings = get_reg_encodings(ctx);
+
+	encode_instr_opcode_group_3(reg_encodings.at(0), reg_encodings.at(1),
+		0x0, opcode);
 
 	return nullptr;
 }
@@ -695,6 +910,18 @@ antlrcpp::Any Assembler::visitExprAddSub
 		else if (op == "%")
 		{
 			push_num(left % right);
+		}
+		else if (op == "&")
+		{
+			push_num(left & right);
+		}
+		else if (op == "|")
+		{
+			push_num(left | right);
+		}
+		else if (op == "^")
+		{
+			push_num(left ^ right);
 		}
 		else if (op == "<<")
 		{
