@@ -1,4 +1,3 @@
-include(src/include/misc_defines.m4)dnl
 # Frost32 Instruction Set
 <!-- Vim Note:  Use @g to update notes.pdf -->
 <!-- Vim Note:  Use @h to update notes.html -->
@@ -16,20 +15,20 @@ include(src/include/misc_defines.m4)dnl
 
 
 * General Purpose Registers (32-bit):
-    * MDCODE(r0) (always zero), MDCODE(r1), MDCODE(r2), MDCODE(r3), 
-    MDCODE(r4), MDCODE(r5), MDCODE(r6), MDCODE(r7),
-    MDCODE(r8), MDCODE(r9), MDCODE(r10), MDCODE(r11),
-    MDCODE(r12), MDCODE(lr), MDCODE(fp), MDCODE(sp)
+    * ``r0`` (always zero), ``r1``, ``r2``, ``r3``, 
+    ``r4``, ``r5``, ``r6``, ``r7``,
+    ``r8``, ``r9``, ``r10``, ``r11``,
+    ``r12``, ``lr``, ``fp``, ``sp``
 * Special Purpose Registers (32-bit)
     * CODE(pc)
 NEWLINE()NEWLINE()
 * Instructions
-    * Encoding:  MDCODE(gggg aaaa bbbb cccc  iiii iiii iiii iiii)
-        * MDCODE(g):  Opcode Group
-        * MDCODE(a):  rA
-        * MDCODE(b):  rB
-        * MDCODE(c):  rC BOLD(or) opcode
-        * MDCODE(i):  16-bit immediate BOLD(or) opcode
+    * Encoding:  ``gggg aaaa bbbb cccc  iiii iiii iiii iiii``
+        * ``g``:  Opcode Group
+        * ``a``:  rA
+        * ``b``:  rB
+        * ``c``:  rC BOLD(or) opcode
+        * ``i``:  16-bit immediate BOLD(or) opcode
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0000)
     * BOLD(add) rA, rB, rC
