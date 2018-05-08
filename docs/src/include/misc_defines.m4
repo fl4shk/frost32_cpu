@@ -1,6 +1,7 @@
 define(`BACKTICK',`changequote(<,>)`dnl'
 changequote`'')dnl
-define(`MDCODE',changequote(⋀,⋁)``$1``changequote())dnl (Unicode quote characters, eh?.  There's no way I'd ever use these characters in normal text, which is why I'm using them in changequote here)
+define(`MDCODE',`changequote(⋀,⋁)``$1``dnl''''
+changequote`'')dnl  This is a bit funky
 define(`CONCAT',$1$2)dnl
 define(`CONCAT3',CONCAT(CONCAT($1,$2),$3))dnl
 define(`CODE',CONCAT3(`<code>',$1,`</code>'))dnl
