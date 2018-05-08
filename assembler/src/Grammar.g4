@@ -7,20 +7,20 @@ program:
 
 line:
 	scopedLines
-	| label '\n'
-	| instruction '\n'
-	| directive '\n'
-	| '\n' // Allow blank lines and lines with only a comment
+	| label TokNewline
+	| instruction TokNewline
+	| directive TokNewline
+	| TokNewline // Allow blank lines and lines with only a comment
 	;
 
 scopedLines:
-	'{' '\n'
+	TokLBrace TokNewline
 	line*
-	'}' '\n'
+	TokRBrace TokNewline
 	;
 
 label: 
-	identName ':' 
+	identName TokColon
 	;
 
 instruction:
@@ -44,11 +44,11 @@ instrOpGrp0ThreeRegs:
 	| TokInstrNameOrr | TokInstrNameXor
 	| TokInstrNameLsl 
 	| TokInstrNameLsr | TokInstrNameAsr)
-	TokReg ',' TokReg ',' TokReg
+	TokReg TokComma TokReg TokComma TokReg
 	;
 instrOpGrp0TwoRegs:
 	TokInstrNameInv
-	TokReg ',' TokReg
+	TokReg TokComma TokReg
 	;
 
 instrOpGrp1TwoRegsOneImm:
@@ -58,33 +58,33 @@ instrOpGrp1TwoRegsOneImm:
 	| TokInstrNameOrri | TokInstrNameXori
 	| TokInstrNameLsli 
 	| TokInstrNameLsri | TokInstrNameAsri)
-	TokReg ',' TokReg ',' expr
+	TokReg TokComma TokReg TokComma expr
 	;
 
 instrOpGrp1TwoRegsOneSimm:
 	TokInstrNameSltsi
-	TokReg ',' TokReg ',' expr
+	TokReg TokComma TokReg TokComma expr
 	;
 
 instrOpGrp1OneRegOnePcOneSimm:
 	TokInstrNameAddsi
-	TokReg ',' TokPcReg ',' expr
+	TokReg TokComma TokPcReg TokComma expr
 	;
 instrOpGrp1OneRegOneImm:
 	(TokInstrNameInvi | TokInstrNameCpyhi)
-	TokReg ',' expr
+	TokReg TokComma expr
 	;
 
 // Branches must be separate because they're pc-relative
 instrOpGrp1Branch:
 	(TokInstrNameBne | TokInstrNameBeq)
-	TokReg ',' expr
+	TokReg TokComma expr
 	;
 
 instrOpGrp2:
 	(TokInstrNameJne | TokInstrNameJeq 
 	| TokInstrNameCallne | TokInstrNameCalleq)
-	TokReg ',' TokReg
+	TokReg TokComma TokReg
 	;
 
 instrOpGrp3:
@@ -92,7 +92,7 @@ instrOpGrp3:
 	| TokInstrNameLdh | TokInstrNameLdsh
 	| TokInstrNameLdb | TokInstrNameLdsb
 	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
-	TokReg ',' TokReg
+	TokReg TokComma TokReg
 	;
 
 
@@ -106,22 +106,22 @@ directive:
 
 
 dotOrgDirective:
-	'.org' expr
+	TokDotOrg expr
 	;
 
 dotSpaceDirective:
-	'.space' expr
+	TokDotSpace expr
 	;
 
 dotDbDirective:
-	'.db' expr ((',' expr)*)
+	TokDotDb expr ((TokComma expr)*)
 	;
 
 dotDb16Directive:
-	'.db16' expr ((',' expr)*)
+	TokDotDb16 expr ((TokComma expr)*)
 	;
 dotDb8Directive:
-	'.db8' expr ((',' expr)*)
+	TokDotDb8 expr ((TokComma expr)*)
 	;
 
 // Expression parsing
@@ -142,8 +142,8 @@ exprCompare:
 	| exprJustSub
 	;
 
-exprJustAdd: exprAddSub '+' exprCompare ;
-exprJustSub: exprAddSub '-' exprCompare ;
+exprJustAdd: exprAddSub TokPlus exprCompare ;
+exprJustSub: exprAddSub TokMinus exprCompare ;
 
 exprAddSub:
 	exprMulDivModEtc
@@ -156,7 +156,7 @@ exprMulDivModEtc:
 	| numExpr
 	| identName
 	| currPc
-	| '(' expr ')'
+	| TokLParen expr TokRParen
 	;
 
 exprUnary:
@@ -165,9 +165,9 @@ exprUnary:
 	| exprLogNot
 	;
 
-exprBitInvert: '~' expr ;
-exprNegate: '-' expr ;
-exprLogNot: '!' expr ;
+exprBitInvert: TokBitInvert expr ;
+exprNegate: TokMinus expr ;
+exprLogNot: TokExclamPoint expr ;
 
 identName: TokIdent | instrName | TokReg | TokPcReg ;
 
@@ -203,7 +203,7 @@ instrName:
 
 numExpr: TokDecNum | TokHexNum | TokBinNum;
 
-currPc: '.' ;
+currPc: TokPeriod ;
 
 // Lexer rules
 LexWhitespace: (' ' | '\t') -> skip ;
@@ -212,8 +212,11 @@ LexLineComment: '//' (~ '\n')* -> skip ;
 TokOpLogical: ('&&' | '||') ;
 TokOpCompare: ('==' | '!=' | '<' | '>' | '<=' | '>=') ;
 //TokOpAddSub: ('+' | '-') ;
+TokPlus: '+' ;
+TokMinus: '-' ;
 TokOpMulDivMod: ('*' | '/' | '%') ;
 TokOpBitwise: ('&' | '|' | '^' | '<<' | '>>' | '>>>') ;
+TokBitInvert: '~' ;
 
 TokDecNum: [0-9] ([0-9]*) ;
 TokHexNum: '0x' ([0-9A-Za-z]+);
@@ -265,6 +268,26 @@ TokInstrNameLdsb: 'ldsb' ;
 TokInstrNameStr: 'str' ;
 TokInstrNameSth: 'sth' ;
 TokInstrNameStb: 'stb' ;
+
+// Directives
+TokDotOrg: '.org' ;
+TokDotSpace: '.space' ;
+TokDotDb: '.db' ;
+TokDotDb16: '.db16' ;
+TokDotDb8: '.db8' ;
+
+// Punctuation, etc.
+TokPeriod: '.' ;
+TokComma: ',' ;
+TokColon: ':' ;
+TokExclamPoint: '!' ;
+TokLParen: '(' ;
+TokRParen: ')' ;
+TokLBracket: '[' ;
+TokRBracket: ']' ;
+TokLBrace: '{' ;
+TokRBrace: '}' ;
+TokNewline: '\n' ;
 
 
 TokReg:

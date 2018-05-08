@@ -16,4 +16,5 @@ main:
 
 infin:
 	beq r0, infin
+	{
 }
