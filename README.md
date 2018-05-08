@@ -1,2 +1,3 @@
 # Frost32 CPU
-My first attempt at a pipelined CPU in [MyHDL](http://myhdl.org/).
+My first attempt at a pipelined CPU, being implemented in
+[MyHDL](http://myhdl.org/).
