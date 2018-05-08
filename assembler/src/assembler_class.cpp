@@ -204,7 +204,7 @@ void Assembler::gen_no_ws(u16 data)
 
 		if (__pc.has_changed())
 		{
-			printout("\n@", __pc.curr, "\n");
+			printout("@", __pc.curr, "\n");
 		}
 
 		//printout(get_bits_with_range(data, 15, 8), "");
@@ -238,7 +238,7 @@ void Assembler::gen_8(u8 data)
 
 		if (__pc.has_changed())
 		{
-			printout("\n@", __pc.curr, "\n");
+			printout("@", __pc.curr, "\n");
 		}
 
 		const u32 a = data;
