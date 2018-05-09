@@ -84,95 +84,71 @@ Assembler::Assembler(GrammarParser& parser, bool s_show_ws)
 
 	// Instruction Opcode Group 0
 	temp = 0;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("add")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("sub")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("sltu")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("slts")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("mul")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("and")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("orr")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("xor")] = temp++;
-	__encoding_stuff.instr_op_grp_0.two_regs_map
-		[cstm_strdup("inv")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("lsl")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("lsr")] = temp++;
-	__encoding_stuff.instr_op_grp_0.three_regs_map
-		[cstm_strdup("asr")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("add")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("sub")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("sltu")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("slts")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("mul")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("and")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("orr")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("xor")] = temp++;
+	__encoding_stuff.iog0_two_regs_map[cstm_strdup("inv")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("lsl")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("lsr")] = temp++;
+	__encoding_stuff.iog0_three_regs_map[cstm_strdup("asr")] = temp++;
 
 	// Instruction Opcode Group 1
 	temp = 0;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("addi")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("subi")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("sltui")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_simm_map
-		[cstm_strdup("sltsi")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("muli")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("andi")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("orri")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("xori")] = temp++;
-	__encoding_stuff.instr_op_grp_1.one_reg_one_imm_map
-		[cstm_strdup("invi")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("lsli")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("lsri")] = temp++;
-	__encoding_stuff.instr_op_grp_1.two_regs_one_imm_map
-		[cstm_strdup("asri")] = temp++;
-	__encoding_stuff.instr_op_grp_1.one_reg_one_pc_one_simm_map
-		[cstm_strdup("addsi")] = temp++;
-	__encoding_stuff.instr_op_grp_1.one_reg_one_imm_map
-		[cstm_strdup("cpyhi")] = temp++;
-	__encoding_stuff.instr_op_grp_1.branch_map
-		[cstm_strdup("bne")] = temp++;
-	__encoding_stuff.instr_op_grp_1.branch_map
-		[cstm_strdup("beq")] = temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("addi")] 
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("subi")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("sltui")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_simm_map[cstm_strdup("sltsi")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("muli")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("andi")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("orri")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("xori")]
+		= temp++;
+	__encoding_stuff.iog1_one_reg_one_imm_map[cstm_strdup("invi")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("lsli")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("lsri")]
+		= temp++;
+	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("asri")]
+		= temp++;
+	__encoding_stuff.iog1_one_reg_one_pc_one_simm_map[cstm_strdup("addsi")]
+		= temp++;
+	__encoding_stuff.iog1_one_reg_one_imm_map[cstm_strdup("cpyhi")]
+		= temp++;
+	__encoding_stuff.iog1_branch_map[cstm_strdup("bne")]
+		= temp++;
+	__encoding_stuff.iog1_branch_map[cstm_strdup("beq")] =
+		temp++;
 
 	// Instruction Opcode Group 2
 	temp = 0;
-	__encoding_stuff.instr_op_grp_2.all_names_map
-		[cstm_strdup("jne")] = temp++;
-	__encoding_stuff.instr_op_grp_2.all_names_map
-		[cstm_strdup("jeq")] = temp++;
-	__encoding_stuff.instr_op_grp_2.all_names_map
-		[cstm_strdup("callne")] = temp++;
-	__encoding_stuff.instr_op_grp_2.all_names_map
-		[cstm_strdup("calleq")] = temp++;
+	__encoding_stuff.iog2_two_regs_map[cstm_strdup("jne")] = temp++;
+	__encoding_stuff.iog2_two_regs_map[cstm_strdup("jeq")] = temp++;
+	__encoding_stuff.iog2_two_regs_map[cstm_strdup("callne")] = temp++;
+	__encoding_stuff.iog2_two_regs_map[cstm_strdup("calleq")] = temp++;
 
 	// Instruction Opcode Group 3
 	temp = 0;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("ldr")] = temp++;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("ldh")] = temp++;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("ldsh")] = temp++;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("ldb")] = temp++;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("ldsb")] = temp++;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("str")] = temp++;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("sth")] = temp++;
-	__encoding_stuff.instr_op_grp_3.all_names_map
-		[cstm_strdup("stb")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldr")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldh")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldsh")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldb")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldsb")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("str")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("sth")] = temp++;
+	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("stb")] = temp++;
 }
 
 int Assembler::run()
@@ -204,8 +180,8 @@ auto Assembler::get_reg_encodings(CtxType *ctx) const
 
 	for (auto reg : regs)
 	{
-		ret.push_back(__encoding_stuff.reg_names_map.at
-			(cstm_strdup(reg->toString())));
+		ret.push_back(__encoding_stuff.reg_names_map
+			.at(cstm_strdup(reg->toString())));
 	}
 
 	return ret;
@@ -313,6 +289,7 @@ antlrcpp::Any Assembler::visitLine
 	ANY_ACCEPT_IF_BASIC(ctx->scopedLines())
 	else ANY_ACCEPT_IF_BASIC(ctx->label())
 	else ANY_ACCEPT_IF_BASIC(ctx->instruction())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstruction())
 	else ANY_ACCEPT_IF_BASIC(ctx->directive())
 	else
 	{
@@ -332,8 +309,8 @@ antlrcpp::Any Assembler::visitScopedLines
 	}
 	else // if (__pass)
 	{
-		__curr_scope_node = __curr_scope_node->children.at
-			(get_top_scope_child_num());
+		__curr_scope_node = __curr_scope_node->children
+			.at(get_top_scope_child_num());
 		push_scope_child_num(0);
 	}
 	auto&& lines = ctx->line();
@@ -408,7 +385,22 @@ antlrcpp::Any Assembler::visitInstruction
 
 	else
 	{
-		err(ctx, "visitInstruction();  Eek!");
+		err(ctx, "visitInstruction():  Eek!");
+	}
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstruction
+	(GrammarParser::PseudoInstructionContext *ctx)
+{
+	ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpGrpCpy())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpCpyi())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpCpya())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpBra())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpJmp())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpCall())
+	else
+	{
+		err(ctx, "visitPseudoInstruction():  Eek!");
 	}
 	return nullptr;
 }
@@ -447,8 +439,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
 		err(ctx, "visitInstrOpGrp0ThreeRegs():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_0.three_regs_map.at
-		(pop_str());
+	const auto opcode = __encoding_stuff.iog0_three_regs_map
+		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
@@ -467,8 +459,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
 		err(ctx, "visitInstrOpGrp0TwoRegs():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_0.two_regs_map.at
-		(pop_str());
+	const auto opcode = __encoding_stuff.iog0_two_regs_map
+		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
@@ -495,8 +487,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
 		err(ctx, "visitInstrOpGrp1TwoRegsOneImm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_1
-		.two_regs_one_imm_map.at(pop_str());
+	const auto opcode = __encoding_stuff.iog1_two_regs_one_imm_map
+		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
@@ -517,8 +509,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneSimm
 		err(ctx, "visitInstrOpGrp1TwoRegsOneSimm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_1
-		.two_regs_one_simm_map.at(pop_str());
+	const auto opcode = __encoding_stuff.iog1_two_regs_one_simm_map
+		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
@@ -539,8 +531,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOnePcOneSimm
 		err(ctx, "visitInstrOpGrp1OneRegOnePcOneSimm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_1
-		.one_reg_one_pc_one_simm_map.at(pop_str());
+	const auto opcode = __encoding_stuff.iog1_one_reg_one_pc_one_simm_map
+		.at(pop_str());
 
 	//auto&& reg_encodings = get_reg_encodings(ctx);
 
@@ -565,8 +557,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOneImm
 		err(ctx, "visitInstrOpGrp1OneRegOneImm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_1
-		.one_reg_one_imm_map.at(pop_str());
+	const auto opcode = __encoding_stuff.iog1_one_reg_one_imm_map
+		.at(pop_str());
 
 	//auto&& reg_encodings = get_reg_encodings(ctx);
 
@@ -593,7 +585,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1Branch
 		err(ctx, "visitInstrOpGrp1Branch():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_1.branch_map
+	const auto opcode = __encoding_stuff.iog1_branch_map
 		.at(pop_str());
 
 	//auto&& reg_encodings = get_reg_encodings(ctx);
@@ -606,8 +598,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1Branch
 	//encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
 	//	immediate);
 	encode_instr_opcode_group_1(get_one_reg_encoding
-		(ctx->TokReg()->toString()), 0x0, opcode,
-		immediate);
+		(ctx->TokReg()->toString()), 0x0, opcode, immediate);
 
 	return nullptr;
 }
@@ -623,7 +614,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp2
 		err(ctx, "visitInstrOpGrp2():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_2.all_names_map
+	const auto opcode = __encoding_stuff.iog2_two_regs_map
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
@@ -649,13 +640,176 @@ antlrcpp::Any Assembler::visitInstrOpGrp3
 		err(ctx, "visitInstrOpGrp3():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.instr_op_grp_3.all_names_map
+	const auto opcode = __encoding_stuff.iog3_two_regs_ldst_map
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
 	encode_instr_opcode_group_3(reg_encodings.at(0), reg_encodings.at(1),
 		0x0, opcode);
+
+	return nullptr;
+}
+
+
+// pseudoInstruction:
+antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
+	(GrammarParser::PseudoInstrOpGrpCpyContext *ctx)
+{
+	auto&& reg_encodings = get_reg_encodings(ctx);
+
+	// cpy rA, rB
+	// Encoded as "add rA, rB, r0"
+	if (!ctx->TokPcReg())
+	{
+		const auto opcode = __encoding_stuff.iog0_three_regs_map
+			.at(cstm_strdup("add"));
+
+		encode_instr_opcode_group_0(reg_encodings.at(0),
+			reg_encodings.at(1), 0x0, opcode);
+	}
+	// cpy rA, pc
+	// Encoded as "addsi rA, pc, 0"
+	else if (ctx->TokPcReg())
+	{
+		const auto opcode = __encoding_stuff
+			.iog1_one_reg_one_pc_one_simm_map.at(cstm_strdup("addsi"));
+
+		encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
+			0x0000);
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpGrpCpy():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpCpyi
+	(GrammarParser::PseudoInstrOpCpyiContext *ctx)
+{
+	// cpyi rA, imm16
+	// Encoded as "addi rA, r0, imm16"
+	if (ctx->TokPseudoInstrNameCpyi())
+	{
+		const auto opcode = __encoding_stuff
+			.iog1_two_regs_one_imm_map.at(cstm_strdup("addi"));
+
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		const auto immediate = pop_num();
+
+		encode_instr_opcode_group_1(get_one_reg_encoding
+			(ctx->TokReg()->toString()), 0x0, opcode, immediate);
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpCpyi():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpCpya
+	(GrammarParser::PseudoInstrOpCpyaContext *ctx)
+{
+	// cpya rA, imm32
+	// Copy absolute (32-bit immediate)
+	// Encoded as 
+	// "
+	// addi rA, r0, (imm32 & 0xffff)
+	// cpyhi rA, (imm32 >> 16)
+	// "
+	if (ctx->TokPseudoInstrNameCpya())
+	{
+		const auto first_opcode = __encoding_stuff
+			.iog1_two_regs_one_imm_map.at(cstm_strdup("addi"));
+		const auto second_opcode = __encoding_stuff
+			.iog1_one_reg_one_imm_map.at(cstm_strdup("cpyhi"));
+
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		const auto immediate = pop_num();
+
+		const auto reg_a_index = get_one_reg_encoding(ctx->TokReg()
+			->toString());
+
+		// addi rA, r0, (imm32 & 0xffff)
+		encode_instr_opcode_group_1(reg_a_index, 0x0, first_opcode,
+			immediate);
+
+		// cpyhi rA, (imm32 >> 16)
+		encode_instr_opcode_group_1(reg_a_index, 0x0, second_opcode,
+			(immediate >> 16));
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpCpya():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpBra
+	(GrammarParser::PseudoInstrOpBraContext *ctx)
+{
+	// bra imm16
+	// Unconditional relative branch
+	// Encoded as "beq r0, simm16"
+	if (ctx->TokPseudoInstrNameBra())
+	{
+		const auto opcode = __encoding_stuff.iog1_branch_map
+			.at(cstm_strdup("beq"));
+
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+
+		// This may need to be adjusted
+		const auto immediate = pop_num() - __pc.curr - sizeof(s32);
+
+		encode_instr_opcode_group_1(0x0, 0x0, opcode, immediate);
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpBra():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpJmp
+	(GrammarParser::PseudoInstrOpJmpContext *ctx)
+{
+	// jmp rB
+	// Unconditional jump to address in register
+	// Encoded as "jeq r0, rB"
+	if (ctx->TokPseudoInstrNameJmp())
+	{
+		const auto opcode = __encoding_stuff.iog2_two_regs_map
+			.at(cstm_strdup("jeq"));
+
+		encode_instr_opcode_group_2(0x0, 
+			get_one_reg_encoding(ctx->TokReg()->toString()), 0x0, opcode);
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpJmp():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpCall
+	(GrammarParser::PseudoInstrOpCallContext *ctx)
+{
+	// call rB
+	// Unconditional call to address in register
+	// Encoded as "calleq r0, rB"
+	if (ctx->TokPseudoInstrNameCall())
+	{
+		const auto opcode = __encoding_stuff.iog2_two_regs_map
+			.at(cstm_strdup("calleq"));
+
+		encode_instr_opcode_group_2(0x0, 
+			get_one_reg_encoding(ctx->TokReg()->toString()), 0x0, opcode);
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpCall():  Eek!");
+	}
 
 	return nullptr;
 }
@@ -1035,6 +1189,7 @@ antlrcpp::Any Assembler::visitIdentName
 {
 	ANY_PUSH_TOK_IF(ctx->TokIdent())
 	else ANY_ACCEPT_IF_BASIC(ctx->instrName())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrName())
 	else ANY_PUSH_TOK_IF(ctx->TokReg())
 	else ANY_PUSH_TOK_IF(ctx->TokPcReg())
 	else
@@ -1097,6 +1252,22 @@ antlrcpp::Any Assembler::visitInstrName
 	else
 	{
 		err(ctx, "visitInstrName():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrName
+	(GrammarParser::PseudoInstrNameContext *ctx)
+{
+	ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpy())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpyi())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpya())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameBra())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameJmp())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCall())
+	else
+	{
+		err(ctx, "visitPseudoInstrName():  Eek!");
 	}
 
 	return nullptr;

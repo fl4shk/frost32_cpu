@@ -30,7 +30,7 @@ define(`NEWLINE',`<br>')dnl
 	MDCODE(r8), MDCODE(r9), MDCODE(r10), MDCODE(r11),
 	MDCODE(r12), MDCODE(lr), MDCODE(fp), MDCODE(sp)
 * Special Purpose Registers (32-bit)
-	* CODE(pc)
+	* MDCODE(pc)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0000)
 	* Encoding:  MDCODE(0000 aaaa bbbb cccc  0000 0000 0000 oooo)
@@ -127,19 +127,43 @@ NEWLINE()NEWLINE()
 		* MDCODE(c):  rC
 		* MDCODE(o):  opcode
 	* Instructions:
-		* BOLD(ldr) rA, rB
+		* BOLD(ldr) rA, [rB]
 			* OPCODE(0b0000)
-		* BOLD(ldh) rA, rB
+		* BOLD(ldh) rA, [rB]
 			* OPCODE(0b0001)
-		* BOLD(ldsh) rA, rB
+		* BOLD(ldsh) rA, [rB]
 			* OPCODE(0b0010)
-		* BOLD(ldb) rA, rB
+		* BOLD(ldb) rA, [rB]
 			* OPCODE(0b0011)
-		* BOLD(ldsb) rA, rB
+		* BOLD(ldsb) rA, [rB]
 			* OPCODE(0b0100)
-		* BOLD(str) rA, rB
+		* BOLD(str) rA, [rB]
 			* OPCODE(0b0101)
-		* BOLD(sth) rA, rB
+		* BOLD(sth) rA, [rB]
 			* OPCODE(0b0110)
-		* BOLD(stb) rA, rB
+		* BOLD(stb) rA, [rB]
 			* OPCODE(0b0111)
+NEWLINE()NEWLINE()
+* Pseudo Instructions:
+	* BOLD(cpy) rA, rB
+		* Encoded as CODE(`add rA, rB, r0')
+	* BOLD(cpy) rA, pc
+		* Encoded as CODE(`addsi rA, pc, 0')
+	* BOLD(cpyi) rA, imm16
+		* Encoded as CODE(`addi rA, r0, imm16')
+	* BOLD(cpya) rA, imm32
+		* Copy absolute (32-bit immediate)
+		* Encoded as 
+			NEWLINE()
+			CODE(`addi rA, r0, (imm32 & 0xffff)')
+			NEWLINE()
+			CODE(`cpyhi rA, (imm32 >> 16)')
+	* BOLD(bra) simm16
+		* Unconditional relative branch
+		* Encoded as CODE(`beq r0, simm16')
+	* BOLD(jmp) rB
+		* Unconditional jump to address in register
+		* Encoded as CODE(`jeq r0, rB')
+	* BOLD(call) rB
+		* Unconditional call to address in register
+		* Encoded as CODE(`calleq r0, rB')

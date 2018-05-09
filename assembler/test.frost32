@@ -8,13 +8,20 @@ data_1:
 
 .org 0x9000
 main:
-{
-	//addi r1, r0, 9
-	//cpyhi r1, 8
-	addi r1, r0, (infin & 0xffff)
-	cpyhi r1, (infin >> 16)
+	cpya r1, data_0
 
 infin:
-	beq r0, infin
-	{
-}
+	cpya r1, data_1
+	bra infin
+
+;.org 0x9000
+;main:
+;{
+;	;addi r1, r0, 9
+;	;cpyhi r1, 8
+;	addi r1, r0, (infin & 0xffff)
+;	cpyhi r1, (infin >> 16)
+;
+;infin:
+;	; bra r0, infin
+;}

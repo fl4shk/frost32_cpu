@@ -52,28 +52,21 @@ private:		// variables
 
 	struct
 	{
-		std::map<std::string*, u16> reg_names_map;
-		struct
-		{
-			std::map<std::string*, u16> three_regs_map;
-			std::map<std::string*, u16> two_regs_map;
-		} instr_op_grp_0;
-		struct
-		{
-			std::map<std::string*, u16> two_regs_one_imm_map;
-			std::map<std::string*, u16> two_regs_one_simm_map;
-			std::map<std::string*, u16> one_reg_one_pc_one_simm_map;
-			std::map<std::string*, u16> one_reg_one_imm_map;
-			std::map<std::string*, u16> branch_map;
-		} instr_op_grp_1;
-		struct
-		{
-			std::map<std::string*, u16> all_names_map;
-		} instr_op_grp_2;
-		struct
-		{
-			std::map<std::string*, u16> all_names_map;
-		} instr_op_grp_3;
+		typedef std::map<std::string*, u16> MapType;
+		MapType reg_names_map;
+
+
+		MapType iog0_three_regs_map;
+		MapType iog0_two_regs_map;
+
+		MapType iog1_two_regs_one_imm_map;
+		MapType iog1_two_regs_one_simm_map;
+		MapType iog1_one_reg_one_pc_one_simm_map;
+		MapType iog1_one_reg_one_imm_map;
+		MapType iog1_branch_map;
+
+		MapType iog2_two_regs_map;
+		MapType iog3_two_regs_ldst_map;
 
 	} __encoding_stuff;
 
@@ -204,6 +197,8 @@ private:		// visitor functions
 		(GrammarParser::LabelContext *ctx);
 	antlrcpp::Any visitInstruction
 		(GrammarParser::InstructionContext *ctx);
+	antlrcpp::Any visitPseudoInstruction
+		(GrammarParser::PseudoInstructionContext *ctx);
 	antlrcpp::Any visitDirective
 		(GrammarParser::DirectiveContext *ctx);
 
@@ -226,6 +221,21 @@ private:		// visitor functions
 		(GrammarParser::InstrOpGrp2Context *ctx);
 	antlrcpp::Any visitInstrOpGrp3
 		(GrammarParser::InstrOpGrp3Context *ctx);
+
+	// pseudoInstruction:
+	antlrcpp::Any visitPseudoInstrOpGrpCpy
+		(GrammarParser::PseudoInstrOpGrpCpyContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpCpyi
+		(GrammarParser::PseudoInstrOpCpyiContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpCpya
+		(GrammarParser::PseudoInstrOpCpyaContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpBra
+		(GrammarParser::PseudoInstrOpBraContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpJmp
+		(GrammarParser::PseudoInstrOpJmpContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpCall
+		(GrammarParser::PseudoInstrOpCallContext *ctx);
+
 
 	// directive:
 	antlrcpp::Any visitDotOrgDirective
@@ -270,6 +280,8 @@ private:		// visitor functions
 		(GrammarParser::IdentNameContext *ctx);
 	antlrcpp::Any visitInstrName
 		(GrammarParser::InstrNameContext *ctx);
+	antlrcpp::Any visitPseudoInstrName
+		(GrammarParser::PseudoInstrNameContext *ctx);
 	antlrcpp::Any visitNumExpr
 		(GrammarParser::NumExprContext *ctx);
 	antlrcpp::Any visitCurrPc

@@ -20,7 +20,7 @@
 	``r8``, ``r9``, ``r10``, ``r11``,
 	``r12``, ``lr``, ``fp``, ``sp``
 * Special Purpose Registers (32-bit)
-	* <code>pc</code>
+	* ``pc``
 <br><br>
 * Opcode Group:  0b0000
 	* Encoding:  ``0000 aaaa bbbb cccc  0000 0000 0000 oooo``
@@ -117,19 +117,43 @@
 		* ``c``:  rC
 		* ``o``:  opcode
 	* Instructions:
-		* <b>ldr</b> rA, rB
+		* <b>ldr</b> rA, [rB]
 			* Opcode:  0b0000
-		* <b>ldh</b> rA, rB
+		* <b>ldh</b> rA, [rB]
 			* Opcode:  0b0001
-		* <b>ldsh</b> rA, rB
+		* <b>ldsh</b> rA, [rB]
 			* Opcode:  0b0010
-		* <b>ldb</b> rA, rB
+		* <b>ldb</b> rA, [rB]
 			* Opcode:  0b0011
-		* <b>ldsb</b> rA, rB
+		* <b>ldsb</b> rA, [rB]
 			* Opcode:  0b0100
-		* <b>str</b> rA, rB
+		* <b>str</b> rA, [rB]
 			* Opcode:  0b0101
-		* <b>sth</b> rA, rB
+		* <b>sth</b> rA, [rB]
 			* Opcode:  0b0110
-		* <b>stb</b> rA, rB
+		* <b>stb</b> rA, [rB]
 			* Opcode:  0b0111
+<br><br>
+* Pseudo Instructions:
+	* <b>cpy</b> rA, rB
+		* Encoded as <code>add rA, rB, r0</code>
+	* <b>cpy</b> rA, pc
+		* Encoded as <code>addsi rA, pc, 0</code>
+	* <b>cpyi</b> rA, imm16
+		* Encoded as <code>addi rA, r0, imm16</code>
+	* <b>cpya</b> rA, imm32
+		* Copy absolute (32-bit immediate)
+		* Encoded as 
+			<br>
+			<code>addi rA, r0, (imm32 & 0xffff)</code>
+			<br>
+			<code>cpyhi rA, (imm32 >> 16)</code>
+	* <b>bra</b> simm16
+		* Unconditional relative branch
+		* Encoded as <code>beq r0, simm16</code>
+	* <b>jmp</b> rB
+		* Unconditional jump to address in register
+		* Encoded as <code>jeq r0, rB</code>
+	* <b>call</b> rB
+		* Unconditional call to address in register
+		* Encoded as <code>calleq r0, rB</code>

@@ -9,6 +9,7 @@ line:
 	scopedLines
 	| label TokNewline
 	| instruction TokNewline
+	| pseudoInstruction TokNewline
 	| directive TokNewline
 	| TokNewline // Allow blank lines and lines with only a comment
 	;
@@ -92,9 +93,42 @@ instrOpGrp3:
 	| TokInstrNameLdh | TokInstrNameLdsh
 	| TokInstrNameLdb | TokInstrNameLdsb
 	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
-	TokReg TokComma TokReg
+	TokReg TokComma TokLBracket TokReg TokRBracket
 	;
 
+pseudoInstruction:
+	pseudoInstrOpGrpCpy
+	| pseudoInstrOpCpyi
+	| pseudoInstrOpCpya
+	| pseudoInstrOpBra
+	| pseudoInstrOpJmp
+	| pseudoInstrOpCall
+	;
+
+pseudoInstrOpGrpCpy:
+	TokPseudoInstrNameCpy
+	TokReg TokComma (TokReg | TokPcReg)
+	;
+pseudoInstrOpCpyi:
+	TokPseudoInstrNameCpyi
+	TokReg TokComma expr
+	;
+pseudoInstrOpCpya:
+	TokPseudoInstrNameCpya
+	TokReg TokComma expr
+	;
+pseudoInstrOpBra:
+	TokPseudoInstrNameBra
+	expr
+	;
+pseudoInstrOpJmp:
+	TokPseudoInstrNameJmp
+	TokReg
+	;
+pseudoInstrOpCall:
+	TokPseudoInstrNameCall
+	TokReg
+	;
 
 directive:
 	dotOrgDirective
@@ -169,7 +203,7 @@ exprBitInvert: TokBitInvert expr ;
 exprNegate: TokMinus expr ;
 exprLogNot: TokExclamPoint expr ;
 
-identName: TokIdent | instrName | TokReg | TokPcReg ;
+identName: TokIdent | instrName | pseudoInstrName | TokReg | TokPcReg ;
 
 instrName:
 	(TokInstrNameAdd | TokInstrNameSub
@@ -201,13 +235,20 @@ instrName:
 	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
 	;
 
+pseudoInstrName:
+	(TokPseudoInstrNameCpy 
+	| TokPseudoInstrNameCpyi | TokPseudoInstrNameCpya
+	| TokPseudoInstrNameBra | TokPseudoInstrNameJmp
+	| TokPseudoInstrNameCall)
+	;
+
 numExpr: TokDecNum | TokHexNum | TokBinNum;
 
 currPc: TokPeriod ;
 
 // Lexer rules
 LexWhitespace: (' ' | '\t') -> skip ;
-LexLineComment: '//' (~ '\n')* -> skip ;
+LexLineComment: ('//' | ';') (~ '\n')* -> skip ;
 
 TokOpLogical: ('&&' | '||') ;
 TokOpCompare: ('==' | '!=' | '<' | '>' | '<=' | '>=') ;
@@ -268,6 +309,13 @@ TokInstrNameLdsb: 'ldsb' ;
 TokInstrNameStr: 'str' ;
 TokInstrNameSth: 'sth' ;
 TokInstrNameStb: 'stb' ;
+
+TokPseudoInstrNameCpy: 'cpy' ;
+TokPseudoInstrNameCpyi: 'cpyi' ;
+TokPseudoInstrNameCpya: 'cpya' ;
+TokPseudoInstrNameBra: 'bra' ;
+TokPseudoInstrNameJmp: 'jmp' ;
+TokPseudoInstrNameCall: 'call' ;
 
 // Directives
 TokDotOrg: '.org' ;
