@@ -32,8 +32,8 @@ antlrcpp::Any Disassembler::visitLine
 		const u32 addr = convert_hex_string(ctx, ctx->TokOrg()->toString(),
 			num_good_chars);
 
-		// This isn't perfect, as it does plain ".org" instead of ".space"
-		// when it can.
+		// This isn't perfect, as it does plain ".org" always, but never
+		// ".space"
 		// 
 		// It should still work, though
 		printout(".org ", std::hex, "0x", addr, std::dec, "\n");

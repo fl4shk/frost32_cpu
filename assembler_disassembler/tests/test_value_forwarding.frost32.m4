@@ -15,7 +15,6 @@ dnl
 .org 0x0000
 main:
 {
-	.db8 3
 	; Set stack pointer to (assumed) top of RAM
 	; (assume actual memory size is 0x10000 bytes)
 	cpyi sp, 0xffff
@@ -26,6 +25,9 @@ main:
 	cpyi r5, 0
 	cpyi r6, 0
 	cpyi r7, 0
+
+	cpyi r8, good - .
+
 
 	; r4 should have 4 in it if we're good
 	cpyi r8, 4
