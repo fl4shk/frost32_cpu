@@ -1,42 +1,22 @@
-#ifndef assembler_class_hpp
-#define assembler_class_hpp
+#ifndef src__slash__assembler_class_hpp
+#define src__slash__assembler_class_hpp
+
+// src/assembler_class.hpp
 
 #include "misc_includes.hpp"
 #include "ANTLRErrorListener.h"
-#include "gen_src/GrammarLexer.h"
-#include "gen_src/GrammarParser.h"
-#include "gen_src/GrammarVisitor.h"
+#include "gen_src/AssemblerGrammarLexer.h"
+#include "gen_src/AssemblerGrammarParser.h"
+#include "gen_src/AssemblerGrammarVisitor.h"
 
 #include "symbol_table_classes.hpp"
 
+#include "encoding_stuff_class.hpp"
 
 
 
-class AsmErrorListener : public antlr4::ANTLRErrorListener
-{
-public:		// functions
-	virtual ~AsmErrorListener();
 
-	void syntaxError(antlr4::Recognizer *recognizer, 
-		antlr4::Token *offendingSymbol, size_t line, 
-		size_t charPositionInLine, const std::string &msg, 
-		std::exception_ptr e);
-	void reportAmbiguity(antlr4::Parser *recognizer, 
-		const antlr4::dfa::DFA &dfa, size_t startIndex, size_t stopIndex, 
-		bool exact, const antlrcpp::BitSet &ambigAlts, 
-		antlr4::atn::ATNConfigSet *configs);
-	
-	void reportAttemptingFullContext(antlr4::Parser *recognizer, 
-		const antlr4::dfa::DFA &dfa, size_t startIndex, size_t stopIndex,
-		const antlrcpp::BitSet &conflictingAlts, 
-		antlr4::atn::ATNConfigSet *configs);
-
-	void reportContextSensitivity(antlr4::Parser *recognizer, 
-		const antlr4::dfa::DFA &dfa, size_t startIndex, size_t stopIndex,
-		size_t prediction, antlr4::atn::ATNConfigSet *configs);
-};
-
-class Assembler : public GrammarVisitor
+class Assembler : public AssemblerGrammarVisitor
 {
 private:		// variables
 	SymbolTable __sym_tbl;
@@ -50,27 +30,9 @@ private:		// variables
 	std::stack<s64> __scope_child_num_stack;
 	std::stack<std::string*> __str_stack;
 
-	struct
-	{
-		typedef std::map<std::string*, u16> MapType;
-		MapType reg_names_map;
+	EncodingStuff __encoding_stuff;
 
-
-		MapType iog0_three_regs_map;
-		MapType iog0_two_regs_map;
-
-		MapType iog1_two_regs_one_imm_map;
-		MapType iog1_two_regs_one_simm_map;
-		MapType iog1_one_reg_one_pc_one_simm_map;
-		MapType iog1_one_reg_one_imm_map;
-		MapType iog1_branch_map;
-
-		MapType iog2_two_regs_map;
-		MapType iog3_two_regs_ldst_map;
-
-	} __encoding_stuff;
-
-	GrammarParser::ProgramContext* __program_ctx;
+	AssemblerGrammarParser::ProgramContext* __program_ctx;
 	int __pass;
 
 	bool __show_ws;
@@ -78,7 +40,7 @@ private:		// variables
 	ScopedTableNode<Symbol>* __curr_scope_node = nullptr;
 
 public:		// functions
-	Assembler(GrammarParser& parser, bool s_show_ws=false);
+	Assembler(AssemblerGrammarParser& parser, bool s_show_ws=false);
 
 	int run();
 
@@ -183,109 +145,110 @@ private:		// functions
 	void gen_16(u16 data);
 	void gen_32(u32 data);
 
-	antlrcpp::Any visitProgram(GrammarParser::ProgramContext *ctx);
 
 private:		// visitor functions
+	antlrcpp::Any visitProgram
+		(AssemblerGrammarParser::ProgramContext *ctx);
 	// program:
 	antlrcpp::Any visitLine
-		(GrammarParser::LineContext *ctx);
+		(AssemblerGrammarParser::LineContext *ctx);
 
 	// line:
 	antlrcpp::Any visitScopedLines
-		(GrammarParser::ScopedLinesContext *ctx);
+		(AssemblerGrammarParser::ScopedLinesContext *ctx);
 	antlrcpp::Any visitLabel
-		(GrammarParser::LabelContext *ctx);
+		(AssemblerGrammarParser::LabelContext *ctx);
 	antlrcpp::Any visitInstruction
-		(GrammarParser::InstructionContext *ctx);
+		(AssemblerGrammarParser::InstructionContext *ctx);
 	antlrcpp::Any visitPseudoInstruction
-		(GrammarParser::PseudoInstructionContext *ctx);
+		(AssemblerGrammarParser::PseudoInstructionContext *ctx);
 	antlrcpp::Any visitDirective
-		(GrammarParser::DirectiveContext *ctx);
+		(AssemblerGrammarParser::DirectiveContext *ctx);
 
 	// instruction:
 	antlrcpp::Any visitInstrOpGrp0ThreeRegs
-		(GrammarParser::InstrOpGrp0ThreeRegsContext *ctx);
+		(AssemblerGrammarParser::InstrOpGrp0ThreeRegsContext *ctx);
 	antlrcpp::Any visitInstrOpGrp0TwoRegs
-		(GrammarParser::InstrOpGrp0TwoRegsContext *ctx);
+		(AssemblerGrammarParser::InstrOpGrp0TwoRegsContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1TwoRegsOneImm
-		(GrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx);
+		(AssemblerGrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1TwoRegsOneSimm
-		(GrammarParser::InstrOpGrp1TwoRegsOneSimmContext *ctx);
+		(AssemblerGrammarParser::InstrOpGrp1TwoRegsOneSimmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1OneRegOnePcOneSimm
-		(GrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx);
+		(AssemblerGrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1OneRegOneImm
-		(GrammarParser::InstrOpGrp1OneRegOneImmContext *ctx);
+		(AssemblerGrammarParser::InstrOpGrp1OneRegOneImmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1Branch
-		(GrammarParser::InstrOpGrp1BranchContext *ctx);
+		(AssemblerGrammarParser::InstrOpGrp1BranchContext *ctx);
 	antlrcpp::Any visitInstrOpGrp2
-		(GrammarParser::InstrOpGrp2Context *ctx);
+		(AssemblerGrammarParser::InstrOpGrp2Context *ctx);
 	antlrcpp::Any visitInstrOpGrp3
-		(GrammarParser::InstrOpGrp3Context *ctx);
+		(AssemblerGrammarParser::InstrOpGrp3Context *ctx);
 
 	// pseudoInstruction:
 	antlrcpp::Any visitPseudoInstrOpGrpCpy
-		(GrammarParser::PseudoInstrOpGrpCpyContext *ctx);
+		(AssemblerGrammarParser::PseudoInstrOpGrpCpyContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpCpyi
-		(GrammarParser::PseudoInstrOpCpyiContext *ctx);
+		(AssemblerGrammarParser::PseudoInstrOpCpyiContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpCpya
-		(GrammarParser::PseudoInstrOpCpyaContext *ctx);
+		(AssemblerGrammarParser::PseudoInstrOpCpyaContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpBra
-		(GrammarParser::PseudoInstrOpBraContext *ctx);
+		(AssemblerGrammarParser::PseudoInstrOpBraContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpJmp
-		(GrammarParser::PseudoInstrOpJmpContext *ctx);
+		(AssemblerGrammarParser::PseudoInstrOpJmpContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpCall
-		(GrammarParser::PseudoInstrOpCallContext *ctx);
+		(AssemblerGrammarParser::PseudoInstrOpCallContext *ctx);
 
 
 	// directive:
 	antlrcpp::Any visitDotOrgDirective
-		(GrammarParser::DotOrgDirectiveContext *ctx);
+		(AssemblerGrammarParser::DotOrgDirectiveContext *ctx);
 	antlrcpp::Any visitDotSpaceDirective
-		(GrammarParser::DotSpaceDirectiveContext *ctx);
+		(AssemblerGrammarParser::DotSpaceDirectiveContext *ctx);
 	antlrcpp::Any visitDotDbDirective
-		(GrammarParser::DotDbDirectiveContext *ctx);
+		(AssemblerGrammarParser::DotDbDirectiveContext *ctx);
 	antlrcpp::Any visitDotDb16Directive
-		(GrammarParser::DotDb16DirectiveContext *ctx);
+		(AssemblerGrammarParser::DotDb16DirectiveContext *ctx);
 	antlrcpp::Any visitDotDb8Directive
-		(GrammarParser::DotDb8DirectiveContext *ctx);
+		(AssemblerGrammarParser::DotDb8DirectiveContext *ctx);
 
 	// Expression parsing
 	antlrcpp::Any visitExpr
-		(GrammarParser::ExprContext *ctx);
+		(AssemblerGrammarParser::ExprContext *ctx);
 
 	antlrcpp::Any visitExprLogical
-		(GrammarParser::ExprLogicalContext *ctx);
+		(AssemblerGrammarParser::ExprLogicalContext *ctx);
 	antlrcpp::Any visitExprCompare
-		(GrammarParser::ExprCompareContext *ctx);
+		(AssemblerGrammarParser::ExprCompareContext *ctx);
 	antlrcpp::Any visitExprAddSub
-		(GrammarParser::ExprAddSubContext *ctx);
+		(AssemblerGrammarParser::ExprAddSubContext *ctx);
 	antlrcpp::Any visitExprJustAdd
-		(GrammarParser::ExprJustAddContext *ctx);
+		(AssemblerGrammarParser::ExprJustAddContext *ctx);
 	antlrcpp::Any visitExprJustSub
-		(GrammarParser::ExprJustSubContext *ctx);
+		(AssemblerGrammarParser::ExprJustSubContext *ctx);
 	antlrcpp::Any visitExprMulDivModEtc
-		(GrammarParser::ExprMulDivModEtcContext *ctx);
+		(AssemblerGrammarParser::ExprMulDivModEtcContext *ctx);
 
 	antlrcpp::Any visitExprUnary
-		(GrammarParser::ExprUnaryContext *ctx);
+		(AssemblerGrammarParser::ExprUnaryContext *ctx);
 	antlrcpp::Any visitExprBitInvert
-		(GrammarParser::ExprBitInvertContext *ctx);
+		(AssemblerGrammarParser::ExprBitInvertContext *ctx);
 	antlrcpp::Any visitExprNegate
-		(GrammarParser::ExprNegateContext *ctx);
+		(AssemblerGrammarParser::ExprNegateContext *ctx);
 	antlrcpp::Any visitExprLogNot
-		(GrammarParser::ExprLogNotContext *ctx);
+		(AssemblerGrammarParser::ExprLogNotContext *ctx);
 
 	// Last set of token stuff
 	antlrcpp::Any visitIdentName
-		(GrammarParser::IdentNameContext *ctx);
+		(AssemblerGrammarParser::IdentNameContext *ctx);
 	antlrcpp::Any visitInstrName
-		(GrammarParser::InstrNameContext *ctx);
+		(AssemblerGrammarParser::InstrNameContext *ctx);
 	antlrcpp::Any visitPseudoInstrName
-		(GrammarParser::PseudoInstrNameContext *ctx);
+		(AssemblerGrammarParser::PseudoInstrNameContext *ctx);
 	antlrcpp::Any visitNumExpr
-		(GrammarParser::NumExprContext *ctx);
+		(AssemblerGrammarParser::NumExprContext *ctx);
 	antlrcpp::Any visitCurrPc
-		(GrammarParser::CurrPcContext *ctx);
+		(AssemblerGrammarParser::CurrPcContext *ctx);
 
 private:		// functions
 	inline void push_num(s64 to_push)
@@ -339,4 +302,4 @@ private:		// functions
 
 
 
-#endif		// assembler_class_hpp
+#endif		// src__slash__assembler_class_hpp

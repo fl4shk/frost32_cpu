@@ -3,41 +3,6 @@
 
 #include <sstream>
 
-AsmErrorListener::~AsmErrorListener()
-{
-}
-
-void AsmErrorListener::syntaxError(antlr4::Recognizer *recognizer, 
-	antlr4::Token *offendingSymbol, size_t line, 
-	size_t charPositionInLine, const std::string &msg, 
-	std::exception_ptr e)
-{
-	printerr("Syntax error on line ", line, 
-		", position ", charPositionInLine, 
-		":  ", msg, "\n");
-	exit(1);
-}
-void AsmErrorListener::reportAmbiguity(antlr4::Parser *recognizer, 
-	const antlr4::dfa::DFA &dfa, size_t startIndex, size_t stopIndex, 
-	bool exact, const antlrcpp::BitSet &ambigAlts, 
-	antlr4::atn::ATNConfigSet *configs)
-{
-}
-
-void AsmErrorListener::reportAttemptingFullContext
-	(antlr4::Parser *recognizer, const antlr4::dfa::DFA &dfa, 
-	size_t startIndex, size_t stopIndex,
-	const antlrcpp::BitSet &conflictingAlts, 
-	antlr4::atn::ATNConfigSet *configs)
-{
-}
-
-void AsmErrorListener::reportContextSensitivity
-	(antlr4::Parser *recognizer, const antlr4::dfa::DFA &dfa, 
-	size_t startIndex, size_t stopIndex, size_t prediction, 
-	antlr4::atn::ATNConfigSet *configs)
-{
-}
 
 
 #define ANY_JUST_ACCEPT_BASIC(arg) \
@@ -55,100 +20,12 @@ void AsmErrorListener::reportContextSensitivity
 		push_str(cstm_strdup(arg->toString())); \
 	}
 
-Assembler::Assembler(GrammarParser& parser, bool s_show_ws)
+Assembler::Assembler(AssemblerGrammarParser& parser, bool s_show_ws)
 	: __show_ws(s_show_ws)
 {
 	__program_ctx = parser.program();
 
 
-	// Encoding stuff (opcode field, register fields)
-
-	// Registers
-	u16 temp = 0;
-	__encoding_stuff.reg_names_map[cstm_strdup("r0")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r1")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r2")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r3")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r4")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r5")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r6")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r7")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r8")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r9")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r10")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r11")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("r12")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("lr")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("fp")] = temp++;
-	__encoding_stuff.reg_names_map[cstm_strdup("sp")] = temp++;
-
-	// Instruction Opcode Group 0
-	temp = 0;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("add")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("sub")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("sltu")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("slts")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("mul")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("and")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("orr")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("xor")] = temp++;
-	__encoding_stuff.iog0_two_regs_map[cstm_strdup("inv")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("lsl")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("lsr")] = temp++;
-	__encoding_stuff.iog0_three_regs_map[cstm_strdup("asr")] = temp++;
-
-	// Instruction Opcode Group 1
-	temp = 0;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("addi")] 
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("subi")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("sltui")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_simm_map[cstm_strdup("sltsi")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("muli")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("andi")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("orri")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("xori")]
-		= temp++;
-	__encoding_stuff.iog1_one_reg_one_imm_map[cstm_strdup("invi")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("lsli")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("lsri")]
-		= temp++;
-	__encoding_stuff.iog1_two_regs_one_imm_map[cstm_strdup("asri")]
-		= temp++;
-	__encoding_stuff.iog1_one_reg_one_pc_one_simm_map[cstm_strdup("addsi")]
-		= temp++;
-	__encoding_stuff.iog1_one_reg_one_imm_map[cstm_strdup("cpyhi")]
-		= temp++;
-	__encoding_stuff.iog1_branch_map[cstm_strdup("bne")]
-		= temp++;
-	__encoding_stuff.iog1_branch_map[cstm_strdup("beq")] =
-		temp++;
-
-	// Instruction Opcode Group 2
-	temp = 0;
-	__encoding_stuff.iog2_two_regs_map[cstm_strdup("jne")] = temp++;
-	__encoding_stuff.iog2_two_regs_map[cstm_strdup("jeq")] = temp++;
-	__encoding_stuff.iog2_two_regs_map[cstm_strdup("callne")] = temp++;
-	__encoding_stuff.iog2_two_regs_map[cstm_strdup("calleq")] = temp++;
-
-	// Instruction Opcode Group 3
-	temp = 0;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldr")] = temp++;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldh")] = temp++;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldsh")] = temp++;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldb")] = temp++;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("ldsb")] = temp++;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("str")] = temp++;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("sth")] = temp++;
-	__encoding_stuff.iog3_two_regs_ldst_map[cstm_strdup("stb")] = temp++;
 }
 
 int Assembler::run()
@@ -180,7 +57,7 @@ auto Assembler::get_reg_encodings(CtxType *ctx) const
 
 	for (auto reg : regs)
 	{
-		ret.push_back(__encoding_stuff.reg_names_map
+		ret.push_back(__encoding_stuff.reg_names_map()
 			.at(cstm_strdup(reg->toString())));
 	}
 
@@ -190,7 +67,7 @@ auto Assembler::get_reg_encodings(CtxType *ctx) const
 inline auto Assembler::get_one_reg_encoding(const std::string& reg_name) 
 	const
 {
-	return __encoding_stuff.reg_names_map.at(cstm_strdup(reg_name));
+	return __encoding_stuff.reg_names_map().at(cstm_strdup(reg_name));
 }
 
 void Assembler::gen_no_ws(u16 data)
@@ -271,7 +148,7 @@ void Assembler::gen_32(u32 data)
 }
 
 antlrcpp::Any Assembler::visitProgram
-	(GrammarParser::ProgramContext *ctx)
+	(AssemblerGrammarParser::ProgramContext *ctx)
 {
 	auto&& lines = ctx->line();
 
@@ -284,7 +161,7 @@ antlrcpp::Any Assembler::visitProgram
 }
 
 antlrcpp::Any Assembler::visitLine
-	(GrammarParser::LineContext *ctx)
+	(AssemblerGrammarParser::LineContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->scopedLines())
 	else ANY_ACCEPT_IF_BASIC(ctx->label())
@@ -301,7 +178,7 @@ antlrcpp::Any Assembler::visitLine
 
 // line:
 antlrcpp::Any Assembler::visitScopedLines
-	(GrammarParser::ScopedLinesContext *ctx)
+	(AssemblerGrammarParser::ScopedLinesContext *ctx)
 {
 	if (!__pass)
 	{
@@ -341,7 +218,7 @@ antlrcpp::Any Assembler::visitScopedLines
 }
 
 antlrcpp::Any Assembler::visitLabel
-	(GrammarParser::LabelContext *ctx)
+	(AssemblerGrammarParser::LabelContext *ctx)
 {
 	ANY_JUST_ACCEPT_BASIC(ctx->identName());
 
@@ -369,7 +246,7 @@ antlrcpp::Any Assembler::visitLabel
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstruction
-	(GrammarParser::InstructionContext *ctx)
+	(AssemblerGrammarParser::InstructionContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp0ThreeRegs())
 	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp0TwoRegs())
@@ -390,7 +267,7 @@ antlrcpp::Any Assembler::visitInstruction
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitPseudoInstruction
-	(GrammarParser::PseudoInstructionContext *ctx)
+	(AssemblerGrammarParser::PseudoInstructionContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpGrpCpy())
 	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpCpyi())
@@ -405,7 +282,7 @@ antlrcpp::Any Assembler::visitPseudoInstruction
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitDirective
-	(GrammarParser::DirectiveContext *ctx)
+	(AssemblerGrammarParser::DirectiveContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->dotOrgDirective())
 	else ANY_ACCEPT_IF_BASIC(ctx->dotSpaceDirective())
@@ -421,7 +298,7 @@ antlrcpp::Any Assembler::visitDirective
 
 // instruction:
 antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
-	(GrammarParser::InstrOpGrp0ThreeRegsContext *ctx)
+	(AssemblerGrammarParser::InstrOpGrp0ThreeRegsContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameAdd())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSub())
@@ -439,7 +316,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
 		err(ctx, "visitInstrOpGrp0ThreeRegs():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog0_three_regs_map
+	const auto opcode = __encoding_stuff.iog0_three_regs_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
@@ -451,7 +328,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
-	(GrammarParser::InstrOpGrp0TwoRegsContext *ctx)
+	(AssemblerGrammarParser::InstrOpGrp0TwoRegsContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameInv())
 	else
@@ -459,7 +336,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
 		err(ctx, "visitInstrOpGrp0TwoRegs():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog0_two_regs_map
+	const auto opcode = __encoding_stuff.iog0_two_regs_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
@@ -470,7 +347,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
-	(GrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx)
+	(AssemblerGrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameAddi())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSubi())
@@ -487,7 +364,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
 		err(ctx, "visitInstrOpGrp1TwoRegsOneImm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog1_two_regs_one_imm_map
+	const auto opcode = __encoding_stuff.iog1_two_regs_one_imm_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
@@ -501,7 +378,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneSimm
-	(GrammarParser::InstrOpGrp1TwoRegsOneSimmContext *ctx)
+	(AssemblerGrammarParser::InstrOpGrp1TwoRegsOneSimmContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameSltsi())
 	else
@@ -509,7 +386,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneSimm
 		err(ctx, "visitInstrOpGrp1TwoRegsOneSimm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog1_two_regs_one_simm_map
+	const auto opcode = __encoding_stuff.iog1_two_regs_one_simm_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
@@ -523,7 +400,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneSimm
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOnePcOneSimm
-	(GrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx)
+	(AssemblerGrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameAddsi())
 	else
@@ -531,7 +408,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOnePcOneSimm
 		err(ctx, "visitInstrOpGrp1OneRegOnePcOneSimm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog1_one_reg_one_pc_one_simm_map
+	const auto opcode = __encoding_stuff.iog1_one_reg_one_pc_one_simm_map()
 		.at(pop_str());
 
 	//auto&& reg_encodings = get_reg_encodings(ctx);
@@ -548,7 +425,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOnePcOneSimm
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOneImm
-	(GrammarParser::InstrOpGrp1OneRegOneImmContext *ctx)
+	(AssemblerGrammarParser::InstrOpGrp1OneRegOneImmContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameInvi())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCpyhi())
@@ -557,7 +434,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOneImm
 		err(ctx, "visitInstrOpGrp1OneRegOneImm():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog1_one_reg_one_imm_map
+	const auto opcode = __encoding_stuff.iog1_one_reg_one_imm_map()
 		.at(pop_str());
 
 	//auto&& reg_encodings = get_reg_encodings(ctx);
@@ -575,7 +452,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOneImm
 }
 // Branches must be separate because they're pc-relative
 antlrcpp::Any Assembler::visitInstrOpGrp1Branch
-	(GrammarParser::InstrOpGrp1BranchContext *ctx)
+	(AssemblerGrammarParser::InstrOpGrp1BranchContext *ctx)
 {
 	//gen_64(pop_num() - pc() - sizeof(s64));
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameBne())
@@ -585,7 +462,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1Branch
 		err(ctx, "visitInstrOpGrp1Branch():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog1_branch_map
+	const auto opcode = __encoding_stuff.iog1_branch_map()
 		.at(pop_str());
 
 	//auto&& reg_encodings = get_reg_encodings(ctx);
@@ -603,7 +480,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1Branch
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp2
-	(GrammarParser::InstrOpGrp2Context *ctx)
+	(AssemblerGrammarParser::InstrOpGrp2Context *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameJne())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameJeq())
@@ -614,7 +491,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp2
 		err(ctx, "visitInstrOpGrp2():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog2_two_regs_map
+	const auto opcode = __encoding_stuff.iog2_two_regs_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
@@ -625,7 +502,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp2
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrOpGrp3
-	(GrammarParser::InstrOpGrp3Context *ctx)
+	(AssemblerGrammarParser::InstrOpGrp3Context *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameLdr())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdh())
@@ -640,7 +517,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp3
 		err(ctx, "visitInstrOpGrp3():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog3_two_regs_ldst_map
+	const auto opcode = __encoding_stuff.iog3_two_regs_ldst_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
@@ -654,7 +531,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp3
 
 // pseudoInstruction:
 antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
-	(GrammarParser::PseudoInstrOpGrpCpyContext *ctx)
+	(AssemblerGrammarParser::PseudoInstrOpGrpCpyContext *ctx)
 {
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
@@ -662,7 +539,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
 	// Encoded as "add rA, rB, r0"
 	if (!ctx->TokPcReg())
 	{
-		const auto opcode = __encoding_stuff.iog0_three_regs_map
+		const auto opcode = __encoding_stuff.iog0_three_regs_map()
 			.at(cstm_strdup("add"));
 
 		encode_instr_opcode_group_0(reg_encodings.at(0),
@@ -673,7 +550,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
 	else if (ctx->TokPcReg())
 	{
 		const auto opcode = __encoding_stuff
-			.iog1_one_reg_one_pc_one_simm_map.at(cstm_strdup("addsi"));
+			.iog1_one_reg_one_pc_one_simm_map().at(cstm_strdup("addsi"));
 
 		encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
 			0x0000);
@@ -686,14 +563,14 @@ antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitPseudoInstrOpCpyi
-	(GrammarParser::PseudoInstrOpCpyiContext *ctx)
+	(AssemblerGrammarParser::PseudoInstrOpCpyiContext *ctx)
 {
 	// cpyi rA, imm16
 	// Encoded as "addi rA, r0, imm16"
 	if (ctx->TokPseudoInstrNameCpyi())
 	{
 		const auto opcode = __encoding_stuff
-			.iog1_two_regs_one_imm_map.at(cstm_strdup("addi"));
+			.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
 
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
@@ -709,7 +586,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCpyi
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitPseudoInstrOpCpya
-	(GrammarParser::PseudoInstrOpCpyaContext *ctx)
+	(AssemblerGrammarParser::PseudoInstrOpCpyaContext *ctx)
 {
 	// cpya rA, imm32
 	// Copy absolute (32-bit immediate)
@@ -721,9 +598,9 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCpya
 	if (ctx->TokPseudoInstrNameCpya())
 	{
 		const auto first_opcode = __encoding_stuff
-			.iog1_two_regs_one_imm_map.at(cstm_strdup("addi"));
+			.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
 		const auto second_opcode = __encoding_stuff
-			.iog1_one_reg_one_imm_map.at(cstm_strdup("cpyhi"));
+			.iog1_one_reg_one_imm_map().at(cstm_strdup("cpyhi"));
 
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
@@ -747,14 +624,14 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCpya
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitPseudoInstrOpBra
-	(GrammarParser::PseudoInstrOpBraContext *ctx)
+	(AssemblerGrammarParser::PseudoInstrOpBraContext *ctx)
 {
 	// bra imm16
 	// Unconditional relative branch
 	// Encoded as "beq r0, simm16"
 	if (ctx->TokPseudoInstrNameBra())
 	{
-		const auto opcode = __encoding_stuff.iog1_branch_map
+		const auto opcode = __encoding_stuff.iog1_branch_map()
 			.at(cstm_strdup("beq"));
 
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
@@ -772,14 +649,14 @@ antlrcpp::Any Assembler::visitPseudoInstrOpBra
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitPseudoInstrOpJmp
-	(GrammarParser::PseudoInstrOpJmpContext *ctx)
+	(AssemblerGrammarParser::PseudoInstrOpJmpContext *ctx)
 {
 	// jmp rB
 	// Unconditional jump to address in register
 	// Encoded as "jeq r0, rB"
 	if (ctx->TokPseudoInstrNameJmp())
 	{
-		const auto opcode = __encoding_stuff.iog2_two_regs_map
+		const auto opcode = __encoding_stuff.iog2_two_regs_map()
 			.at(cstm_strdup("jeq"));
 
 		encode_instr_opcode_group_2(0x0, 
@@ -793,14 +670,14 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmp
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitPseudoInstrOpCall
-	(GrammarParser::PseudoInstrOpCallContext *ctx)
+	(AssemblerGrammarParser::PseudoInstrOpCallContext *ctx)
 {
 	// call rB
 	// Unconditional call to address in register
 	// Encoded as "calleq r0, rB"
 	if (ctx->TokPseudoInstrNameCall())
 	{
-		const auto opcode = __encoding_stuff.iog2_two_regs_map
+		const auto opcode = __encoding_stuff.iog2_two_regs_map()
 			.at(cstm_strdup("calleq"));
 
 		encode_instr_opcode_group_2(0x0, 
@@ -816,7 +693,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCall
 
 // directive:
 antlrcpp::Any Assembler::visitDotOrgDirective
-	(GrammarParser::DotOrgDirectiveContext *ctx)
+	(AssemblerGrammarParser::DotOrgDirectiveContext *ctx)
 {
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
 	__pc.curr = pop_num();
@@ -824,7 +701,7 @@ antlrcpp::Any Assembler::visitDotOrgDirective
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitDotSpaceDirective
-	(GrammarParser::DotSpaceDirectiveContext *ctx)
+	(AssemblerGrammarParser::DotSpaceDirectiveContext *ctx)
 {
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
 	__pc.curr += pop_num();
@@ -832,7 +709,7 @@ antlrcpp::Any Assembler::visitDotSpaceDirective
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitDotDbDirective
-	(GrammarParser::DotDbDirectiveContext *ctx)
+	(AssemblerGrammarParser::DotDbDirectiveContext *ctx)
 {
 	auto&& expressions = ctx->expr();
 
@@ -845,7 +722,7 @@ antlrcpp::Any Assembler::visitDotDbDirective
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitDotDb16Directive
-	(GrammarParser::DotDb16DirectiveContext *ctx)
+	(AssemblerGrammarParser::DotDb16DirectiveContext *ctx)
 {
 	auto&& expressions = ctx->expr();
 
@@ -858,7 +735,7 @@ antlrcpp::Any Assembler::visitDotDb16Directive
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitDotDb8Directive
-	(GrammarParser::DotDb8DirectiveContext *ctx)
+	(AssemblerGrammarParser::DotDb8DirectiveContext *ctx)
 {
 	auto&& expressions = ctx->expr();
 
@@ -873,7 +750,7 @@ antlrcpp::Any Assembler::visitDotDb8Directive
 
 // Expression parsing
 antlrcpp::Any Assembler::visitExpr
-	(GrammarParser::ExprContext *ctx)
+	(AssemblerGrammarParser::ExprContext *ctx)
 {
 	if (ctx->expr())
 	{
@@ -910,7 +787,7 @@ antlrcpp::Any Assembler::visitExpr
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprLogical
-	(GrammarParser::ExprLogicalContext *ctx)
+	(AssemblerGrammarParser::ExprLogicalContext *ctx)
 {
 	if (ctx->exprLogical())
 	{
@@ -963,7 +840,7 @@ antlrcpp::Any Assembler::visitExprLogical
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprCompare
-	(GrammarParser::ExprCompareContext *ctx)
+	(AssemblerGrammarParser::ExprCompareContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->exprAddSub())
 	else ANY_ACCEPT_IF_BASIC(ctx->exprJustAdd())
@@ -977,7 +854,7 @@ antlrcpp::Any Assembler::visitExprCompare
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprJustAdd
-	(GrammarParser::ExprJustAddContext *ctx)
+	(AssemblerGrammarParser::ExprJustAddContext *ctx)
 {
 	//ctx->exprAddSub()->accept(this);
 	ANY_JUST_ACCEPT_BASIC(ctx->exprAddSub());
@@ -992,7 +869,7 @@ antlrcpp::Any Assembler::visitExprJustAdd
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprJustSub
-	(GrammarParser::ExprJustSubContext *ctx)
+	(AssemblerGrammarParser::ExprJustSubContext *ctx)
 {
 	//ctx->exprAddSub()->accept(this);
 	ANY_JUST_ACCEPT_BASIC(ctx->exprAddSub());
@@ -1007,7 +884,7 @@ antlrcpp::Any Assembler::visitExprJustSub
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprAddSub
-	(GrammarParser::ExprAddSubContext *ctx)
+	(AssemblerGrammarParser::ExprAddSubContext *ctx)
 {
 	if (ctx->exprAddSub())
 	{
@@ -1113,7 +990,7 @@ antlrcpp::Any Assembler::visitExprAddSub
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprMulDivModEtc
-	(GrammarParser::ExprMulDivModEtcContext *ctx)
+	(AssemblerGrammarParser::ExprMulDivModEtcContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->exprUnary())
 	else ANY_ACCEPT_IF_BASIC(ctx->numExpr())
@@ -1144,7 +1021,7 @@ antlrcpp::Any Assembler::visitExprMulDivModEtc
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprUnary
-	(GrammarParser::ExprUnaryContext *ctx)
+	(AssemblerGrammarParser::ExprUnaryContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->exprBitInvert())
 	else ANY_ACCEPT_IF_BASIC(ctx->exprNegate())
@@ -1158,7 +1035,7 @@ antlrcpp::Any Assembler::visitExprUnary
 }
 
 antlrcpp::Any Assembler::visitExprBitInvert
-	(GrammarParser::ExprBitInvertContext *ctx)
+	(AssemblerGrammarParser::ExprBitInvertContext *ctx)
 {
 	//ctx->expr()->accept(this);
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
@@ -1166,7 +1043,7 @@ antlrcpp::Any Assembler::visitExprBitInvert
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprNegate
-	(GrammarParser::ExprNegateContext *ctx)
+	(AssemblerGrammarParser::ExprNegateContext *ctx)
 {
 	//ctx->expr()->accept(this);
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
@@ -1174,7 +1051,7 @@ antlrcpp::Any Assembler::visitExprNegate
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitExprLogNot
-	(GrammarParser::ExprLogNotContext *ctx)
+	(AssemblerGrammarParser::ExprLogNotContext *ctx)
 {
 	//ctx->expr()->accept(this);
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
@@ -1185,7 +1062,7 @@ antlrcpp::Any Assembler::visitExprLogNot
 
 // Last set of token stuff
 antlrcpp::Any Assembler::visitIdentName
-	(GrammarParser::IdentNameContext *ctx)
+	(AssemblerGrammarParser::IdentNameContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokIdent())
 	else ANY_ACCEPT_IF_BASIC(ctx->instrName())
@@ -1200,7 +1077,7 @@ antlrcpp::Any Assembler::visitIdentName
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitInstrName
-	(GrammarParser::InstrNameContext *ctx)
+	(AssemblerGrammarParser::InstrNameContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameAdd())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSub())
@@ -1257,7 +1134,7 @@ antlrcpp::Any Assembler::visitInstrName
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitPseudoInstrName
-	(GrammarParser::PseudoInstrNameContext *ctx)
+	(AssemblerGrammarParser::PseudoInstrNameContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpy())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpyi())
@@ -1273,7 +1150,7 @@ antlrcpp::Any Assembler::visitPseudoInstrName
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitNumExpr
-	(GrammarParser::NumExprContext *ctx)
+	(AssemblerGrammarParser::NumExprContext *ctx)
 {
 	s64 to_push;
 
@@ -1338,7 +1215,7 @@ antlrcpp::Any Assembler::visitNumExpr
 	return nullptr;
 }
 antlrcpp::Any Assembler::visitCurrPc
-	(GrammarParser::CurrPcContext *ctx)
+	(AssemblerGrammarParser::CurrPcContext *ctx)
 {
 	push_num(__pc.curr);
 	return nullptr;

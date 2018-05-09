@@ -1,4 +1,4 @@
-grammar Grammar;
+grammar AssemblerGrammar;
 
 // Parser rules
 program:
@@ -113,6 +113,11 @@ pseudoInstrOpCpyi:
 	TokPseudoInstrNameCpyi
 	TokReg TokComma expr
 	;
+
+// Copy absolute (32-bit immediate)
+// Allows you to copy a 32-bit immediate into a register.
+// This is honestly just a convenience thing, but hey, it was easy to
+// implement.
 pseudoInstrOpCpya:
 	TokPseudoInstrNameCpya
 	TokReg TokComma expr
@@ -130,6 +135,7 @@ pseudoInstrOpCall:
 	TokReg
 	;
 
+// Assembler directives 
 directive:
 	dotOrgDirective
 	| dotSpaceDirective
@@ -139,26 +145,34 @@ directive:
 	;
 
 
+// Change the program counter to the value of an expression
 dotOrgDirective:
 	TokDotOrg expr
 	;
 
+// Add the value of an expression to the program counter (allows allocating
+// global variables)
 dotSpaceDirective:
 	TokDotSpace expr
 	;
 
+// Raw 32-bit constants
 dotDbDirective:
 	TokDotDb expr ((TokComma expr)*)
 	;
 
+// Raw 16-bit constants
 dotDb16Directive:
 	TokDotDb16 expr ((TokComma expr)*)
 	;
+
+// Raw 8-bit constants
 dotDb8Directive:
 	TokDotDb8 expr ((TokComma expr)*)
 	;
 
-// Expression parsing
+// Expression parsing.  This part of the grammar is borrowed from a
+// previous assembler I wrote.
 expr:
 	exprLogical
 	| expr TokOpLogical exprLogical
@@ -203,6 +217,10 @@ exprBitInvert: TokBitInvert expr ;
 exprNegate: TokMinus expr ;
 exprLogNot: TokExclamPoint expr ;
 
+// Instruction names, pseudo instruction names, register names, and
+// TokRegPc are all valid identifiers, but they will **NOT** be caught by
+// the TokIdent token in the lexer.  Thus, these things must be special
+// cased to allow them to be used as identifiers.
 identName: TokIdent | instrName | pseudoInstrName | TokReg | TokPcReg ;
 
 instrName:
@@ -247,6 +265,10 @@ numExpr: TokDecNum | TokHexNum | TokBinNum;
 currPc: TokPeriod ;
 
 // Lexer rules
+// ALL tokens get a lexer rule of some sort because it forces ANTLR to
+// catch more (all?) syntax errors.
+// So that means no raw '...' stuff in the parser rules.
+
 LexWhitespace: (' ' | '\t') -> skip ;
 LexLineComment: ('//' | ';') (~ '\n')* -> skip ;
 
@@ -260,8 +282,8 @@ TokOpBitwise: ('&' | '|' | '^' | '<<' | '>>' | '>>>') ;
 TokBitInvert: '~' ;
 
 TokDecNum: [0-9] ([0-9]*) ;
-TokHexNum: '0x' ([0-9A-Za-z]+);
-TokBinNum: '0b' ([0-1]+);
+TokHexNum: '0x' ([0-9A-Fa-f]+) ;
+TokBinNum: '0b' ([0-1]+) ;
 
 TokInstrNameAdd: 'add' ;
 TokInstrNameSub: 'sub' ;

@@ -1,5 +1,7 @@
-#ifndef scoped_table_base_class_hpp
-#define scoped_table_base_class_hpp
+#ifndef src__slash__scoped_table_base_class_hpp
+#define src__slash__scoped_table_base_class_hpp
+
+// src/scoped_table_base_class.hpp
 
 #include "misc_includes.hpp"
 #include "ident_table_classes.hpp"
@@ -247,4 +249,4 @@ public:		// functions
 };
 
 
-#endif		// scoped_table_base_class_hpp
+#endif		// src__slash__scoped_table_base_class_hpp

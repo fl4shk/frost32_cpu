@@ -1,6 +1,7 @@
-#ifndef ident_table_classeses_hpp
-#define ident_table_classeses_hpp
+#ifndef src__slash__ident_table_classes_hpp
+#define src__slash__ident_table_classes_hpp
 
+// src/ident_table_classes.hpp
 
 #include "misc_includes.hpp"
 
@@ -82,4 +83,4 @@ public:		// functions
 };
 
 
-#endif		// ident_table_classeses_hpp
+#endif		// src__slash__ident_table_classes_hpp

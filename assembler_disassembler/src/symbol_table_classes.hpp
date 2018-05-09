@@ -1,5 +1,7 @@
-#ifndef symbol_table_classes_hpp
-#define symbol_table_classes_hpp
+#ifndef src__slash__symbol_table_classes_hpp
+#define src__slash__symbol_table_classes_hpp
+
+// src/symbol_table_classes.hpp
 
 #include "misc_includes.hpp"
 
@@ -47,4 +49,4 @@ public:		// functions
 
 
 
-#endif		// symbol_table_classes_hpp
+#endif		// src__slash__symbol_table_classes_hpp
