@@ -24,3 +24,6 @@ Since the disassembler is mainly intended for debugging the assembler, it
 still actually decodes some technically invalid instructions as legitimate
 ones (the ``0000 0000 0000`` field of instructions from instruction opcodes
 groups 0, 2, and 3 is completely ignored in the disassembly process).
+
+Also note that the input to the disassembler is expected to be Verilog VMEM
+format text, which is the same as what the assembler generates.
