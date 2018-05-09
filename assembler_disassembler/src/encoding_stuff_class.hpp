@@ -59,7 +59,7 @@ public:		// functions
 	gen_getter_by_con_ref(iog2_two_regs_map);
 	gen_getter_by_con_ref(iog3_two_regs_ldst_map);
 
-	const std::string* decode_reg_name(u32 reg_index) const;
+	std::string* decode_reg_name(u32 reg_index) const;
 	void get_iog0_instr_from_opcode(u32 opcode, std::string*& instr_name,
 		ArgsType& args_type) const;
 	void get_iog1_instr_from_opcode(u32 opcode, std::string*& instr_name,

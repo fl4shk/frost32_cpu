@@ -105,8 +105,9 @@ EncodingStuff::EncodingStuff()
 }
 
 
-const std::string* EncodingStuff::decode_reg_name(u32 reg_index) const
+std::string* EncodingStuff::decode_reg_name(u32 reg_index) const
 {
+	//printout("EncodingStuff::decode_reg_name():  ", reg_index, "\n");
 	for (auto& iter : reg_names_map())
 	{
 		if (iter.second == reg_index)

@@ -36,29 +36,151 @@ antlrcpp::Any Disassembler::visitLine
 		// when it can.
 		// 
 		// It should still work, though
-		printout(".org ", std::hex, addr, std::dec, "\n");
+		printout(".org ", std::hex, "0x", addr, std::dec, "\n");
 	}
 	else if (ctx->TokHexNum())
 	{
 		const u32 instruction = convert_hex_string(ctx, 
 			ctx->TokHexNum()->toString(), num_good_chars);
 
-		if (num_good_chars == 2)
+		auto show_unknown_instruction_as_dot_db = [&]() -> void
 		{
-			display_dot_db8(instruction);
-		}
-		else if (num_good_chars == 4)
-		{
-			display_dot_db16(instruction);
-		}
-		else if (num_good_chars == 8)
-		{
-			display_dot_db(instruction);
-		}
-		else
+			if (num_good_chars == 2)
+			{
+				display_dot_db8(instruction);
+			}
+			else if (num_good_chars == 4)
+			{
+				display_dot_db16(instruction);
+			}
+			else if (num_good_chars == 8)
+			{
+				display_dot_db(instruction);
+			}
+			else
+			{
+				err(ctx, "Disassembler::visitLine():  Eek 1!");
+			}
+		};
+
+		if ((num_good_chars != 2) && (num_good_chars != 4)
+			&& (num_good_chars != 8))
 		{
 			err(ctx, "Allowed data sizes:   8-bit, 16-bit, 32-bit");
 		}
+
+		if (num_good_chars == 8)
+		{
+			const u32 iog = decode_iog(instruction);
+			u32 reg_a_index = 0, reg_b_index = 0, reg_c_index = 0, 
+				opcode= 0, immediate = 0;
+			std::string * reg_a_name = nullptr, * reg_b_name = nullptr, 
+				* reg_c_name = nullptr;
+			std::string* instr_name = nullptr;
+			EncodingStuff::ArgsType args_type 
+				= EncodingStuff::ArgsType::Unknown;
+
+			switch (iog)
+			{
+				case 0x0:
+					decode_instr_opcode_group_0(instruction, reg_a_index,
+						reg_b_index, reg_c_index, opcode);
+					__encoding_stuff.get_iog0_instr_from_opcode(opcode,
+						instr_name, args_type);
+					break;
+				case 0x1:
+					decode_instr_opcode_group_1(instruction, reg_a_index,
+						reg_b_index, opcode, immediate);
+					__encoding_stuff.get_iog1_instr_from_opcode(opcode,
+						instr_name, args_type);
+					break;
+				case 0x2:
+					decode_instr_opcode_group_2(instruction, reg_a_index,
+						reg_b_index, reg_c_index, opcode);
+					__encoding_stuff.get_iog2_instr_from_opcode(opcode,
+						instr_name, args_type);
+					break;
+				case 0x3:
+					decode_instr_opcode_group_3(instruction, reg_a_index,
+						reg_b_index, reg_c_index, opcode);
+					__encoding_stuff.get_iog3_instr_from_opcode(opcode,
+						instr_name, args_type);
+					break;
+				default:
+					show_unknown_instruction_as_dot_db();
+					printout("\n");
+					return nullptr;
+			}
+
+			reg_a_name = __encoding_stuff.decode_reg_name(reg_a_index);
+			reg_b_name = __encoding_stuff.decode_reg_name(reg_b_index);
+			reg_c_name = __encoding_stuff.decode_reg_name(reg_c_index);
+
+			switch (args_type)
+			{
+				case EncodingStuff::ArgsType::ThreeRegs:
+					printout(*instr_name, " ", strappcom2(*reg_a_name, 
+						*reg_b_name, *reg_c_name));
+					break;
+				case EncodingStuff::ArgsType::TwoRegs:
+					printout(*instr_name, " ", strappcom2(*reg_a_name, 
+						*reg_b_name));
+					break;
+
+				case EncodingStuff::ArgsType::TwoRegsOneImm:
+					//printout(*instr_name, " ", strappcom2(*reg_a_name, 
+					//	*reg_b_name, immediate));
+					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
+						*reg_b_name, ", 0x", immediate, std::dec);
+					break;
+				case EncodingStuff::ArgsType::TwoRegsOneSimm:
+					//printout(*instr_name, " ", strappcom2(*reg_a_name, 
+					//	*reg_b_name, immediate));
+					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
+						*reg_b_name, ", 0x", immediate, std::dec);
+					break;
+				case EncodingStuff::ArgsType::OneRegOnePcOneSimm:
+					//printout(*instr_name, " ", strappcom2(*reg_a_name, 
+					//	"pc", immediate));
+					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
+						"pc", ", 0x", immediate, std::dec);
+					break;
+				case EncodingStuff::ArgsType::OneRegOneImm:
+					//printout(*instr_name, " ", strappcom2(*reg_a_name, 
+					//	immediate));
+					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
+						"0x", immediate, std::dec);
+					break;
+				case EncodingStuff::ArgsType::Branch:
+					//printout(*instr_name, " ", strappcom2(*reg_a_name, 
+					//	immediate));
+					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
+						"0x", immediate, std::dec);
+					break;
+
+				case EncodingStuff::ArgsType::TwoRegsLdst:
+					printout(*instr_name, " ", *reg_a_name, ", ", 
+						"[", *reg_b_name, "]");
+					break;
+
+				case EncodingStuff::ArgsType::Unknown:
+					show_unknown_instruction_as_dot_db();
+					printout("\n");
+					return nullptr;
+					break;
+				default:
+					err(ctx, "Disassembler::visitLine():  Eek 2!");
+					break;
+			}
+
+		}
+		else
+		{
+			show_unknown_instruction_as_dot_db();
+			printout("\n");
+			return nullptr;
+		}
+
 
 		printout("\n");
 	}
@@ -68,7 +190,7 @@ antlrcpp::Any Disassembler::visitLine
 	}
 	else
 	{
-		err(ctx, "visitLine():  Eek!");
+		err(ctx, "visitLine():  Eek 3!");
 	}
 
 	return nullptr;

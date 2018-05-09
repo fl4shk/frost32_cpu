@@ -84,3 +84,6 @@ data_0:
 
 data_1:
 	.space 0x100
+
+asdf:
+	bra asdf
