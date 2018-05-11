@@ -1,5 +1,4 @@
-# verilog
-# m4_verilog
+# systemverilog
 # start stuff
 
 # Edit these variables if more directories are needed.
@@ -15,41 +14,28 @@ PROJ := frost32_cpu
 VC=iverilog
 
 
-BUILD_VVP=$(VC) -o $(PROJ).vvp
-#BUILD_VHDL=$(VC) -tvhdl -o $(PROJ).vhd
-PREPROCESS=$(VC) -E -o $(PROJ).E
-
-# Generated directories
-V_OUT_DIR := v_outputs
+BUILD_VVP=$(VC) -g2009 -o $(PROJ).vvp
+#BUILD_VHDL=$(VC) -g2009 -tvhdl -o $(PROJ).vhd
+PREPROCESS=$(VC) -g2009 -E -o $(PROJ).E
 
 
-M4_SRC_FILES := $(foreach DIR,$(SRC_DIRS),$(wildcard $(DIR)/*.src.m4.v))
-SRC_FILES := $(M4_SRC_FILES:%.src.m4.v=$(V_OUT_DIR)/%.src.v)
+PKG_FILES := $(foreach DIR,$(PKG_DIRS),$(wildcard $(DIR)/*.pkg.sv))
+SRC_FILES := $(foreach DIR,$(SRC_DIRS),$(wildcard $(DIR)/*.src.sv))
 
 .PHONY : all
-all: clean reminder all_pre $(PKG_FILES) $(SRC_FILES)
+all: clean reminder
 	$(BUILD_VVP) $(PKG_FILES) $(SRC_FILES)
 	@#$(BUILD_VHDL) $(PKG_FILES) $(SRC_FILES)
 
 .PHONY : only_preprocess
-only_preprocess: clean reminder all_pre $(PKG_FILES) $(SRC_FILES)
+only_preprocess: clean reminder
 	$(PREPROCESS) $(PKG_FILES) $(SRC_FILES)
 
-.PHONY : all_pre
-all_pre :
-	mkdir -p $(V_OUT_DIR)
-	@for src_file in $(SRC_FILES); \
-	do \
-		mkdir -p $$(dirname $$src_file); \
-	done
-
-$(SRC_FILES) : $(V_OUT_DIR)/%.src.v : %.src.m4.v
-	m4 $< > $@
 
 .PHONY : reminder
 reminder:
-	@#
+	@echo "Reminder:  With Icarus Verilog, DON'T CAST BITS TO ENUMS!"
 
 .PHONY : clean
 clean:  
-	rm -rf $(PROJ).vvp $(PROJ).vhd $(PROJ).E $(V_OUT_DIR)
+	rm -rf $(PROJ).vvp $(PROJ).vhd $(PROJ).E
