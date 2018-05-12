@@ -19,6 +19,7 @@ assembler_disassembler/*.elf
 *types_*.taghl
 *.txt.ignore
 *.vvp
+*.vhd
 testing/*
 a.out
 *.E

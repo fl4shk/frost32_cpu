@@ -1,6 +1,7 @@
 `include "src/misc_defines.header.sv"
 
 module MainClockGenerator(output logic clk);
+
 	initial
 	begin
 		clk = 1'b0;
@@ -11,6 +12,7 @@ module MainClockGenerator(output logic clk);
 		#1
 		clk = !clk;
 	end
+
 endmodule
 
 module HalfClockGenerator(output logic clk);

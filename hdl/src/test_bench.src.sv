@@ -1,12 +1,16 @@
+`include "src/misc_defines.header.sv"
 
+module Mux2To1(input logic a, b, sel,
+	output logic out);
 
-module TestBench;
-	struct
-	{
-		logic clk, half_clk;
-	} __locals;
+	always_comb
+	begin
+		out = (!sel) ? a : b;
+	end
 
-	MainClockGenerator __inst_main_clk_gen(.clk(__locals.clk));
-	HalfClockGenerator __inst_half_clk_gen(.clk(__locals.half_clk));
+endmodule
 
+module TopLevel;
+
+	// Stuffs!
 endmodule
