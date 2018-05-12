@@ -4,13 +4,13 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 
 	import PkgAlu::*;
 
-	parameter WIDTH_INOUT = `WIDTH__ALU_INOUT;
-	parameter MSB_POS_INOUT = `MSB_POS__ALU_INOUT;
+	parameter __WIDTH_INOUT = `WIDTH__ALU_INOUT;
+	parameter __MSB_POS_INOUT = `MSB_POS__ALU_INOUT;
 
 	// sltu and slts
 	PkgAlu::PortOut_Compare  __out_compare;
 
-	Compare #(.DATA_WIDTH(WIDTH_INOUT)) __inst_compare(.a(in.a),
+	Compare #(.DATA_WIDTH(__WIDTH_INOUT)) __inst_compare(.a(in.a),
 		.b(in.b), .out(__out_compare));
 
 	// Barrel shifters
@@ -45,13 +45,14 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 
 			PkgAlu::Sltu:
 			begin
-				out.data = {{MSB_POS_INOUT{1'b0}}, __out_compare.ltu};
+				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.ltu};
 			end
 
 			PkgAlu::Slts:
 			begin
-				out.data = {{MSB_POS_INOUT{1'b0}}, __out_compare.lts};
+				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.lts};
 			end
+
 
 			PkgAlu::AndN:
 			begin
@@ -73,6 +74,7 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 				out.data = in.a ^ in.b;
 			end
 
+
 			PkgAlu::Nor:
 			begin
 				out.data = ~(in.a | in.b);
@@ -80,9 +82,9 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 
 			PkgAlu::Lsl:
 			begin
-				if (in.b[MSB_POS_INOUT : 5])
+				if (in.b[__MSB_POS_INOUT : 5])
 				begin
-					out.data = {WIDTH_INOUT{1'b0}};
+					out.data = {__WIDTH_INOUT{1'b0}};
 				end
 
 				else
@@ -90,12 +92,11 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 					out.data = __out_lsl32.data;
 				end
 			end
-
 			PkgAlu::Lsr:
 			begin
-				if (in.b[MSB_POS_INOUT : 5])
+				if (in.b[__MSB_POS_INOUT : 5])
 				begin
-					out.data = {WIDTH_INOUT{1'b0}};
+					out.data = {__WIDTH_INOUT{1'b0}};
 				end
 
 				else
@@ -103,19 +104,18 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 					out.data = __out_lsr32.data;
 				end
 			end
-
 			PkgAlu::Asr:
 			begin
-				if (in.b[MSB_POS_INOUT : 5])
+				if (in.b[__MSB_POS_INOUT : 5])
 				begin
-					if (in.a[MSB_POS_INOUT])
+					if (in.a[__MSB_POS_INOUT])
 					begin
-						out.data = {WIDTH_INOUT{1'b1}};
+						out.data = {__WIDTH_INOUT{1'b1}};
 					end
 
 					else
 					begin
-						out.data = {WIDTH_INOUT{1'b0}};
+						out.data = {__WIDTH_INOUT{1'b0}};
 					end
 				end
 
@@ -125,21 +125,19 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 				end
 			end
 
+
 			PkgAlu::OrN:
 			begin
 				out.data = in.a | (~in.b);
 			end
-
 			PkgAlu::Nand:
 			begin
 				out.data = ~(in.a & in.b);
 			end
-
 			PkgAlu::InvA:
 			begin
 				out.data = ~in.a;
 			end
-
 			PkgAlu::Xnor:
 			begin
 				out.data = ~(in.a ^ in.b);
