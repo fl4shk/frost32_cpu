@@ -31,7 +31,7 @@ private:		// variables
 	MapType __reg_names_map;
 
 	MapType __iog0_three_regs_map;
-	MapType __iog0_two_regs_map;
+	//MapType __iog0_two_regs_map;
 
 	MapType __iog1_two_regs_one_imm_map;
 	MapType __iog1_two_regs_one_simm_map;
@@ -48,7 +48,7 @@ public:		// functions
 	gen_getter_by_con_ref(reg_names_map);
 
 	gen_getter_by_con_ref(iog0_three_regs_map);
-	gen_getter_by_con_ref(iog0_two_regs_map);
+	//gen_getter_by_con_ref(iog0_two_regs_map);
 
 	gen_getter_by_con_ref(iog1_two_regs_one_imm_map);
 	gen_getter_by_con_ref(iog1_two_regs_one_simm_map);

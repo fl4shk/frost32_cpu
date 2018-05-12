@@ -18,9 +18,16 @@
 	* ``r0`` (always zero), ``r1``, ``r2``, ``r3``, 
 	``r4``, ``r5``, ``r6``, ``r7``,
 	``r8``, ``r9``, ``r10``, ``r11``,
-	``r12``, ``lr``, ``fp``, ``sp``
+<br>
+	``temp`` (assembler temporary (but can be used otherwise)), 
+<br>
+	``lr`` (upon any call instruction, return address stored here), 
+<br>
+	``fp`` (recommended for use as the frame pointer), 
+<br>
+	``sp`` (recommended for use as the stack pointer)
 * Special Purpose Registers (32-bit)
-	* ``pc``
+	* ``pc`` (program counter)
 <br><br>
 * Opcode Group:  0b0000
 	* Encoding:  ``0000 aaaa bbbb cccc  0000 0000 0000 oooo``
@@ -45,7 +52,7 @@
 			* Opcode:  0b0110
 		* <b>xor</b> rA, rB, rC
 			* Opcode:  0b0111
-		* <b>inv</b> rA, rB
+		* <b>nor</b> rA, rB, rC
 			* Opcode:  0b1000
 		* <b>lsl</b> rA, rB, rC
 			* Opcode:  0b1001
@@ -77,7 +84,7 @@
 			* Opcode:  0x6
 		* <b>xori</b> rA, rB, imm16
 			* Opcode:  0x7
-		* <b>invi</b> rA, imm16
+		* <b>nori</b> rA, rB, imm16
 			* Opcode:  0x8
 		* <b>lsli</b> rA, rB, imm16
 			* Opcode:  0x9
@@ -135,6 +142,10 @@
 			* Opcode:  0b0111
 <br><br>
 * Pseudo Instructions:
+	* <b>inv</b> rA, rB
+		* Encoded as <code>nor rA, rB, r0</code>
+	* <b>invi</b> rA, imm16
+		* Encoded as <code>nori rA, r0, imm16</code>
 	* <b>cpy</b> rA, rB
 		* Encoded as <code>add rA, rB, r0</code>
 	* <b>cpy</b> rA, pc
@@ -157,3 +168,4 @@
 	* <b>call</b> rB
 		* Unconditional call to address in register
 		* Encoded as <code>calleq r0, rB</code>
+																																																					

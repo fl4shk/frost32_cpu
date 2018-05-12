@@ -168,8 +168,8 @@ private:		// visitor functions
 	// instruction:
 	antlrcpp::Any visitInstrOpGrp0ThreeRegs
 		(AssemblerGrammarParser::InstrOpGrp0ThreeRegsContext *ctx);
-	antlrcpp::Any visitInstrOpGrp0TwoRegs
-		(AssemblerGrammarParser::InstrOpGrp0TwoRegsContext *ctx);
+	//antlrcpp::Any visitInstrOpGrp0TwoRegs
+	//	(AssemblerGrammarParser::InstrOpGrp0TwoRegsContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1TwoRegsOneImm
 		(AssemblerGrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1TwoRegsOneSimm
@@ -186,6 +186,10 @@ private:		// visitor functions
 		(AssemblerGrammarParser::InstrOpGrp3Context *ctx);
 
 	// pseudoInstruction:
+	antlrcpp::Any visitPseudoInstrOpInv
+		(AssemblerGrammarParser::PseudoInstrOpInvContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpInvi
+		(AssemblerGrammarParser::PseudoInstrOpInviContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpGrpCpy
 		(AssemblerGrammarParser::PseudoInstrOpGrpCpyContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpCpyi

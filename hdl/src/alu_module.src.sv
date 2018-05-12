@@ -73,9 +73,9 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 				out.data = in.a ^ in.b;
 			end
 
-			PkgAlu::InvA:
+			PkgAlu::Nor:
 			begin
-				out.data = ~in.a;
+				out.data = ~(in.a | in.b);
 			end
 
 			PkgAlu::Lsl:
@@ -135,9 +135,9 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 				out.data = ~(in.a & in.b);
 			end
 
-			PkgAlu::Nor:
+			PkgAlu::InvA:
 			begin
-				out.data = ~(in.a | in.b);
+				out.data = ~in.a;
 			end
 
 			PkgAlu::Xnor:

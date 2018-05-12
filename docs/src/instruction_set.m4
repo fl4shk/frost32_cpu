@@ -28,9 +28,16 @@ define(`NEWLINE',`<br>')dnl
 	* MDCODE(r0) (always zero), MDCODE(r1), MDCODE(r2), MDCODE(r3), 
 	MDCODE(r4), MDCODE(r5), MDCODE(r6), MDCODE(r7),
 	MDCODE(r8), MDCODE(r9), MDCODE(r10), MDCODE(r11),
-	MDCODE(r12), MDCODE(lr), MDCODE(fp), MDCODE(sp)
+NEWLINE()
+	MDCODE(temp) (assembler temporary (but can be used otherwise)), 
+NEWLINE()
+	MDCODE(lr) (upon any call instruction, return address stored here), 
+NEWLINE()
+	MDCODE(fp) (recommended for use as the frame pointer), 
+NEWLINE()
+	MDCODE(sp) (recommended for use as the stack pointer)
 * Special Purpose Registers (32-bit)
-	* MDCODE(pc)
+	* MDCODE(pc) (program counter)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0000)
 	* Encoding:  MDCODE(0000 aaaa bbbb cccc  0000 0000 0000 oooo)
@@ -55,7 +62,7 @@ NEWLINE()NEWLINE()
 			* OPCODE(0b0110)
 		* BOLD(xor) rA, rB, rC
 			* OPCODE(0b0111)
-		* BOLD(inv) rA, rB
+		* BOLD(nor) rA, rB, rC
 			* OPCODE(0b1000)
 		* BOLD(lsl) rA, rB, rC
 			* OPCODE(0b1001)
@@ -87,7 +94,7 @@ NEWLINE()NEWLINE()
 			* OPCODE(0x6)
 		* BOLD(xori) rA, rB, imm16
 			* OPCODE(0x7)
-		* BOLD(invi) rA, imm16
+		* BOLD(nori) rA, rB, imm16
 			* OPCODE(0x8)
 		* BOLD(lsli) rA, rB, imm16
 			* OPCODE(0x9)
@@ -145,6 +152,10 @@ NEWLINE()NEWLINE()
 			* OPCODE(0b0111)
 NEWLINE()NEWLINE()
 * Pseudo Instructions:
+	* BOLD(inv) rA, rB
+		* Encoded as CODE(`nor rA, rB, r0')
+	* BOLD(invi) rA, imm16
+		* Encoded as CODE(`nori rA, r0, imm16')
 	* BOLD(cpy) rA, rB
 		* Encoded as CODE(`add rA, rB, r0')
 	* BOLD(cpy) rA, pc
@@ -167,3 +178,56 @@ NEWLINE()NEWLINE()
 	* BOLD(call) rB
 		* Unconditional call to address in register
 		* Encoded as CODE(`calleq r0, rB')
+	dnl * BOLD(jmpa) imm32
+	dnl 	* Jump absolute (to directly encoded address)
+	dnl 	* Encoded as
+	dnl 		NEWLINE()
+	dnl 		CODE(`cpya temp, imm32')
+	dnl 		NEWLINE()
+	dnl 		CODE(`jmp temp')
+	dnl * BOLD(calla) imm32
+	dnl 	* Call absolute (to directly encoded address)
+	dnl 	* Encoded as
+	dnl 		NEWLINE()
+	dnl 		CODE(`cpya temp, imm32')
+	dnl 		NEWLINE()
+	dnl 		CODE(`call temp')
+	dnl * BOLD(bne) rA, rB, imm16
+	dnl 	* Relative branch if (rA != rB)
+	dnl 	* Encoded as
+	dnl 		NEWLINE()
+	dnl 		CODE(`sub temp, rA, rB')
+	dnl 		NEWLINE()
+	dnl 		CODE(`bne temp, imm16 - 4')
+	dnl * BOLD(beq) rA, rB, imm16
+	dnl 	* Relative branch if (rA == rB)
+	dnl 	* Encoded as
+	dnl 		NEWLINE()
+	dnl 		CODE(`sub temp, rA, rB')
+	dnl 		NEWLINE()
+	dnl 		CODE(`beq temp, imm16 - 4')
+	dnl * BOLD(blts) rA, rB, imm16
+	dnl 	* Relative branch if ($signed(rA) < $signed(rB))
+	dnl 	* Encoded as
+	dnl 		NEWLINE()
+	dnl 		CODE(`slts temp, rA, rB')
+	dnl 		NEWLINE()
+	dnl 		CODE(`bne temp, imm16 - 4')
+	dnl * BOLD(bges) rA, rB, imm16
+	dnl 	* Relative branch if ($signed(rA) >= $signed(rB))
+	dnl 	* Encoded as
+	dnl 		NEWLINE()
+	dnl 		CODE(`slts temp, rA, rB')
+	dnl 		NEWLINE()
+	dnl 		CODE(`beq temp, imm16 - 4')
+	dnl * BOLD(bles) rA, rB, imm16
+	dnl 	* Relative branch if ($signed(rA) <= $signed(rB))
+	dnl 	* Encoded as
+	dnl 		NEWLINE()
+	dnl 		CODE(`slts temp, rA, rB')
+	dnl 		NEWLINE()
+	dnl 		CODE(`bne temp, imm16 - 4')
+	dnl 		NEWLINE()
+	dnl 		CODE(`sub temp, rA, rB')
+	dnl 		NEWLINE()
+	dnl 		CODE(`beq temp, imm16 - 12')

@@ -30,7 +30,7 @@ EncodingStuff::EncodingStuff()
 	__reg_names_map[cstm_strdup("r9")] = temp++;
 	__reg_names_map[cstm_strdup("r10")] = temp++;
 	__reg_names_map[cstm_strdup("r11")] = temp++;
-	__reg_names_map[cstm_strdup("r12")] = temp++;
+	__reg_names_map[cstm_strdup("temp")] = temp++;
 	__reg_names_map[cstm_strdup("lr")] = temp++;
 	__reg_names_map[cstm_strdup("fp")] = temp++;
 	__reg_names_map[cstm_strdup("sp")] = temp++;
@@ -45,7 +45,8 @@ EncodingStuff::EncodingStuff()
 	__iog0_three_regs_map[cstm_strdup("and")] = temp++;
 	__iog0_three_regs_map[cstm_strdup("orr")] = temp++;
 	__iog0_three_regs_map[cstm_strdup("xor")] = temp++;
-	__iog0_two_regs_map[cstm_strdup("inv")] = temp++;
+	//__iog0_two_regs_map[cstm_strdup("inv")] = temp++;
+	__iog0_three_regs_map[cstm_strdup("nor")] = temp++;
 	__iog0_three_regs_map[cstm_strdup("lsl")] = temp++;
 	__iog0_three_regs_map[cstm_strdup("lsr")] = temp++;
 	__iog0_three_regs_map[cstm_strdup("asr")] = temp++;
@@ -68,7 +69,9 @@ EncodingStuff::EncodingStuff()
 		= temp++;
 	__iog1_two_regs_one_imm_map[cstm_strdup("xori")]
 		= temp++;
-	__iog1_one_reg_one_imm_map[cstm_strdup("invi")]
+	//__iog1_one_reg_one_imm_map[cstm_strdup("invi")]
+	//	= temp++;
+	__iog1_two_regs_one_imm_map[cstm_strdup("nori")]
 		= temp++;
 	__iog1_two_regs_one_imm_map[cstm_strdup("lsli")]
 		= temp++;
@@ -82,8 +85,8 @@ EncodingStuff::EncodingStuff()
 		= temp++;
 	__iog1_branch_map[cstm_strdup("bne")]
 		= temp++;
-	__iog1_branch_map[cstm_strdup("beq")] =
-		temp++;
+	__iog1_branch_map[cstm_strdup("beq")]
+		= temp++;
 
 	// Instruction Opcode Group 2
 	temp = 0;
@@ -124,7 +127,7 @@ void EncodingStuff::get_iog0_instr_from_opcode(u32 opcode,
 	std::string*& instr_name, EncodingStuff::ArgsType& args_type) const
 {
 	DECODE_ITERATION(iog0_three_regs_map, ArgsType::ThreeRegs);
-	DECODE_ITERATION(iog0_two_regs_map, ArgsType::TwoRegs);
+	//DECODE_ITERATION(iog0_two_regs_map, ArgsType::TwoRegs);
 
 	instr_name = cstm_strdup("unknown_instruction");
 	args_type = ArgsType::Unknown;

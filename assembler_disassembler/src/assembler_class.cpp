@@ -249,7 +249,7 @@ antlrcpp::Any Assembler::visitInstruction
 	(AssemblerGrammarParser::InstructionContext *ctx)
 {
 	ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp0ThreeRegs())
-	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp0TwoRegs())
+	//else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp0TwoRegs())
 
 	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1TwoRegsOneImm())
 	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1TwoRegsOneSimm())
@@ -269,7 +269,9 @@ antlrcpp::Any Assembler::visitInstruction
 antlrcpp::Any Assembler::visitPseudoInstruction
 	(AssemblerGrammarParser::PseudoInstructionContext *ctx)
 {
-	ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpGrpCpy())
+	ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpInv())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpInvi())
+	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpGrpCpy())
 	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpCpyi())
 	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpCpya())
 	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrOpBra())
@@ -327,25 +329,25 @@ antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
 
 	return nullptr;
 }
-antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
-	(AssemblerGrammarParser::InstrOpGrp0TwoRegsContext *ctx)
-{
-	ANY_PUSH_TOK_IF(ctx->TokInstrNameInv())
-	else
-	{
-		err(ctx, "visitInstrOpGrp0TwoRegs():  Eek!");
-	}
-
-	const auto opcode = __encoding_stuff.iog0_two_regs_map()
-		.at(pop_str());
-
-	auto&& reg_encodings = get_reg_encodings(ctx);
-
-	encode_instr_opcode_group_0(reg_encodings.at(0), reg_encodings.at(1),
-		0x0, opcode);
-
-	return nullptr;
-}
+//antlrcpp::Any Assembler::visitInstrOpGrp0TwoRegs
+//	(AssemblerGrammarParser::InstrOpGrp0TwoRegsContext *ctx)
+//{
+//	ANY_PUSH_TOK_IF(ctx->TokInstrNameInv())
+//	else
+//	{
+//		err(ctx, "visitInstrOpGrp0TwoRegs():  Eek!");
+//	}
+//
+//	const auto opcode = __encoding_stuff.iog0_two_regs_map()
+//		.at(pop_str());
+//
+//	auto&& reg_encodings = get_reg_encodings(ctx);
+//
+//	encode_instr_opcode_group_0(reg_encodings.at(0), reg_encodings.at(1),
+//		0x0, opcode);
+//
+//	return nullptr;
+//}
 antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
 	(AssemblerGrammarParser::InstrOpGrp1TwoRegsOneImmContext *ctx)
 {
@@ -427,8 +429,9 @@ antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOnePcOneSimm
 antlrcpp::Any Assembler::visitInstrOpGrp1OneRegOneImm
 	(AssemblerGrammarParser::InstrOpGrp1OneRegOneImmContext *ctx)
 {
-	ANY_PUSH_TOK_IF(ctx->TokInstrNameInvi())
-	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCpyhi())
+	//ANY_PUSH_TOK_IF(ctx->TokInstrNameInvi())
+	//else 
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameCpyhi())
 	else
 	{
 		err(ctx, "visitInstrOpGrp1OneRegOneImm():  Eek!");
@@ -530,6 +533,51 @@ antlrcpp::Any Assembler::visitInstrOpGrp3
 
 
 // pseudoInstruction:
+antlrcpp::Any Assembler::visitPseudoInstrOpInv
+	(AssemblerGrammarParser::PseudoInstrOpInvContext *ctx)
+{
+	// inv rA, rB
+	// Encoded as "nor rA, rB, r0"
+	if (ctx->TokPseudoInstrNameInv())
+	{
+		const auto opcode = __encoding_stuff
+			.iog0_three_regs_map().at(cstm_strdup("nor"));
+
+		auto&& reg_encodings = get_reg_encodings(ctx);
+
+		encode_instr_opcode_group_0(reg_encodings.at(0),
+			reg_encodings.at(1), 0x0, opcode);
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpInv():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpInvi
+	(AssemblerGrammarParser::PseudoInstrOpInviContext *ctx)
+{
+	// invi rA, imm16
+	// Encoded as "nori rA, r0, imm16"
+	if (ctx->TokPseudoInstrNameInvi())
+	{
+		const auto opcode = __encoding_stuff
+			.iog1_two_regs_one_imm_map().at(cstm_strdup("nori"));
+
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		const auto immediate = pop_num();
+
+		encode_instr_opcode_group_1(get_one_reg_encoding
+			(ctx->TokReg()->toString()), 0x0, opcode, immediate);
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpInvi():  Eek!");
+	}
+
+	return nullptr;
+}
 antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
 	(AssemblerGrammarParser::PseudoInstrOpGrpCpyContext *ctx)
 {
@@ -1087,7 +1135,7 @@ antlrcpp::Any Assembler::visitInstrName
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAnd())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameOrr())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameXor())
-	else ANY_PUSH_TOK_IF(ctx->TokInstrNameInv())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameNor())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsl())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsr())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsr())
@@ -1100,7 +1148,7 @@ antlrcpp::Any Assembler::visitInstrName
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAndi())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameOrri())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameXori())
-	else ANY_PUSH_TOK_IF(ctx->TokInstrNameInvi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameNori())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsli())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsri())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsri())
@@ -1136,7 +1184,9 @@ antlrcpp::Any Assembler::visitInstrName
 antlrcpp::Any Assembler::visitPseudoInstrName
 	(AssemblerGrammarParser::PseudoInstrNameContext *ctx)
 {
-	ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpy())
+	ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameInv())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameInvi())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpy())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpyi())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpya())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameBra())

@@ -35,13 +35,13 @@ typedef enum logic [`MSB_POS__ALU_OPER:0]
 	And,
 	Or,
 	Xor,
-	InvA,
+	Nor,
 	Lsl,
 	Lsr,
 	Asr,
 	OrN,
 	Nand,
-	Nor,
+	InvA,
 	Xnor
 } AluOper;
 
