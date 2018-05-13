@@ -32,7 +32,7 @@ module RegisterFile(input logic clk,
 		for (i=0; i<`ARR_SIZE__REG_FILE_NUM_PORTS; i = i + 1)
 		begin
 			always_comb
-			begin
+			begin : haha_alright_yeah
 				out.read_data[i] = __regfile[in.read_sel[i]];
 			end
 		end
