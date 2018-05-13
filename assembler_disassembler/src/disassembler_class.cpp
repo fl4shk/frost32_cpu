@@ -155,7 +155,7 @@ antlrcpp::Any Disassembler::visitLine
 					//printout(*instr_name, " ", strappcom2(*reg_a_name, 
 					//	immediate));
 					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
-						"0x", immediate, std::dec);
+						*reg_b_name, ", ", "0x", immediate, std::dec);
 					break;
 
 				case EncodingStuff::ArgsType::ThreeRegsLdst:
