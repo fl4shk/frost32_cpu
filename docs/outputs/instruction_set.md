@@ -15,9 +15,9 @@
 
 
 * General Purpose Registers (32-bit):
-	* ``r0`` (always zero), ``r1``, ``r2``, ``r3``, 
-	``r4``, ``r5``, ``r6``, ``r7``,
-	``r8``, ``r9``, ``r10``, ``r11``,
+	* ``zero`` (always zero), ``u0``, ``u1``, ``u2``, 
+	``u3``, ``u4``, ``u5``, ``u6``,
+	``u7``, ``u8``, ``u9``, ``u10``,
 <br>
 	``temp`` (assembler temporary (but can be used otherwise)), 
 <br>
@@ -96,9 +96,9 @@
 			* Opcode:  0xc
 		* <b>cpyhi</b> rA, imm16
 			* Opcode:  0xd
-		* <b>bne</b> rA, simm16
+		* <b>bne</b> rA, rB, simm16
 			* Opcode:  0xe
-		* <b>beq</b> rA, simm16
+		* <b>beq</b> rA, rB, simm16
 			* Opcode:  0xf
 <br><br>
 * Opcode Group:  0b0010
@@ -108,13 +108,13 @@
 		* ``c``:  rC
 		* ``o``:  opcode
 	* Instructions:
-		* <b>jne</b> rA, rB
+		* <b>jne</b> rA, rB, rC
 			* Opcode:  0b0000
-		* <b>jeq</b> rA, rB
+		* <b>jeq</b> rA, rB, rC
 			* Opcode:  0b0001
-		* <b>callne</b> rA, rB
+		* <b>callne</b> rA, rB, rC
 			* Opcode:  0b0010
-		* <b>calleq</b> rA, rB
+		* <b>calleq</b> rA, rB, rC
 			* Opcode:  0b0011
 <br><br>
 * Opcode Group:  0b0011
@@ -124,48 +124,62 @@
 		* ``c``:  rC
 		* ``o``:  opcode
 	* Instructions:
-		* <b>ldr</b> rA, [rB]
+		* <b>ldr</b> rA, [rB, rC]
 			* Opcode:  0b0000
-		* <b>ldh</b> rA, [rB]
+		* <b>ldh</b> rA, [rB, rC]
 			* Opcode:  0b0001
-		* <b>ldsh</b> rA, [rB]
+		* <b>ldsh</b> rA, [rB, rC]
 			* Opcode:  0b0010
-		* <b>ldb</b> rA, [rB]
+		* <b>ldb</b> rA, [rB, rC]
 			* Opcode:  0b0011
-		* <b>ldsb</b> rA, [rB]
+		* <b>ldsb</b> rA, [rB, rC]
 			* Opcode:  0b0100
-		* <b>str</b> rA, [rB]
+		* <b>str</b> rA, [rB, rC]
 			* Opcode:  0b0101
-		* <b>sth</b> rA, [rB]
+		* <b>sth</b> rA, [rB, rC]
 			* Opcode:  0b0110
-		* <b>stb</b> rA, [rB]
+		* <b>stb</b> rA, [rB, rC]
 			* Opcode:  0b0111
 <br><br>
 * Pseudo Instructions:
 	* <b>inv</b> rA, rB
-		* Encoded as <code>nor rA, rB, r0</code>
+		* Encoded as <code>nor rA, rB, zero</code>
 	* <b>invi</b> rA, imm16
-		* Encoded as <code>nori rA, r0, imm16</code>
+		* Encoded as <code>nori rA, zero, imm16</code>
 	* <b>cpy</b> rA, rB
-		* Encoded as <code>add rA, rB, r0</code>
+		* Encoded as <code>add rA, rB, zero</code>
 	* <b>cpy</b> rA, pc
 		* Encoded as <code>addsi rA, pc, 0</code>
 	* <b>cpyi</b> rA, imm16
-		* Encoded as <code>addi rA, r0, imm16</code>
+		* Encoded as <code>addi rA, zero, imm16</code>
 	* <b>cpya</b> rA, imm32
 		* Copy absolute (32-bit immediate)
 		* Encoded as 
 			<br>
-			<code>addi rA, r0, (imm32 & 0xffff)</code>
+			<code>addi rA, zero, (imm32 & 0xffff)</code>
 			<br>
 			<code>cpyhi rA, (imm32 >> 16)</code>
 	* <b>bra</b> simm16
 		* Unconditional relative branch
-		* Encoded as <code>beq r0, simm16</code>
-	* <b>jmp</b> rB
+		* Encoded as <code>beq zero, zero, simm16</code>
+	* <b>jmp</b> rC
 		* Unconditional jump to address in register
-		* Encoded as <code>jeq r0, rB</code>
-	* <b>call</b> rB
+		* Encoded as <code>jeq zero, zero, rC</code>
+	* <b>call</b> rC
 		* Unconditional call to address in register
-		* Encoded as <code>calleq r0, rB</code>
-																																																					
+		* Encoded as <code>calleq zero, zero, rC</code>
+	* <b>jmpa</b> imm32
+		* Jump absolute (to directly encoded address)
+		* Encoded as
+			<br>
+			<code>cpya temp, imm32</code>
+			<br>
+			<code>jmp temp</code>
+	* <b>calla</b> imm32
+		* Call absolute (to directly encoded address)
+		* Encoded as
+			<br>
+			<code>cpya temp, imm32</code>
+			<br>
+			<code>call temp</code>
+																																							

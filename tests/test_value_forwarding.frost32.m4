@@ -1,16 +1,16 @@
 define(`WAIT', 
 `	; Wait for a sufficient amount of time (test value forwarding)'
-`	add r0, r0, r0'
-`	add r0, r0, r0'
-`	add r0, r0, r0'
-`	add r0, r0, r0')dnl
+`	add zero, zero, zero'
+`	add zero, zero, zero'
+`	add zero, zero, zero'
+`	add zero, zero, zero')dnl
 dnl
 define(`HALT_SIM',
-`	; Four "add r0, r1, r2"'s in a row means "end the simulation"'
-`	add r0, r1, r2'
-`	add r0, r1, r2'
-`	add r0, r1, r2'
-`	add r0, r1, r2')dnl
+`	; Four "add zero, u0, u1"'s in a row means "end the simulation"'
+`	add zero, u0, u1'
+`	add zero, u0, u1'
+`	add zero, u0, u1'
+`	add zero, u0, u1')dnl
 dnl
 .org 0x0000
 main:
@@ -19,46 +19,46 @@ main:
 	; (assume actual memory size is 0x10000 bytes)
 	cpyi sp, 0xffff
 
-	cpyi r1, 1
-	cpyi r2, 2
-	cpyi r4, 0
-	cpyi r5, 0
-	cpyi r6, 0
-	cpyi r7, 0
+	cpyi u0, 1
+	cpyi u1, 2
+	cpyi u3, 0
+	cpyi u4, 0
+	cpyi u5, 0
+	cpyi u6, 0
 
-	cpyi r8, good - .
+	cpyi u7, good - .
 
 
-	; r4 should have 4 in it if we're good
-	cpyi r8, 4
+	; u3 should have 4 in it if we're good
+	cpyi u7, 4
 
 	WAIT()
 
 
 	; Test value forwarding
-	add r3, r1, r2
-	add r4, r3, r1
+	add u2, u0, u1
+	add u3, u2, u0
 
-	; r4 should now have 4 in it
+	; u3 should now have 4 in it
 
 
 	WAIT()
 
 
-	; Compare r4 to 4
-	;subi r5, r4, 4
-	sub r5, r4, r8
+	; Compare u3 to 4
+	;subi u4, u3, 4
+	sub u4, u3, u7
 
 	WAIT()
 
-	bne r5, fail
+	bne u4, zero, fail
 
 good:
-	cpyi r6, 0x9001
+	cpyi u5, 0x9001
 	bra done
 
 fail:
-	cpyi r6, 0x9002
+	cpyi u5, 0x9002
 
 
 done:

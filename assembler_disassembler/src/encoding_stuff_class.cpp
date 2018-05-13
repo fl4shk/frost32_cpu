@@ -18,18 +18,18 @@ EncodingStuff::EncodingStuff()
 
 	// Registers
 	u16 temp = 0;
-	__reg_names_map[cstm_strdup("r0")] = temp++;
-	__reg_names_map[cstm_strdup("r1")] = temp++;
-	__reg_names_map[cstm_strdup("r2")] = temp++;
-	__reg_names_map[cstm_strdup("r3")] = temp++;
-	__reg_names_map[cstm_strdup("r4")] = temp++;
-	__reg_names_map[cstm_strdup("r5")] = temp++;
-	__reg_names_map[cstm_strdup("r6")] = temp++;
-	__reg_names_map[cstm_strdup("r7")] = temp++;
-	__reg_names_map[cstm_strdup("r8")] = temp++;
-	__reg_names_map[cstm_strdup("r9")] = temp++;
-	__reg_names_map[cstm_strdup("r10")] = temp++;
-	__reg_names_map[cstm_strdup("r11")] = temp++;
+	__reg_names_map[cstm_strdup("zero")] = temp++;
+	__reg_names_map[cstm_strdup("u0")] = temp++;
+	__reg_names_map[cstm_strdup("u1")] = temp++;
+	__reg_names_map[cstm_strdup("u2")] = temp++;
+	__reg_names_map[cstm_strdup("u3")] = temp++;
+	__reg_names_map[cstm_strdup("u4")] = temp++;
+	__reg_names_map[cstm_strdup("u5")] = temp++;
+	__reg_names_map[cstm_strdup("u6")] = temp++;
+	__reg_names_map[cstm_strdup("u7")] = temp++;
+	__reg_names_map[cstm_strdup("u8")] = temp++;
+	__reg_names_map[cstm_strdup("u9")] = temp++;
+	__reg_names_map[cstm_strdup("u10")] = temp++;
 	__reg_names_map[cstm_strdup("temp")] = temp++;
 	__reg_names_map[cstm_strdup("lr")] = temp++;
 	__reg_names_map[cstm_strdup("fp")] = temp++;
@@ -90,21 +90,21 @@ EncodingStuff::EncodingStuff()
 
 	// Instruction Opcode Group 2
 	temp = 0;
-	__iog2_two_regs_map[cstm_strdup("jne")] = temp++;
-	__iog2_two_regs_map[cstm_strdup("jeq")] = temp++;
-	__iog2_two_regs_map[cstm_strdup("callne")] = temp++;
-	__iog2_two_regs_map[cstm_strdup("calleq")] = temp++;
+	__iog2_three_regs_map[cstm_strdup("jne")] = temp++;
+	__iog2_three_regs_map[cstm_strdup("jeq")] = temp++;
+	__iog2_three_regs_map[cstm_strdup("callne")] = temp++;
+	__iog2_three_regs_map[cstm_strdup("calleq")] = temp++;
 
 	// Instruction Opcode Group 3
 	temp = 0;
-	__iog3_two_regs_ldst_map[cstm_strdup("ldr")] = temp++;
-	__iog3_two_regs_ldst_map[cstm_strdup("ldh")] = temp++;
-	__iog3_two_regs_ldst_map[cstm_strdup("ldsh")] = temp++;
-	__iog3_two_regs_ldst_map[cstm_strdup("ldb")] = temp++;
-	__iog3_two_regs_ldst_map[cstm_strdup("ldsb")] = temp++;
-	__iog3_two_regs_ldst_map[cstm_strdup("str")] = temp++;
-	__iog3_two_regs_ldst_map[cstm_strdup("sth")] = temp++;
-	__iog3_two_regs_ldst_map[cstm_strdup("stb")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("ldr")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("ldh")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("ldsh")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("ldb")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("ldsb")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("str")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("sth")] = temp++;
+	__iog3_three_regs_ldst_map[cstm_strdup("stb")] = temp++;
 }
 
 
@@ -152,7 +152,7 @@ void EncodingStuff::get_iog1_instr_from_opcode(u32 opcode,
 void EncodingStuff::get_iog2_instr_from_opcode(u32 opcode, 
 	std::string*& instr_name, EncodingStuff::ArgsType& args_type) const
 {
-	DECODE_ITERATION(iog2_two_regs_map, ArgsType::TwoRegs);
+	DECODE_ITERATION(iog2_three_regs_map, ArgsType::ThreeRegs);
 
 	instr_name = cstm_strdup("unknown_instruction");
 	args_type = ArgsType::Unknown;
@@ -160,7 +160,7 @@ void EncodingStuff::get_iog2_instr_from_opcode(u32 opcode,
 void EncodingStuff::get_iog3_instr_from_opcode(u32 opcode, 
 	std::string*& instr_name, EncodingStuff::ArgsType& args_type) const
 {
-	DECODE_ITERATION(iog3_two_regs_ldst_map, ArgsType::TwoRegsLdst);
+	DECODE_ITERATION(iog3_three_regs_ldst_map, ArgsType::ThreeRegsLdst);
 
 	instr_name = cstm_strdup("unknown_instruction");
 	args_type = ArgsType::Unknown;

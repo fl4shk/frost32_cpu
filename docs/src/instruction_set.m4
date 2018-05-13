@@ -25,9 +25,9 @@ define(`NEWLINE',`<br>')dnl
 
 
 * General Purpose Registers (32-bit):
-	* MDCODE(r0) (always zero), MDCODE(r1), MDCODE(r2), MDCODE(r3), 
-	MDCODE(r4), MDCODE(r5), MDCODE(r6), MDCODE(r7),
-	MDCODE(r8), MDCODE(r9), MDCODE(r10), MDCODE(r11),
+	* MDCODE(zero) (always zero), MDCODE(u0), MDCODE(u1), MDCODE(u2), 
+	MDCODE(u3), MDCODE(u4), MDCODE(u5), MDCODE(u6),
+	MDCODE(u7), MDCODE(u8), MDCODE(u9), MDCODE(u10),
 NEWLINE()
 	MDCODE(temp) (assembler temporary (but can be used otherwise)), 
 NEWLINE()
@@ -106,9 +106,9 @@ NEWLINE()NEWLINE()
 			* OPCODE(0xc)
 		* BOLD(cpyhi) rA, imm16
 			* OPCODE(0xd)
-		* BOLD(bne) rA, simm16
+		* BOLD(bne) rA, rB, simm16
 			* OPCODE(0xe)
-		* BOLD(beq) rA, simm16
+		* BOLD(beq) rA, rB, simm16
 			* OPCODE(0xf)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0010)
@@ -118,13 +118,13 @@ NEWLINE()NEWLINE()
 		* MDCODE(c):  rC
 		* MDCODE(o):  opcode
 	* Instructions:
-		* BOLD(jne) rA, rB
+		* BOLD(jne) rA, rB, rC
 			* OPCODE(0b0000)
-		* BOLD(jeq) rA, rB
+		* BOLD(jeq) rA, rB, rC
 			* OPCODE(0b0001)
-		* BOLD(callne) rA, rB
+		* BOLD(callne) rA, rB, rC
 			* OPCODE(0b0010)
-		* BOLD(calleq) rA, rB
+		* BOLD(calleq) rA, rB, rC
 			* OPCODE(0b0011)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0011)
@@ -134,64 +134,64 @@ NEWLINE()NEWLINE()
 		* MDCODE(c):  rC
 		* MDCODE(o):  opcode
 	* Instructions:
-		* BOLD(ldr) rA, [rB]
+		* BOLD(ldr) rA, [rB, rC]
 			* OPCODE(0b0000)
-		* BOLD(ldh) rA, [rB]
+		* BOLD(ldh) rA, [rB, rC]
 			* OPCODE(0b0001)
-		* BOLD(ldsh) rA, [rB]
+		* BOLD(ldsh) rA, [rB, rC]
 			* OPCODE(0b0010)
-		* BOLD(ldb) rA, [rB]
+		* BOLD(ldb) rA, [rB, rC]
 			* OPCODE(0b0011)
-		* BOLD(ldsb) rA, [rB]
+		* BOLD(ldsb) rA, [rB, rC]
 			* OPCODE(0b0100)
-		* BOLD(str) rA, [rB]
+		* BOLD(str) rA, [rB, rC]
 			* OPCODE(0b0101)
-		* BOLD(sth) rA, [rB]
+		* BOLD(sth) rA, [rB, rC]
 			* OPCODE(0b0110)
-		* BOLD(stb) rA, [rB]
+		* BOLD(stb) rA, [rB, rC]
 			* OPCODE(0b0111)
 NEWLINE()NEWLINE()
 * Pseudo Instructions:
 	* BOLD(inv) rA, rB
-		* Encoded as CODE(`nor rA, rB, r0')
+		* Encoded as CODE(`nor rA, rB, zero')
 	* BOLD(invi) rA, imm16
-		* Encoded as CODE(`nori rA, r0, imm16')
+		* Encoded as CODE(`nori rA, zero, imm16')
 	* BOLD(cpy) rA, rB
-		* Encoded as CODE(`add rA, rB, r0')
+		* Encoded as CODE(`add rA, rB, zero')
 	* BOLD(cpy) rA, pc
 		* Encoded as CODE(`addsi rA, pc, 0')
 	* BOLD(cpyi) rA, imm16
-		* Encoded as CODE(`addi rA, r0, imm16')
+		* Encoded as CODE(`addi rA, zero, imm16')
 	* BOLD(cpya) rA, imm32
 		* Copy absolute (32-bit immediate)
 		* Encoded as 
 			NEWLINE()
-			CODE(`addi rA, r0, (imm32 & 0xffff)')
+			CODE(`addi rA, zero, (imm32 & 0xffff)')
 			NEWLINE()
 			CODE(`cpyhi rA, (imm32 >> 16)')
 	* BOLD(bra) simm16
 		* Unconditional relative branch
-		* Encoded as CODE(`beq r0, simm16')
-	* BOLD(jmp) rB
+		* Encoded as CODE(`beq zero, zero, simm16')
+	* BOLD(jmp) rC
 		* Unconditional jump to address in register
-		* Encoded as CODE(`jeq r0, rB')
-	* BOLD(call) rB
+		* Encoded as CODE(`jeq zero, zero, rC')
+	* BOLD(call) rC
 		* Unconditional call to address in register
-		* Encoded as CODE(`calleq r0, rB')
-	dnl * BOLD(jmpa) imm32
-	dnl 	* Jump absolute (to directly encoded address)
-	dnl 	* Encoded as
-	dnl 		NEWLINE()
-	dnl 		CODE(`cpya temp, imm32')
-	dnl 		NEWLINE()
-	dnl 		CODE(`jmp temp')
-	dnl * BOLD(calla) imm32
-	dnl 	* Call absolute (to directly encoded address)
-	dnl 	* Encoded as
-	dnl 		NEWLINE()
-	dnl 		CODE(`cpya temp, imm32')
-	dnl 		NEWLINE()
-	dnl 		CODE(`call temp')
+		* Encoded as CODE(`calleq zero, zero, rC')
+	* BOLD(jmpa) imm32
+		* Jump absolute (to directly encoded address)
+		* Encoded as
+			NEWLINE()
+			CODE(`cpya temp, imm32')
+			NEWLINE()
+			CODE(`jmp temp')
+	* BOLD(calla) imm32
+		* Call absolute (to directly encoded address)
+		* Encoded as
+			NEWLINE()
+			CODE(`cpya temp, imm32')
+			NEWLINE()
+			CODE(`call temp')
 	dnl * BOLD(bne) rA, rB, imm16
 	dnl 	* Relative branch if (rA != rB)
 	dnl 	* Encoded as

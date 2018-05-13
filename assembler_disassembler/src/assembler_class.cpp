@@ -257,8 +257,8 @@ antlrcpp::Any Assembler::visitInstruction
 	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1OneRegOneImm())
 	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp1Branch())
 
-	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp2())
-	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp3())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp2ThreeRegs())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp3ThreeRegsLdst())
 
 	else
 	{
@@ -465,25 +465,18 @@ antlrcpp::Any Assembler::visitInstrOpGrp1Branch
 		err(ctx, "visitInstrOpGrp1Branch():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog1_branch_map()
-		.at(pop_str());
-
-	//auto&& reg_encodings = get_reg_encodings(ctx);
+	auto&& reg_encodings = get_reg_encodings(ctx);
 
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
+	const auto raw_immediate = pop_num();
 
-	// This may need to be adjusted
-	const auto immediate = pop_num() - __pc.curr - sizeof(s32);
-
-	//encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
-	//	immediate);
-	encode_instr_opcode_group_1(get_one_reg_encoding
-		(ctx->TokReg()->toString()), 0x0, opcode, immediate);
+	__encode_relative_branch(*pop_str(), reg_encodings.at(0),
+		reg_encodings.at(1), raw_immediate);
 
 	return nullptr;
 }
-antlrcpp::Any Assembler::visitInstrOpGrp2
-	(AssemblerGrammarParser::InstrOpGrp2Context *ctx)
+antlrcpp::Any Assembler::visitInstrOpGrp2ThreeRegs
+	(AssemblerGrammarParser::InstrOpGrp2ThreeRegsContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameJne())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameJeq())
@@ -494,18 +487,18 @@ antlrcpp::Any Assembler::visitInstrOpGrp2
 		err(ctx, "visitInstrOpGrp2():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog2_two_regs_map()
+	const auto opcode = __encoding_stuff.iog2_three_regs_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
 	encode_instr_opcode_group_2(reg_encodings.at(0), reg_encodings.at(1),
-		0x0, opcode);
+		reg_encodings.at(2), opcode);
 
 	return nullptr;
 }
-antlrcpp::Any Assembler::visitInstrOpGrp3
-	(AssemblerGrammarParser::InstrOpGrp3Context *ctx)
+antlrcpp::Any Assembler::visitInstrOpGrp3ThreeRegsLdst
+	(AssemblerGrammarParser::InstrOpGrp3ThreeRegsLdstContext *ctx)
 {
 	ANY_PUSH_TOK_IF(ctx->TokInstrNameLdr())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLdh())
@@ -520,13 +513,13 @@ antlrcpp::Any Assembler::visitInstrOpGrp3
 		err(ctx, "visitInstrOpGrp3():  Eek!");
 	}
 
-	const auto opcode = __encoding_stuff.iog3_two_regs_ldst_map()
+	const auto opcode = __encoding_stuff.iog3_three_regs_ldst_map()
 		.at(pop_str());
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
 	encode_instr_opcode_group_3(reg_encodings.at(0), reg_encodings.at(1),
-		0x0, opcode);
+		reg_encodings.at(2), opcode);
 
 	return nullptr;
 }
@@ -537,16 +530,11 @@ antlrcpp::Any Assembler::visitPseudoInstrOpInv
 	(AssemblerGrammarParser::PseudoInstrOpInvContext *ctx)
 {
 	// inv rA, rB
-	// Encoded as "nor rA, rB, r0"
+	// Encoded as "nor rA, rB, zero"
 	if (ctx->TokPseudoInstrNameInv())
 	{
-		const auto opcode = __encoding_stuff
-			.iog0_three_regs_map().at(cstm_strdup("nor"));
-
 		auto&& reg_encodings = get_reg_encodings(ctx);
-
-		encode_instr_opcode_group_0(reg_encodings.at(0),
-			reg_encodings.at(1), 0x0, opcode);
+		__encode_inv(reg_encodings.at(0), reg_encodings.at(1));
 	}
 	else
 	{
@@ -559,17 +547,23 @@ antlrcpp::Any Assembler::visitPseudoInstrOpInvi
 	(AssemblerGrammarParser::PseudoInstrOpInviContext *ctx)
 {
 	// invi rA, imm16
-	// Encoded as "nori rA, r0, imm16"
+	// Encoded as "nori rA, zero, imm16"
 	if (ctx->TokPseudoInstrNameInvi())
 	{
-		const auto opcode = __encoding_stuff
-			.iog1_two_regs_one_imm_map().at(cstm_strdup("nori"));
+		//const auto opcode = __encoding_stuff
+		//	.iog1_two_regs_one_imm_map().at(cstm_strdup("nori"));
+
+		//ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		//const auto immediate = pop_num();
+
+		//encode_instr_opcode_group_1(get_one_reg_encoding
+		//	(ctx->TokReg()->toString()), 0x0, opcode, immediate);
 
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		encode_instr_opcode_group_1(get_one_reg_encoding
-			(ctx->TokReg()->toString()), 0x0, opcode, immediate);
+		__encode_invi(get_one_reg_encoding(ctx->TokReg()->toString()),
+			immediate);
 	}
 	else
 	{
@@ -584,24 +578,26 @@ antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
 	// cpy rA, rB
-	// Encoded as "add rA, rB, r0"
+	// Encoded as "add rA, rB, zero"
 	if (!ctx->TokPcReg())
 	{
-		const auto opcode = __encoding_stuff.iog0_three_regs_map()
-			.at(cstm_strdup("add"));
+		//const auto opcode = __encoding_stuff.iog0_three_regs_map()
+		//	.at(cstm_strdup("add"));
 
-		encode_instr_opcode_group_0(reg_encodings.at(0),
-			reg_encodings.at(1), 0x0, opcode);
+		//encode_instr_opcode_group_0(reg_encodings.at(0),
+		//	reg_encodings.at(1), 0x0, opcode);
+		__encode_cpy_ra_rb(reg_encodings.at(0), reg_encodings.at(1));
 	}
 	// cpy rA, pc
 	// Encoded as "addsi rA, pc, 0"
 	else if (ctx->TokPcReg())
 	{
-		const auto opcode = __encoding_stuff
-			.iog1_one_reg_one_pc_one_simm_map().at(cstm_strdup("addsi"));
+		//const auto opcode = __encoding_stuff
+		//	.iog1_one_reg_one_pc_one_simm_map().at(cstm_strdup("addsi"));
 
-		encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
-			0x0000);
+		//encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
+		//	0x0000);
+		__encode_cpy_ra_pc(reg_encodings.at(0));
 	}
 	else
 	{
@@ -614,17 +610,22 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCpyi
 	(AssemblerGrammarParser::PseudoInstrOpCpyiContext *ctx)
 {
 	// cpyi rA, imm16
-	// Encoded as "addi rA, r0, imm16"
+	// Encoded as "addi rA, zero, imm16"
 	if (ctx->TokPseudoInstrNameCpyi())
 	{
-		const auto opcode = __encoding_stuff
-			.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
+		//const auto opcode = __encoding_stuff
+		//	.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
 
+		//ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		//const auto immediate = pop_num();
+
+		//encode_instr_opcode_group_1(get_one_reg_encoding
+		//	(ctx->TokReg()->toString()), 0x0, opcode, immediate);
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		encode_instr_opcode_group_1(get_one_reg_encoding
-			(ctx->TokReg()->toString()), 0x0, opcode, immediate);
+		__encode_cpyi(get_one_reg_encoding(ctx->TokReg()->toString()), 
+			immediate);
 	}
 	else
 	{
@@ -640,29 +641,16 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCpya
 	// Copy absolute (32-bit immediate)
 	// Encoded as 
 	// "
-	// addi rA, r0, (imm32 & 0xffff)
+	// addi rA, zero, (imm32 & 0xffff)
 	// cpyhi rA, (imm32 >> 16)
 	// "
 	if (ctx->TokPseudoInstrNameCpya())
 	{
-		const auto first_opcode = __encoding_stuff
-			.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
-		const auto second_opcode = __encoding_stuff
-			.iog1_one_reg_one_imm_map().at(cstm_strdup("cpyhi"));
-
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		const auto reg_a_index = get_one_reg_encoding(ctx->TokReg()
-			->toString());
-
-		// addi rA, r0, (imm32 & 0xffff)
-		encode_instr_opcode_group_1(reg_a_index, 0x0, first_opcode,
+		__encode_cpya(get_one_reg_encoding(ctx->TokReg()->toString()), 
 			immediate);
-
-		// cpyhi rA, (imm32 >> 16)
-		encode_instr_opcode_group_1(reg_a_index, 0x0, second_opcode,
-			(immediate >> 16));
 	}
 	else
 	{
@@ -676,18 +664,24 @@ antlrcpp::Any Assembler::visitPseudoInstrOpBra
 {
 	// bra imm16
 	// Unconditional relative branch
-	// Encoded as "beq r0, simm16"
+	// Encoded as "beq zero, zero, simm16"
 	if (ctx->TokPseudoInstrNameBra())
 	{
-		const auto opcode = __encoding_stuff.iog1_branch_map()
-			.at(cstm_strdup("beq"));
+		//const auto opcode = __encoding_stuff.iog1_branch_map()
+		//	.at(cstm_strdup("beq"));
+
+		//ANY_JUST_ACCEPT_BASIC(ctx->expr());
+
+		//// This may need to be adjusted
+		//const auto immediate = pop_num() - __pc.curr - sizeof(s32);
+
+		//encode_instr_opcode_group_1(0x0, 0x0, opcode, immediate);
 
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		const auto raw_immediate = pop_num();
 
-		// This may need to be adjusted
-		const auto immediate = pop_num() - __pc.curr - sizeof(s32);
-
-		encode_instr_opcode_group_1(0x0, 0x0, opcode, immediate);
+		__encode_relative_branch(std::string("beq"), 0x0, 0x0,
+			raw_immediate);
 	}
 	else
 	{
@@ -699,16 +693,19 @@ antlrcpp::Any Assembler::visitPseudoInstrOpBra
 antlrcpp::Any Assembler::visitPseudoInstrOpJmp
 	(AssemblerGrammarParser::PseudoInstrOpJmpContext *ctx)
 {
-	// jmp rB
+	// jmp rC
 	// Unconditional jump to address in register
-	// Encoded as "jeq r0, rB"
+	// Encoded as "jeq zero, zero, rC"
 	if (ctx->TokPseudoInstrNameJmp())
 	{
-		const auto opcode = __encoding_stuff.iog2_two_regs_map()
-			.at(cstm_strdup("jeq"));
+		//const auto opcode = __encoding_stuff.iog2_three_regs_map()
+		//	.at(cstm_strdup("jeq"));
 
-		encode_instr_opcode_group_2(0x0, 
-			get_one_reg_encoding(ctx->TokReg()->toString()), 0x0, opcode);
+		//encode_instr_opcode_group_2(0x0, 0x0,
+		//	get_one_reg_encoding(ctx->TokReg()->toString()), opcode);
+
+		__encode_jeq(0x0, 0x0,
+			get_one_reg_encoding(ctx->TokReg()->toString()));
 	}
 	else
 	{
@@ -720,20 +717,71 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmp
 antlrcpp::Any Assembler::visitPseudoInstrOpCall
 	(AssemblerGrammarParser::PseudoInstrOpCallContext *ctx)
 {
-	// call rB
+	// call rC
 	// Unconditional call to address in register
-	// Encoded as "calleq r0, rB"
+	// Encoded as "calleq zero, zero, rC"
 	if (ctx->TokPseudoInstrNameCall())
 	{
-		const auto opcode = __encoding_stuff.iog2_two_regs_map()
-			.at(cstm_strdup("calleq"));
+		//const auto opcode = __encoding_stuff.iog2_three_regs_map()
+		//	.at(cstm_strdup("calleq"));
 
-		encode_instr_opcode_group_2(0x0, 
-			get_one_reg_encoding(ctx->TokReg()->toString()), 0x0, opcode);
+		//encode_instr_opcode_group_2(0x0, 0x0,
+		//	get_one_reg_encoding(ctx->TokReg()->toString()), opcode);
+
+		__encode_calleq(0x0, 0x0,
+			get_one_reg_encoding(ctx->TokReg()->toString()));
 	}
 	else
 	{
 		err(ctx, "visitPseudoInstrOpCall():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpJmpa
+	(AssemblerGrammarParser::PseudoInstrOpJmpaContext *ctx)
+{
+	// jmpa imm32
+	// Encoded as 
+	// "
+	// cpya temp, imm32
+	// jmp temp
+	// "
+	if (ctx->TokPseudoInstrNameJmpa())
+	{
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		const auto immediate = pop_num();
+
+		__encode_cpya(__get_reg_temp_index(), immediate);
+		__encode_jeq(0x0, 0x0, __get_reg_temp_index());
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpCalla():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitPseudoInstrOpCalla
+	(AssemblerGrammarParser::PseudoInstrOpCallaContext *ctx)
+{
+	// calla imm32
+	// Encoded as 
+	// "
+	// cpya temp, imm32
+	// call temp
+	// "
+	if (ctx->TokPseudoInstrNameCalla())
+	{
+		ANY_JUST_ACCEPT_BASIC(ctx->expr());
+		const auto immediate = pop_num();
+
+		__encode_cpya(__get_reg_temp_index(), immediate);
+		__encode_calleq(0x0, 0x0, __get_reg_temp_index());
+	}
+	else
+	{
+		err(ctx, "visitPseudoInstrOpCalla():  Eek!");
 	}
 
 	return nullptr;
@@ -1192,6 +1240,8 @@ antlrcpp::Any Assembler::visitPseudoInstrName
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameBra())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameJmp())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCall())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameJmpa())
+	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCalla())
 	else
 	{
 		err(ctx, "visitPseudoInstrName():  Eek!");
@@ -1269,4 +1319,114 @@ antlrcpp::Any Assembler::visitCurrPc
 {
 	push_num(__pc.curr);
 	return nullptr;
+}
+
+void Assembler::__encode_inv(u32 reg_a_index, u32 reg_b_index)
+{
+	// inv rA, rB
+	// Encoded as "nor rA, rB, zero"
+
+	const auto opcode = __encoding_stuff.iog0_three_regs_map()
+		.at(cstm_strdup("nor"));
+
+	//auto&& reg_encodings = get_reg_encodings(ctx);
+
+	//encode_instr_opcode_group_0(reg_encodings.at(0),
+	//	reg_encodings.at(1), 0x0, opcode);
+	encode_instr_opcode_group_0(reg_a_index, reg_b_index, 0x0, opcode);
+}
+void Assembler::__encode_invi(u32 reg_a_index, s64 immediate)
+{
+	// invi rA, imm16
+	// Encoded as "nori rA, zero, imm16"
+	const auto opcode = __encoding_stuff
+		.iog1_two_regs_one_imm_map().at(cstm_strdup("nori"));
+	encode_instr_opcode_group_1(reg_a_index, 0x0, opcode, immediate);
+}
+void Assembler::__encode_cpy_ra_rb(u32 reg_a_index, u32 reg_b_index)
+{
+	const auto opcode = __encoding_stuff.iog0_three_regs_map()
+		.at(cstm_strdup("add"));
+
+	//encode_instr_opcode_group_0(reg_encodings.at(0),
+	//	reg_encodings.at(1), 0x0, opcode);
+	encode_instr_opcode_group_0(reg_a_index, reg_b_index, 0x0, opcode);
+}
+void Assembler::__encode_cpy_ra_pc(u32 reg_a_index)
+{
+	const auto opcode = __encoding_stuff
+		.iog1_one_reg_one_pc_one_simm_map().at(cstm_strdup("addsi"));
+
+	encode_instr_opcode_group_1(reg_a_index, 0x0, opcode, 0x0000);
+}
+void Assembler::__encode_cpyi(u32 reg_a_index, s64 immediate)
+{
+	// addi rA, zero, (immediate & 0xffff)
+	const auto first_opcode = __encoding_stuff
+		.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
+	encode_instr_opcode_group_1(reg_a_index, 0x0, first_opcode,
+		immediate);
+}
+void Assembler::__encode_cpya(u32 reg_a_index, s64 immediate)
+{
+	// addi rA, zero, (imm32 & 0xffff)
+	__encode_cpyi(reg_a_index, immediate);
+
+	// cpyhi rA, (imm32 >> 16)
+	const auto second_opcode = __encoding_stuff
+		.iog1_one_reg_one_imm_map().at(cstm_strdup("cpyhi"));
+	encode_instr_opcode_group_1(reg_a_index, 0x0, second_opcode,
+		(immediate >> 16));
+}
+void Assembler::__encode_relative_branch(const std::string& instr_name, 
+	u32 reg_a_index, u32 reg_b_index, s64 raw_immediate)
+{
+	const auto opcode = __encoding_stuff.iog1_branch_map()
+		.at(cstm_strdup(instr_name));
+
+	// This may need to be adjusted
+	const auto immediate = raw_immediate - __pc.curr - sizeof(s32);
+
+	encode_instr_opcode_group_1(reg_a_index, reg_b_index, opcode, 
+		immediate);
+}
+void Assembler::__encode_jne(u32 reg_a_index, u32 reg_b_index, 
+	u32 reg_c_index)
+{
+	const auto opcode = __encoding_stuff.iog2_three_regs_map()
+		.at(cstm_strdup("jne"));
+
+	encode_instr_opcode_group_2(reg_a_index, reg_b_index, reg_c_index, 
+		opcode);
+}
+void Assembler::__encode_jeq(u32 reg_a_index, u32 reg_b_index, 
+	u32 reg_c_index)
+{
+	const auto opcode = __encoding_stuff.iog2_three_regs_map()
+		.at(cstm_strdup("jeq"));
+
+	encode_instr_opcode_group_2(reg_a_index, reg_b_index, reg_c_index, 
+		opcode);
+}
+void Assembler::__encode_callne(u32 reg_a_index, u32 reg_b_index, 
+	u32 reg_c_index)
+{
+	const auto opcode = __encoding_stuff.iog2_three_regs_map()
+		.at(cstm_strdup("callne"));
+
+	encode_instr_opcode_group_2(reg_a_index, reg_b_index, reg_c_index, 
+		opcode);
+}
+void Assembler::__encode_calleq(u32 reg_a_index, u32 reg_b_index, 
+	u32 reg_c_index)
+{
+	const auto opcode = __encoding_stuff.iog2_three_regs_map()
+		.at(cstm_strdup("calleq"));
+
+	encode_instr_opcode_group_2(reg_a_index, reg_b_index, reg_c_index, 
+		opcode);
+}
+u32 Assembler::__get_reg_temp_index() const
+{
+	return __encoding_stuff.reg_names_map().at(cstm_strdup("temp"));
 }

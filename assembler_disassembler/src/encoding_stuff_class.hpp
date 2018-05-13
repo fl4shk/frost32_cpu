@@ -19,7 +19,7 @@ public:		// enums
 		OneRegOneImm,
 		Branch,
 
-		TwoRegsLdst,
+		ThreeRegsLdst,
 
 		Unknown,
 	};
@@ -39,8 +39,8 @@ private:		// variables
 	MapType __iog1_one_reg_one_imm_map;
 	MapType __iog1_branch_map;
 
-	MapType __iog2_two_regs_map;
-	MapType __iog3_two_regs_ldst_map;
+	MapType __iog2_three_regs_map;
+	MapType __iog3_three_regs_ldst_map;
 
 public:		// functions
 	EncodingStuff();
@@ -56,8 +56,8 @@ public:		// functions
 	gen_getter_by_con_ref(iog1_one_reg_one_imm_map);
 	gen_getter_by_con_ref(iog1_branch_map);
 
-	gen_getter_by_con_ref(iog2_two_regs_map);
-	gen_getter_by_con_ref(iog3_two_regs_ldst_map);
+	gen_getter_by_con_ref(iog2_three_regs_map);
+	gen_getter_by_con_ref(iog3_three_regs_ldst_map);
 
 	std::string* decode_reg_name(u32 reg_index) const;
 	void get_iog0_instr_from_opcode(u32 opcode, std::string*& instr_name,

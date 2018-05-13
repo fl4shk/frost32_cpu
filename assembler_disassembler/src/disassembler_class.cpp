@@ -158,9 +158,9 @@ antlrcpp::Any Disassembler::visitLine
 						"0x", immediate, std::dec);
 					break;
 
-				case EncodingStuff::ArgsType::TwoRegsLdst:
+				case EncodingStuff::ArgsType::ThreeRegsLdst:
 					printout(*instr_name, " ", *reg_a_name, ", ", 
-						"[", *reg_b_name, "]");
+						"[", *reg_b_name, ", ", *reg_c_name, "]");
 					break;
 
 				case EncodingStuff::ArgsType::Unknown:

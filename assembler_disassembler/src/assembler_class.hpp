@@ -180,10 +180,10 @@ private:		// visitor functions
 		(AssemblerGrammarParser::InstrOpGrp1OneRegOneImmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1Branch
 		(AssemblerGrammarParser::InstrOpGrp1BranchContext *ctx);
-	antlrcpp::Any visitInstrOpGrp2
-		(AssemblerGrammarParser::InstrOpGrp2Context *ctx);
-	antlrcpp::Any visitInstrOpGrp3
-		(AssemblerGrammarParser::InstrOpGrp3Context *ctx);
+	antlrcpp::Any visitInstrOpGrp2ThreeRegs
+		(AssemblerGrammarParser::InstrOpGrp2ThreeRegsContext *ctx);
+	antlrcpp::Any visitInstrOpGrp3ThreeRegsLdst
+		(AssemblerGrammarParser::InstrOpGrp3ThreeRegsLdstContext *ctx);
 
 	// pseudoInstruction:
 	antlrcpp::Any visitPseudoInstrOpInv
@@ -202,6 +202,10 @@ private:		// visitor functions
 		(AssemblerGrammarParser::PseudoInstrOpJmpContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpCall
 		(AssemblerGrammarParser::PseudoInstrOpCallContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpJmpa
+		(AssemblerGrammarParser::PseudoInstrOpJmpaContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpCalla
+		(AssemblerGrammarParser::PseudoInstrOpCallaContext *ctx);
 
 
 	// directive:
@@ -301,6 +305,23 @@ private:		// functions
 
 	gen_getter_and_setter_by_val(pc);
 	gen_getter_by_ref(sym_tbl);
+
+	void __encode_inv(u32 reg_a_index, u32 reg_b_index);
+	void __encode_invi(u32 reg_a_index, s64 immediate);
+	void __encode_cpy_ra_rb(u32 reg_a_index, u32 reg_b_index);
+	void __encode_cpy_ra_pc(u32 reg_a_index);
+	void __encode_cpyi(u32 reg_a_index, s64 immediate);
+	void __encode_cpya(u32 reg_a_index, s64 immediate);
+	void __encode_relative_branch(const std::string& instr_name, 
+		u32 reg_a_index, u32 reg_b_index, s64 raw_immediate);
+	void __encode_jne(u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
+	void __encode_jeq(u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
+	void __encode_callne(u32 reg_a_index, u32 reg_b_index, 
+		u32 reg_c_index);
+	void __encode_calleq(u32 reg_a_index, u32 reg_b_index, 
+		u32 reg_c_index);
+
+	u32 __get_reg_temp_index() const;
 
 };
 

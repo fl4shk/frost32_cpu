@@ -34,8 +34,8 @@ instruction:
 	| instrOpGrp1OneRegOneImm
 	| instrOpGrp1Branch
 
-	| instrOpGrp2
-	| instrOpGrp3
+	| instrOpGrp2ThreeRegs
+	| instrOpGrp3ThreeRegsLdst
 	;
 
 instrOpGrp0ThreeRegs:
@@ -80,21 +80,21 @@ instrOpGrp1OneRegOneImm:
 // Branches must be separate because they're pc-relative
 instrOpGrp1Branch:
 	(TokInstrNameBne | TokInstrNameBeq)
-	TokReg TokComma expr
+	TokReg TokComma TokReg TokComma expr
 	;
 
-instrOpGrp2:
+instrOpGrp2ThreeRegs:
 	(TokInstrNameJne | TokInstrNameJeq 
 	| TokInstrNameCallne | TokInstrNameCalleq)
-	TokReg TokComma TokReg
+	TokReg TokComma TokReg TokComma TokReg
 	;
 
-instrOpGrp3:
+instrOpGrp3ThreeRegsLdst:
 	(TokInstrNameLdr
 	| TokInstrNameLdh | TokInstrNameLdsh
 	| TokInstrNameLdb | TokInstrNameLdsb
 	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
-	TokReg TokComma TokLBracket TokReg TokRBracket
+	TokReg TokComma TokLBracket TokReg TokComma TokReg TokRBracket
 	;
 
 pseudoInstruction:
@@ -106,6 +106,8 @@ pseudoInstruction:
 	| pseudoInstrOpBra
 	| pseudoInstrOpJmp
 	| pseudoInstrOpCall
+	| pseudoInstrOpJmpa
+	| pseudoInstrOpCalla
 	;
 
 pseudoInstrOpInv:
@@ -145,6 +147,14 @@ pseudoInstrOpJmp:
 pseudoInstrOpCall:
 	TokPseudoInstrNameCall
 	TokReg
+	;
+pseudoInstrOpJmpa:
+	TokPseudoInstrNameJmpa
+	expr
+	;
+pseudoInstrOpCalla:
+	TokPseudoInstrNameCalla
+	expr
 	;
 
 // Assembler directives 
@@ -269,8 +279,9 @@ pseudoInstrName:
 	(TokPseudoInstrNameInv | TokPseudoInstrNameInvi
 	| TokPseudoInstrNameCpy 
 	| TokPseudoInstrNameCpyi | TokPseudoInstrNameCpya
-	| TokPseudoInstrNameBra | TokPseudoInstrNameJmp
-	| TokPseudoInstrNameCall)
+	| TokPseudoInstrNameBra 
+	| TokPseudoInstrNameJmp | TokPseudoInstrNameCall
+	| TokPseudoInstrNameJmpa | TokPseudoInstrNameCalla)
 	;
 
 numExpr: TokDecNum | TokHexNum | TokBinNum;
@@ -353,6 +364,8 @@ TokPseudoInstrNameCpya: 'cpya' ;
 TokPseudoInstrNameBra: 'bra' ;
 TokPseudoInstrNameJmp: 'jmp' ;
 TokPseudoInstrNameCall: 'call' ;
+TokPseudoInstrNameJmpa: 'jmpa' ;
+TokPseudoInstrNameCalla: 'calla' ;
 
 // Directives
 TokDotOrg: '.org' ;
@@ -376,9 +389,9 @@ TokNewline: '\n' ;
 
 
 TokReg:
-	('r0' | 'r1' | 'r2' | 'r3'
-	| 'r4' | 'r5' | 'r6' | 'r7'
-	| 'r8' | 'r9' | 'r10' | 'r11'
+	('zero' | 'u0' | 'u1' | 'u2'
+	| 'u3' | 'u4' | 'u5' | 'u6'
+	| 'u7' | 'u8' | 'u9' | 'u10'
 	| 'temp' | 'lr' | 'fp' | 'sp')
 	;
 
