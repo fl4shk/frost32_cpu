@@ -105,8 +105,8 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 
 	Addsi_OneRegOnePcOneImm,
 	Cpyhi_OneRegOneImm,
-	Bne_TwoRegsOneImm,
-	Beq_TwoRegsOneImm
+	Bne_TwoRegsOneSimm,
+	Beq_TwoRegsOneSimm
 } Iog1Oper;
 
 typedef enum logic [`MSB_POS__INSTR_OPER:0]
@@ -152,7 +152,7 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 	Bad4_Iog3,
 	Bad5_Iog3,
 	Bad6_Iog3,
-	Bad7_Iog3,
+	Bad7_Iog3
 
 } Iog3Oper;
 

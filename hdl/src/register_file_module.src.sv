@@ -23,21 +23,32 @@ module RegisterFile(input logic clk,
 		for (int i=0; i<__ARR_SIZE__NUM_REGISTERS; ++i)
 		begin
 			__regfile[i] = 0;
+			//__regfile[i] = i;
 		end
 	end
 
 	generate
 		genvar i;
 
-		for (i=0; i<`ARR_SIZE__REG_FILE_NUM_PORTS; i = i + 1)
-		begin
+		for (i=0; i<`WIDTH__REG_FILE_NUM_PORTS; i=i+1)
+		begin : __generate_reg_file_read
 			always_comb
-			begin : haha_alright_yeah
-				out.read_data[i] = __regfile[in.read_sel[i]];
+			begin
+				if (in.write_en && (in.write_sel == in.read_sel[i])
+					&& (in.write_sel != 0))
+				begin
+					out.read_data[i] = in.write_data;
+				end
+
+				else
+				begin
+					out.read_data[i] = __regfile[in.read_sel[i]];
+				end
+
+				//out.read_data[i] = __regfile[in.read_sel[i]];
 			end
 		end
 	endgenerate
-
 
 	always_ff @ (posedge clk)
 	begin
@@ -46,5 +57,4 @@ module RegisterFile(input logic clk,
 			__regfile[in.write_sel] <= in.write_data;
 		end
 	end
-
 endmodule

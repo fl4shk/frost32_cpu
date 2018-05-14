@@ -41,4 +41,4 @@ reminder:
 
 .PHONY : clean
 clean:  
-	rm -rf $(PROJ).vvp $(PROJ).vhd $(PROJ).E
+	rm -rf $(PROJ).vvp $(PROJ).vhd $(PROJ).E types_vhdl.taghl

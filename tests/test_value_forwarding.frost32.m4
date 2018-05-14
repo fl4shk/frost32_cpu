@@ -55,10 +55,14 @@ main:
 
 good:
 	cpyi u5, 0x9001
+
+	WAIT()
+
 	bra done
 
 fail:
 	cpyi u5, 0x9002
+	WAIT()
 
 
 done:
@@ -72,6 +76,7 @@ done:
 
 quit:
 {
+	WAIT()
 	HALT_SIM()
 	bra quit
 }

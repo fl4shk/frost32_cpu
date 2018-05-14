@@ -10,21 +10,20 @@
 //
 //endmodule
 
-module TestInstrDecoder;
+//module TestInstrDecoder;
+//
+//	parameter __ARR_SIZE__MAX_NUM_INSTRUCTIONS = 1 << 16;
+//	parameter __LAST_INDEX__MAX_NUM_INSTRUCTIONS 
+//		= `ARR_SIZE_TO_LAST_INDEX(__ARR_SIZE__MAX_NUM_INSTRUCTIONS);
+//
+//	logic [`MSB_POS__INSTRUCTION:0] 
+//		__instructions[0 : __LAST_INDEX__MAX_NUM_INSTRUCTIONS];
+//
+//	initial
+//	begin
+//		$readmemh("instructions.txt.ignore", __instructions);
+//	end
+//
+//
+//endmodule
 
-	parameter __ARR_SIZE__MAX_NUM_INSTRUCTIONS = 1024;
-	parameter __LAST_INDEX__MAX_NUM_INSTRUCTIONS 
-		= `ARR_SIZE_TO_LAST_INDEX(__ARR_SIZE__MAX_NUM_INSTRUCTIONS);
-
-	logic [`MSB_POS__INSTRUCTION:0] 
-		__instructions[0 : __LAST_INDEX__MAX_NUM_INSTRUCTIONS];
-
-	initial
-	begin
-		$readmemh("instructions.txt.ignore", __instructions);
-	end
-
-
-
-	// Stuffs!
-endmodule
