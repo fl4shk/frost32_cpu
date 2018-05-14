@@ -19,6 +19,7 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index, rc_index;
 	logic [`MSB_POS__INSTR_OP_GROUP:0] opcode;
 	logic [`MSB_POS__INSTR_IMM_VALUE:0] imm_val;
+	logic causes_stall;
 } PortOut_InstrDecoder;
 
 typedef struct packed

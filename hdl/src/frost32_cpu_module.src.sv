@@ -28,28 +28,42 @@ module Frost32Cpu(input logic clk,
 		// that in a **generally** synthesizeable way.
 		logic [`MSB_POS__FROST32_CPU_DECODE_STAGE_STALL_COUNTER:0]
 			stall_counter;
+
+		//logic [`MSB_POS__FROST32_CPU_STATE:0] stall_state;
 	} __stage_instr_decode_data;
 
-	// Data output by or used by the execute stage
+	// Data input to the execute stage
 	struct packed
 	{
 		logic [`MSB_POS__REG_FILE_DATA:0] rfile_ra_data, rfile_rb_data,
 			rfile_rc_data;
 
-		logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
-	} __stage_execute_data;
+		//logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
+	} __stage_execute_input_data;
 
-	// Data input to the write back stage
+	// Data input to the write back stage (output
 	struct packed
 	{
+		// These are written
 		logic [`MSB_POS__REG_FILE_DATA:0] rfile_ra_data, rfile_rb_data,
 			rfile_rc_data;
+	} __stage_write_back_input_data;
 
+	
+	// Data output from the write back stage ("ahead" to the instruction
+	// decode stage)
+	struct packed
+	{
+		// The next program counter for instructions that stall (read by
+		// the instruction decode stage for updating the program counter in
+		// the case of these instructions)
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
-	} __stage_write_back_data;
+	} __stage_write_back_output_data;
 
 	struct packed
 	{
+		// The program counter (written to ONLY by the instruction decode
+		// stage)
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] pc;
 	} __locals;
 
@@ -83,17 +97,22 @@ module Frost32Cpu(input logic clk,
 		__multi_stage_data_0.instr_imm_val,
 		__multi_stage_data_0.instr_group,
 		__multi_stage_data_0.instr_opcode,
+		__multi_stage_data_0.instr_causes_stall,
 		__multi_stage_data_0.pc_val}
 		= {__out_instr_decoder.ra_index, __out_instr_decoder.rb_index,
 		__out_instr_decoder.rc_index, __out_instr_decoder.imm_val,
 		__out_instr_decoder.group, __out_instr_decoder.opcode,
-		__locals.pc};
+		__out_instr_decoder.causes_stall, __locals.pc};
+
+	assign __stage_execute_input_data.rfile_ra_data 
+		= __out_reg_file.read_data_ra;
+	assign __stage_execute_input_data.rfile_rb_data 
+		= __out_reg_file.read_data_rb;
+	assign __stage_execute_input_data.rfile_rc_data 
+		= __out_reg_file.read_data_rc;
 
 
 	// Tasks and functions
-	//function logic in_stall();
-	//	return (__stage_instr_decode_data.stall_counter != 0);
-	//endfunction
 
 	task prep_mem_read;
 		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
@@ -153,7 +172,10 @@ module Frost32Cpu(input logic clk,
 		__multi_stage_data_1 = 0;
 		__multi_stage_data_2 = 0;
 
-		{__stage_instr_decode_data, __stage_execute_data} = 0;
+		//{__stage_instr_decode_data, __stage_execute_input_data} = 0;
+		__stage_instr_decode_data = 0;
+		__stage_write_back_input_data = 0;
+		__stage_write_back_output_data = 0;
 		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
 
 		// Prepare a read from memory
@@ -163,7 +185,8 @@ module Frost32Cpu(input logic clk,
 		out.data_inout_access_size = PkgFrost32Cpu::Dias32;
 		out.req_mem_access = 1;
 
-		__stage_instr_decode_data.stall_counter = 3;
+		__stage_instr_decode_data.stall_counter = 0;
+		//__stage_instr_decode_data.stall_state = PkgFrost32Cpu::StInit;
 	end
 
 	// Stage 0:  Instruction Decode
@@ -173,6 +196,35 @@ module Frost32Cpu(input logic clk,
 		begin
 			__stage_instr_decode_data.stall_counter
 				<= __stage_instr_decode_data.stall_counter - 1;
+
+			// The last stall_counter value before it hits zero.
+			if (__stage_instr_decode_data.stall_counter == 1)
+			begin
+				//case (__stage_instr_decode_data.state)
+				//	PkgFrost32Cpu::StInit:
+				//	begin
+				//		// Do nothing
+				//	end
+
+				//	PkgFrost32Cpu::StMulDiv:
+				//	begin
+				//		// Not using this yet
+				//	end
+
+				//	PkgFrost32Cpu::StCtrlFlow:
+				//	begin
+				//	end
+
+				//	PkgFrost32Cpu::StMemAccess:
+				//	begin
+				//	end
+				//endcase
+
+				//prep_mem_read
+				__locals.pc <= __stage_write_back_output_data.next_pc;
+
+				// The write-back stage will perform prep_mem_read()
+			end
 		end
 
 		else // if (__stage_instr_decode_data.stall_counter == 0)
@@ -180,12 +232,20 @@ module Frost32Cpu(input logic clk,
 			// Update the program counter via owner computes (only this
 			// always_ff block can perform an actual change to the program
 			// counter).
+			if (!__multi_stage_data_0.instr_causes_stall)
+			begin
+				// Every instruction is 4 bytes long
+				__locals.pc <= __locals.pc + 4;
+			end
 
-			// Every instruction is 4 bytes long
-			__locals.pc <= __locals.pc + 4;
+			// For now, (before multiplication is implemented for real),
+			// assume that all multi-cycle instructions actually take three
+			// cycles (thus set the stall_counter to 3)
+			else // if (__multi_stage_data_0.instr_causes_stall)
+			begin
+				__stage_instr_decode_data.stall_counter <= 3;
+			end
 		end
-
-		__multi_stage_data_1 <= __multi_stage_data_0;
 	end
 
 	// Stage 1:  Execute
@@ -213,8 +273,9 @@ module Frost32Cpu(input logic clk,
 					begin
 						// Temporarily pretend that 32-bit multiplies using
 						// * are synthesizeable
-						prep_ra_write(__stage_write_back_data.rfile_rb_data
-							* __stage_write_back_data.rfile_rc_data);
+						prep_ra_write
+							(__stage_write_back_input_data.rfile_rb_data
+							* __stage_write_back_input_data.rfile_rc_data);
 					end
 				end
 
@@ -239,8 +300,10 @@ module Frost32Cpu(input logic clk,
 					begin
 						// Temporarily pretend that 32-bit multiplies using
 						// * are synthesizeable
-						prep_ra_write(__stage_write_back_data.rfile_rb_data
-							* {16'h0000, __stage_write_back_data.imm_val});
+						prep_ra_write
+							(__stage_write_back_input_data.rfile_rb_data
+							* {16'h0000, 
+							__stage_write_back_input_data.imm_val});
 					end
 				end
 
@@ -249,7 +312,7 @@ module Frost32Cpu(input logic clk,
 				begin
 					// "cpyhi" does not change the lower 15 bits of rA
 					prep_ra_write({__multi_stage_data_2.instr_imm_val,
-						__stage_write_back_data.rfile_ra_data[15:0]});
+						__stage_write_back_input_data.rfile_ra_data[15:0]});
 				end
 
 				else if (__multi_stage_data_2.instr_opcode

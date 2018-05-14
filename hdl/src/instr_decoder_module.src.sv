@@ -31,6 +31,7 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = __iog0_instr.rc_index;
 				out.opcode = __iog0_instr.opcode;
 				out.imm_val = 0;
+				out.causes_stall = 0;
 			end
 
 			// Group 1
@@ -42,6 +43,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = 0;
 				out.opcode = __iog1_instr.opcode;
 				out.imm_val = __iog1_instr.imm_val;
+
+				out.causes_stall 
+					= (out.opcode >= PkgInstrDecoder::Bne_TwoRegsOneSimm);
 			end
 
 			// Group 2
@@ -53,6 +57,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = __iog2_instr.rc_index;
 				out.opcode = __iog2_instr.opcode;
 				out.imm_val = 0;
+
+				out.causes_stall
+					= (out.opcode <= PkgInstrDecoder::Calleq_ThreeRegs);
 			end
 
 			// Group 3
@@ -64,6 +71,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = __iog3_instr.rc_index;
 				out.opcode = __iog3_instr.opcode;
 				out.imm_val = 0;
+
+				out.causes_stall
+					= (out.opcode <= PkgInstrDecoder::Stb_ThreeRegsLdst);
 			end
 
 			default:
