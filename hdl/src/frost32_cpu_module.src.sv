@@ -29,7 +29,7 @@ module Frost32Cpu(input logic clk,
 		logic [`MSB_POS__FROST32_CPU_DECODE_STAGE_STALL_COUNTER:0]
 			stall_counter;
 
-		//logic [`MSB_POS__FROST32_CPU_STATE:0] stall_state;
+		logic [`MSB_POS__FROST32_CPU_STATE:0] stall_state;
 	} __stage_instr_decode_data;
 
 	// Data input to the execute stage
@@ -41,10 +41,18 @@ module Frost32Cpu(input logic clk,
 		//logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
 	} __stage_execute_input_data;
 
+	struct packed
+	{
+		// The next program counter for instructions that stall (read by
+		// the instruction decode stage for updating the program counter in
+		// the case of these instructions)
+		logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
+	} __stage_execute_output_data;
+
 	// Data input to the write back stage (output
 	struct packed
 	{
-		// These are written
+		// These are written by the execute stage
 		logic [`MSB_POS__REG_FILE_DATA:0] rfile_ra_data, rfile_rb_data,
 			rfile_rc_data;
 	} __stage_write_back_input_data;
@@ -54,10 +62,7 @@ module Frost32Cpu(input logic clk,
 	// decode stage)
 	struct packed
 	{
-		// The next program counter for instructions that stall (read by
-		// the instruction decode stage for updating the program counter in
-		// the case of these instructions)
-		logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
+		logic temp;
 	} __stage_write_back_output_data;
 
 	struct packed
@@ -174,8 +179,9 @@ module Frost32Cpu(input logic clk,
 
 		//{__stage_instr_decode_data, __stage_execute_input_data} = 0;
 		__stage_instr_decode_data = 0;
+		__stage_execute_output_data = 0;
 		__stage_write_back_input_data = 0;
-		__stage_write_back_output_data = 0;
+		//__stage_write_back_output_data = 0;
 		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
 
 		// Prepare a read from memory
@@ -186,7 +192,7 @@ module Frost32Cpu(input logic clk,
 		out.req_mem_access = 1;
 
 		__stage_instr_decode_data.stall_counter = 0;
-		//__stage_instr_decode_data.stall_state = PkgFrost32Cpu::StInit;
+		__stage_instr_decode_data.stall_state = PkgFrost32Cpu::StInit;
 	end
 
 	// Stage 0:  Instruction Decode
@@ -200,30 +206,22 @@ module Frost32Cpu(input logic clk,
 			// The last stall_counter value before it hits zero.
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
-				//case (__stage_instr_decode_data.state)
-				//	PkgFrost32Cpu::StInit:
-				//	begin
-				//		// Do nothing
-				//	end
+				__locals.pc <= __stage_execute_output_data.next_pc;
 
-				//	PkgFrost32Cpu::StMulDiv:
-				//	begin
-				//		// Not using this yet
-				//	end
+				// Prepare a load from memory of the next instruction
+				prep_mem_read(__stage_execute_output_data.next_pc,
+					PkgFrost32Cpu::Dias32);
+			end
 
-				//	PkgFrost32Cpu::StCtrlFlow:
-				//	begin
-				//	end
-
-				//	PkgFrost32Cpu::StMemAccess:
-				//	begin
-				//	end
-				//endcase
-
-				//prep_mem_read
-				__locals.pc <= __stage_write_back_output_data.next_pc;
-
-				// The write-back stage will perform prep_mem_read()
+			else // if (we're in the middle of executing a multi-cycle
+				// instruction (and not about to finish it))
+			begin
+				// Memory access:  stage after address computation
+				if ((__stage_instr_decode_data.stall_state
+					== PkgFrost32Cpu::StMemAccess)
+					&& (__stage_instr_decode_data.stall_counter == 2))
+				begin
+				end
 			end
 		end
 
@@ -245,6 +243,8 @@ module Frost32Cpu(input logic clk,
 			begin
 				__stage_instr_decode_data.stall_counter <= 3;
 			end
+
+			__multi_stage_data_1 <= __multi_stage_data_0;
 		end
 	end
 
@@ -315,20 +315,23 @@ module Frost32Cpu(input logic clk,
 						__stage_write_back_input_data.rfile_ra_data[15:0]});
 				end
 
-				else if (__multi_stage_data_2.instr_opcode
-					== PkgInstrDecoder::Bne_TwoRegsOneSimm)
-				begin
-					//__enable_set_pc <= !__enable_set_pc;
+				//else if (__multi_stage_data_2.instr_opcode
+				//	== PkgInstrDecoder::Bne_TwoRegsOneSimm)
+				//begin
+				//	//__enable_set_pc <= !__enable_set_pc;
 
-					//request_set_pc_from_write_back
-					//	(__stage_write_back_data.next_pc);
-				end
+				//	//request_set_pc_from_write_back
+				//	//	(__stage_write_back_data.next_pc);
+				//end
 
-				else //if (__multi_stage_data_2.instr_opcode
-					//== PkgInstrDecoder::Beq_TwoRegsOneSimm)
+				//else //if (__multi_stage_data_2.instr_opcode
+				//	//== PkgInstrDecoder::Beq_TwoRegsOneSimm)
+				//begin
+				//	//request_set_pc_from_write_back
+				//	//	(__stage_write_back_data.next_pc);
+				//end
+				else
 				begin
-					//request_set_pc_from_write_back
-					//	(__stage_write_back_data.next_pc);
 				end
 			end
 
