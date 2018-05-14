@@ -104,7 +104,7 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 	Lsri_TwoRegsOneImm,
 	Asri_TwoRegsOneImm,
 
-	Addsi_OneRegOnePcOneImm,
+	Addsi_OneRegOnePcOneSimm,
 	Cpyhi_OneRegOneImm,
 	Bne_TwoRegsOneSimm,
 	Beq_TwoRegsOneSimm

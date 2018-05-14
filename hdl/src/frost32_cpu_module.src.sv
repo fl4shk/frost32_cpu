@@ -109,12 +109,153 @@ module Frost32Cpu(input logic clk,
 		__out_instr_decoder.group, __out_instr_decoder.opcode,
 		__out_instr_decoder.causes_stall, __locals.pc};
 
+
+	// This will need to be replaced with operand forwarding later
+	// (probably with another always_comb statement)
 	assign __stage_execute_input_data.rfile_ra_data 
 		= __out_reg_file.read_data_ra;
 	assign __stage_execute_input_data.rfile_rb_data 
 		= __out_reg_file.read_data_rb;
 	assign __stage_execute_input_data.rfile_rc_data 
 		= __out_reg_file.read_data_rc;
+
+
+	// ALU input stuff (ONLY relevant to the execute stage, and almost
+	// uses execute stage data exclusively)
+	always_comb
+	begin
+		case (__multi_stage_data_1.instr_group)
+			0:
+			begin
+				// It's okay if the ALU performs a bogus operation, so
+				// let's decode the ALU opcode directly from the
+				// instruction for group 0 instructions.
+				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
+				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
+				__in_alu.oper = __multi_stage_data_1.instr_opcode;
+			end
+
+			1:
+			begin
+				//__in_alu.oper = __multi_stage_data_1.instr_opcode;
+
+				case (__multi_stage_data_1.instr_opcode)
+					PkgInstrDecoder::Sltsi_TwoRegsOneSimm:
+					begin
+						__in_alu.a
+							= __stage_execute_input_data.rfile_rb_data;
+
+						// Sign extend the immediate value
+						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+							? {16'hffff, 
+							__multi_stage_data_1.instr_imm_val}
+							: {16'h0000,
+							__multi_stage_data_1.instr_imm_val};
+
+						__in_alu.oper = PkgAlu::Slts;
+					end
+
+					PkgInstrDecoder::Addsi_OneRegOnePcOneSimm:
+					begin
+						__in_alu.a = __multi_stage_data_1.pc_val;
+
+						// Sign extend the immediate value
+						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+							? {16'hffff, 
+							__multi_stage_data_1.instr_imm_val}
+							: {16'h0000,
+							__multi_stage_data_1.instr_imm_val};
+
+						__in_alu.oper = PkgAlu::Add;
+					end
+
+					//PkgInstrDecoder::Cpyhi_OneRegOneImm:
+					//begin
+					//	
+					//end
+					PkgInstrDecoder::Bne_TwoRegsOneSimm:
+					begin
+						// Sneaky way to use the value
+						// __multi_stage_data_1.pc_val + 4 as input to the
+						// ALU without an extra addition (in theory, at
+						// least....)
+						__in_alu.a = __multi_stage_data_0.pc_val;
+
+						// Sign extend the immediate value
+						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+							? {16'hffff, 
+							__multi_stage_data_1.instr_imm_val}
+							: {16'h0000,
+							__multi_stage_data_1.instr_imm_val};
+
+						__in_alu.oper = PkgAlu::Add;
+					end
+
+					PkgInstrDecoder::Beq_TwoRegsOneSimm:
+					begin
+						// Sneaky way to use the value
+						// __multi_stage_data_1.pc_val + 4 as input to the
+						// ALU without an extra addition (in theory, at
+						// least....)
+						__in_alu.a = __multi_stage_data_0.pc_val;
+
+						// Sign extend the immediate value
+						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+							? {16'hffff, 
+							__multi_stage_data_1.instr_imm_val}
+							: {16'h0000,
+							__multi_stage_data_1.instr_imm_val};
+
+						__in_alu.oper = PkgAlu::Add;
+					end
+
+
+					// Let's decode the ALU opcode directly from the
+					// instruction for the remainder of the instructions
+					// from group 1
+					default:
+					begin
+						__in_alu.a 
+							= __stage_execute_input_data.rfile_rb_data;
+
+						// Zero-extend the immediate value
+						__in_alu.b = {16'h0000,
+							__multi_stage_data_1.instr_imm_val};
+						__in_alu.oper = __multi_stage_data_1.instr_opcode;
+					end
+				endcase
+			end
+
+			//2:
+			//begin
+			//	// Perform a bogus add
+			//	__in_alu.a = 0;
+			//	__in_alu.b = 0;
+			//	__in_alu.oper = 0;
+			//end
+
+			3:
+			begin
+				// memory address computation:  rB + rC
+				//__in_alu.a = __stage_execute_input_data.rfile_rb_data;
+				//__in_alu.b = __stage_execute_input_data.rfile_rc_data;
+
+				// Sometimes this causes the ALU to perform a bogus add,
+				// specifically whenever it's an invalid group 3
+				// instruction.
+				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
+				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
+				__in_alu.oper = PkgAlu::Add;
+			end
+
+			default:
+			begin
+				// Perform a bogus add
+				__in_alu = 0;
+			end
+		endcase
+		//__in_alu.a = __stage_execute_input_data.rfile_rb_data
+	end
 
 
 	// Tasks and functions
@@ -216,7 +357,7 @@ module Frost32Cpu(input logic clk,
 			else // if (we're in the middle of executing a multi-cycle
 				// instruction (and not about to finish it))
 			begin
-				// Memory access:  stage after address computation
+				// Memory access:  We've done the address computation
 				if ((__stage_instr_decode_data.stall_state
 					== PkgFrost32Cpu::StMemAccess)
 					&& (__stage_instr_decode_data.stall_counter == 2))
@@ -243,6 +384,14 @@ module Frost32Cpu(input logic clk,
 			begin
 				__stage_instr_decode_data.stall_counter <= 3;
 			end
+
+			// Use all three register file read ports
+			__in_reg_file.read_sel_ra 
+				<= __multi_stage_data_0.instr_ra_index;
+			__in_reg_file.read_sel_rb 
+				<= __multi_stage_data_0.instr_rb_index;
+			__in_reg_file.read_sel_rc 
+				<= __multi_stage_data_0.instr_rc_index;
 
 			__multi_stage_data_1 <= __multi_stage_data_0;
 		end
