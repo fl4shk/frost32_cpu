@@ -4,6 +4,13 @@
 
 package PkgFrost32Cpu;
 
+//typedef enum logic [`MSB_POS__FROST32_CPU_STATE:0]
+//{
+//	StInit,
+//	StNoStall,
+//	StCtrlFlow,
+//	StMemAccess
+//} State;
 
 // Data used by more than one pipeline stage
 typedef struct packed
@@ -17,8 +24,11 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_OP_GROUP:0] instr_group;
 	logic [`MSB_POS__INSTR_OPER:0] instr_opcode;
 
-	logic [`MSB_POS__REG_FILE_DATA:0] rfile_ra_data, rfile_rb_data, 
-		rfile_rc_data, pc;
+	// What the PC was for this instruction
+	logic [`MSB_POS__REG_FILE_DATA:0] pc_val;
+
+	//logic nop;
+
 } MultiStageData;
 
 
