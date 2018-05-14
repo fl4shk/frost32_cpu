@@ -29,8 +29,8 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 	ArithmeticShiftRight32 __inst_asr32(.in(__in_any_shift),
 		.out(__out_asr32));
 
-	//always_comb
-	always @(*)
+	always_comb
+	//always @(*)
 	begin
 		case (in.oper)
 			PkgAlu::Add:

@@ -23,6 +23,7 @@
 `define WIDTH__INSTR_REG_INDEX 4
 `define MSB_POS__INSTR_REG_INDEX `WIDTH_TO_MSB_POS(`WIDTH__INSTR_REG_INDEX)
 
-`define MSB_POS__INSTR_FILL 11
+`define WIDTH__INSTR_FILL 12
+`define MSB_POS__INSTR_FILL `WIDTH_TO_MSB_POS(`WIDTH__INSTR_FILL)
 
 `endif		// src__slash__instr_decoder_defines_header_sv

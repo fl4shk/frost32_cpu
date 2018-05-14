@@ -5,8 +5,7 @@ package PkgRegisterFile;
 typedef struct packed
 {
 	// Which registers to read from
-	logic [`MSB_POS__REG_FILE_NUM_PORTS : 0][`MSB_POS__REG_FILE_SEL:0]
-		read_sel;
+	logic [`MSB_POS__REG_FILE_SEL:0] read_sel_ra, read_sel_rb, read_sel_rc;
 
 	// Which register to write to
 	logic [`MSB_POS__REG_FILE_SEL:0] write_sel;
@@ -21,8 +20,8 @@ typedef struct packed
 
 typedef struct packed
 {
-	logic [`MSB_POS__REG_FILE_NUM_PORTS : 0][`MSB_POS__REG_FILE_DATA:0]
-		read_data;
+	logic [`MSB_POS__REG_FILE_DATA:0] read_data_ra, read_data_rb, 
+		read_data_rc;
 } PortOut_RegFile;
 
 endpackage : PkgRegisterFile

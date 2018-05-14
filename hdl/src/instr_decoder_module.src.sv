@@ -6,13 +6,15 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 	import PkgInstrDecoder::*;
 
 	PkgInstrDecoder::Iog0Instr __iog0_instr;
-	PkgInstrDecoder::Iog1Instr __iog1_instr;
-	PkgInstrDecoder::Iog2Instr __iog2_instr;
-	PkgInstrDecoder::Iog3Instr __iog3_instr;
-
 	assign __iog0_instr = in;
+
+	PkgInstrDecoder::Iog1Instr __iog1_instr;
 	assign __iog1_instr = in;
+
+	PkgInstrDecoder::Iog2Instr __iog2_instr;
 	assign __iog2_instr = in;
+
+	PkgInstrDecoder::Iog3Instr __iog3_instr;
 	assign __iog3_instr = in;
 
 	always_comb
@@ -28,7 +30,7 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rb_index = __iog0_instr.rb_index;
 				out.rc_index = __iog0_instr.rc_index;
 				out.opcode = __iog0_instr.opcode;
-				out.imm_val = __iog0_instr.imm_val;
+				out.imm_val = 0;
 			end
 
 			// Group 1
