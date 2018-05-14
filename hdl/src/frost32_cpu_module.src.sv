@@ -55,15 +55,9 @@ module Frost32Cpu(input logic clk,
 		// These are written by the execute stage
 		logic [`MSB_POS__REG_FILE_DATA:0] rfile_ra_data, rfile_rb_data,
 			rfile_rc_data;
-	} __stage_write_back_input_data;
 
-	
-	// Data output from the write back stage ("ahead" to the instruction
-	// decode stage)
-	struct packed
-	{
-		logic temp;
-	} __stage_write_back_output_data;
+		logic [`MSB_POS__ALU_INOUT:0] alu_out;
+	} __stage_write_back_input_data;
 
 	struct packed
 	{
@@ -119,6 +113,258 @@ module Frost32Cpu(input logic clk,
 	assign __stage_execute_input_data.rfile_rc_data 
 		= __out_reg_file.read_data_rc;
 
+
+
+
+	// Tasks and functions
+
+	task prep_mem_read;
+		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
+		//input PkgFrost32Cpu::DataInoutAccessSize size;
+		input [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0] size;
+
+		out.data <= 0;
+		out.addr <= addr;
+		out.data_inout_access_type <= PkgFrost32Cpu::DiatRead; 
+		out.data_inout_access_size <= size;
+		out.req_mem_access <= 1;
+	endtask
+
+	task prep_mem_write;
+		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
+		//input PkgFrost32Cpu::DataInoutAccessSize size;
+		input [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0] size;
+		input [`MSB_POS__FROST32_CPU_DATA_INOUT:0] data;
+
+		out.data <= data;
+		out.addr <= addr;
+		out.data_inout_access_type <= PkgFrost32Cpu::DiatWrite; 
+		out.data_inout_access_size <= size;
+		out.req_mem_access <= 1;
+	endtask
+
+	task stop_mem_access;
+		out.req_mem_access <= 0;
+	endtask
+
+	task prep_reg_write;
+		input [`MSB_POS__REG_FILE_SEL:0] s_sel;
+		input [`MSB_POS__REG_FILE_DATA:0] s_data;
+
+		__in_reg_file.write_sel <= s_sel;
+		__in_reg_file.write_data <= s_data;
+		__in_reg_file.write_en <= 1;
+	endtask
+
+	task prep_ra_write;
+		input [`MSB_POS__REG_FILE_DATA:0] s_data;
+		__in_reg_file.write_sel <= __multi_stage_data_2.instr_ra_index;
+		__in_reg_file.write_data <= s_data;
+		__in_reg_file.write_en <= 1;
+	endtask
+
+
+
+	task stop_reg_write;
+		__in_reg_file.write_en <= 0;
+	endtask
+
+
+	initial
+	begin
+		//__multi_stage_data_0 = 0;
+		__multi_stage_data_1 = 0;
+		__multi_stage_data_2 = 0;
+
+		//{__stage_instr_decode_data, __stage_execute_input_data} = 0;
+		__stage_instr_decode_data = 0;
+		__stage_execute_output_data = 0;
+		__stage_write_back_input_data = 0;
+		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
+
+		// Prepare a read from memory
+		out.data = 0;
+		out.addr = __locals.pc;
+		out.data_inout_access_type = PkgFrost32Cpu::DiatRead; 
+		out.data_inout_access_size = PkgFrost32Cpu::Dias32;
+		out.req_mem_access = 1;
+
+		__stage_instr_decode_data.stall_counter = 0;
+		__stage_instr_decode_data.stall_state = PkgFrost32Cpu::StInit;
+	end
+
+	// Stage 0:  Instruction Decode
+	always_ff @ (posedge clk)
+	begin
+		if (__stage_instr_decode_data.stall_counter > 0)
+		begin
+			__stage_instr_decode_data.stall_counter
+				<= __stage_instr_decode_data.stall_counter - 1;
+
+			// The last stall_counter value before it hits zero.
+			if (__stage_instr_decode_data.stall_counter == 1)
+			begin
+				__locals.pc <= __stage_execute_output_data.next_pc;
+
+				// Prepare a load from memory of the next instruction
+				prep_mem_read(__stage_execute_output_data.next_pc,
+					PkgFrost32Cpu::Dias32);
+			end
+
+			else // if (we're in the middle of executing a multi-cycle
+				// instruction (and not about to finish it))
+			begin
+				// Memory access:  We've done the address computation
+				if ((__stage_instr_decode_data.stall_state
+					== PkgFrost32Cpu::StMemAccess)
+					&& (__stage_instr_decode_data.stall_counter == 2))
+				begin
+				end
+			end
+		end
+
+		else // if (__stage_instr_decode_data.stall_counter == 0)
+		begin
+			// Update the program counter via owner computes (only this
+			// always_ff block can perform an actual change to the program
+			// counter).
+			if (!__multi_stage_data_0.instr_causes_stall)
+			begin
+				// Every instruction is 4 bytes long
+				__locals.pc <= __locals.pc + 4;
+			end
+
+			// For now, (before multiplication is implemented for real),
+			// assume that all multi-cycle instructions actually take three
+			// cycles (thus set the stall_counter to 3)
+			else // if (__multi_stage_data_0.instr_causes_stall)
+			begin
+				__stage_instr_decode_data.stall_counter <= 3;
+			end
+
+			// Use all three register file read ports
+			__in_reg_file.read_sel_ra 
+				<= __multi_stage_data_0.instr_ra_index;
+			__in_reg_file.read_sel_rb 
+				<= __multi_stage_data_0.instr_rb_index;
+			__in_reg_file.read_sel_rc 
+				<= __multi_stage_data_0.instr_rc_index;
+
+			__multi_stage_data_1 <= __multi_stage_data_0;
+		end
+	end
+
+	// Stage 1:  Execute
+	always_ff @ (posedge clk)
+	begin
+		__multi_stage_data_2 <= __multi_stage_data_1;
+
+		__stage_write_back_input_data.rfile_ra_data 
+			<= __stage_execute_input_data.rfile_ra_data;
+		__stage_write_back_input_data.rfile_rb_data 
+			<= __stage_execute_input_data.rfile_rb_data;
+		__stage_write_back_input_data.rfile_rc_data 
+			<= __stage_execute_input_data.rfile_rc_data;
+
+		__stage_write_back_input_data.alu_out <= __out_alu.data;
+	end
+
+	// Stage 2:  Write Back
+	always_ff @ (posedge clk)
+	begin
+		case (__multi_stage_data_2.instr_group)
+			4'd0:
+			begin
+				if (__multi_stage_data_2.instr_opcode
+					< PkgInstrDecoder::Bad0_Iog0)
+				begin
+					if (__multi_stage_data_2.instr_opcode
+						!= PkgInstrDecoder::Mul_ThreeRegs)
+					begin
+						prep_ra_write
+							(__stage_write_back_input_data.alu_out);
+					end
+
+					else
+					begin
+						// Temporarily pretend that 32-bit multiplies using
+						// * are synthesizeable
+						prep_ra_write
+							(__stage_write_back_input_data.rfile_rb_data
+							* __stage_write_back_input_data.rfile_rc_data);
+					end
+				end
+
+				else
+				begin
+					// Treat this instruction as a NOP (no write-back)
+				end
+			end
+
+			4'd1:
+			begin
+				if (__multi_stage_data_2.instr_opcode
+					< PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				begin
+					if (__multi_stage_data_2.instr_opcode
+						!= PkgInstrDecoder::Muli_TwoRegsOneImm)
+					begin
+						prep_ra_write
+							(__stage_write_back_input_data.alu_out);
+					end
+
+					else
+					begin
+						// Temporarily pretend that 32-bit multiplies using
+						// * are synthesizeable
+						prep_ra_write
+							(__stage_write_back_input_data.rfile_rb_data
+							* {16'h0000, 
+							__stage_write_back_input_data.imm_val});
+					end
+				end
+
+				else if (__multi_stage_data_2.instr_opcode
+					== PkgInstrDecoder::Addsi_OneRegOnePcOneSimm)
+				begin
+					prep_ra_write(__stage_write_back_input_data.alu_out);
+				end
+
+				else if (__multi_stage_data_2.instr_opcode
+					== PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				begin
+					// "cpyhi" does not change the lower 15 bits of rA
+					prep_ra_write({__multi_stage_data_2.instr_imm_val,
+						__stage_write_back_input_data.rfile_ra_data[15:0]});
+				end
+
+				//else if (__multi_stage_data_2.instr_opcode
+				//	== PkgInstrDecoder::Bne_TwoRegsOneSimm)
+				//begin
+				//end
+
+				//else //if (__multi_stage_data_2.instr_opcode
+				//	//== PkgInstrDecoder::Beq_TwoRegsOneSimm)
+				//begin
+				//end
+			end
+
+			4'd2:
+			begin
+				
+			end
+
+			4'd3:
+			begin
+				
+			end
+
+			default:
+			begin
+				// Eek!
+			end
+		endcase
+	end
 
 	// ALU input stuff (ONLY relevant to the execute stage, and almost
 	// uses execute stage data exclusively)
@@ -255,250 +501,6 @@ module Frost32Cpu(input logic clk,
 			end
 		endcase
 		//__in_alu.a = __stage_execute_input_data.rfile_rb_data
-	end
-
-
-	// Tasks and functions
-
-	task prep_mem_read;
-		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
-		//input PkgFrost32Cpu::DataInoutAccessSize size;
-		input [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0] size;
-
-		out.data <= 0;
-		out.addr <= addr;
-		out.data_inout_access_type <= PkgFrost32Cpu::DiatRead; 
-		out.data_inout_access_size <= size;
-		out.req_mem_access <= 1;
-	endtask
-
-	task prep_mem_write;
-		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
-		//input PkgFrost32Cpu::DataInoutAccessSize size;
-		input [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0] size;
-		input [`MSB_POS__FROST32_CPU_DATA_INOUT:0] data;
-
-		out.data <= data;
-		out.addr <= addr;
-		out.data_inout_access_type <= PkgFrost32Cpu::DiatWrite; 
-		out.data_inout_access_size <= size;
-		out.req_mem_access <= 1;
-	endtask
-
-	task stop_mem_access;
-		out.req_mem_access <= 0;
-	endtask
-
-	task prep_reg_write;
-		input [`MSB_POS__REG_FILE_SEL:0] s_sel;
-		input [`MSB_POS__REG_FILE_DATA:0] s_data;
-
-		__in_reg_file.write_sel <= s_sel;
-		__in_reg_file.write_data <= s_data;
-		__in_reg_file.write_en <= 1;
-	endtask
-
-	task prep_ra_write;
-		input [`MSB_POS__REG_FILE_DATA:0] s_data;
-		__in_reg_file.write_sel <= __multi_stage_data_2.instr_ra_index;
-		__in_reg_file.write_data <= s_data;
-		__in_reg_file.write_en <= 1;
-	endtask
-
-
-
-	task stop_reg_write;
-		__in_reg_file.write_en <= 0;
-	endtask
-
-
-	initial
-	begin
-		//__multi_stage_data_0 = 0;
-		__multi_stage_data_1 = 0;
-		__multi_stage_data_2 = 0;
-
-		//{__stage_instr_decode_data, __stage_execute_input_data} = 0;
-		__stage_instr_decode_data = 0;
-		__stage_execute_output_data = 0;
-		__stage_write_back_input_data = 0;
-		//__stage_write_back_output_data = 0;
-		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
-
-		// Prepare a read from memory
-		out.data = 0;
-		out.addr = __locals.pc;
-		out.data_inout_access_type = PkgFrost32Cpu::DiatRead; 
-		out.data_inout_access_size = PkgFrost32Cpu::Dias32;
-		out.req_mem_access = 1;
-
-		__stage_instr_decode_data.stall_counter = 0;
-		__stage_instr_decode_data.stall_state = PkgFrost32Cpu::StInit;
-	end
-
-	// Stage 0:  Instruction Decode
-	always_ff @ (posedge clk)
-	begin
-		if (__stage_instr_decode_data.stall_counter > 0)
-		begin
-			__stage_instr_decode_data.stall_counter
-				<= __stage_instr_decode_data.stall_counter - 1;
-
-			// The last stall_counter value before it hits zero.
-			if (__stage_instr_decode_data.stall_counter == 1)
-			begin
-				__locals.pc <= __stage_execute_output_data.next_pc;
-
-				// Prepare a load from memory of the next instruction
-				prep_mem_read(__stage_execute_output_data.next_pc,
-					PkgFrost32Cpu::Dias32);
-			end
-
-			else // if (we're in the middle of executing a multi-cycle
-				// instruction (and not about to finish it))
-			begin
-				// Memory access:  We've done the address computation
-				if ((__stage_instr_decode_data.stall_state
-					== PkgFrost32Cpu::StMemAccess)
-					&& (__stage_instr_decode_data.stall_counter == 2))
-				begin
-				end
-			end
-		end
-
-		else // if (__stage_instr_decode_data.stall_counter == 0)
-		begin
-			// Update the program counter via owner computes (only this
-			// always_ff block can perform an actual change to the program
-			// counter).
-			if (!__multi_stage_data_0.instr_causes_stall)
-			begin
-				// Every instruction is 4 bytes long
-				__locals.pc <= __locals.pc + 4;
-			end
-
-			// For now, (before multiplication is implemented for real),
-			// assume that all multi-cycle instructions actually take three
-			// cycles (thus set the stall_counter to 3)
-			else // if (__multi_stage_data_0.instr_causes_stall)
-			begin
-				__stage_instr_decode_data.stall_counter <= 3;
-			end
-
-			// Use all three register file read ports
-			__in_reg_file.read_sel_ra 
-				<= __multi_stage_data_0.instr_ra_index;
-			__in_reg_file.read_sel_rb 
-				<= __multi_stage_data_0.instr_rb_index;
-			__in_reg_file.read_sel_rc 
-				<= __multi_stage_data_0.instr_rc_index;
-
-			__multi_stage_data_1 <= __multi_stage_data_0;
-		end
-	end
-
-	// Stage 1:  Execute
-	always_ff @ (posedge clk)
-	begin
-		__multi_stage_data_2 <= __multi_stage_data_1;
-	end
-
-	// Stage 2:  Write Back
-	always_ff @ (posedge clk)
-	begin
-		case (__multi_stage_data_2.instr_group)
-			4'd0:
-			begin
-				if (__multi_stage_data_2.instr_opcode
-					< PkgInstrDecoder::Bad0_Iog0)
-				begin
-					if (__multi_stage_data_2.instr_opcode
-						!= PkgInstrDecoder::Mul_ThreeRegs)
-					begin
-						prep_ra_write(__out_alu.data);
-					end
-
-					else
-					begin
-						// Temporarily pretend that 32-bit multiplies using
-						// * are synthesizeable
-						prep_ra_write
-							(__stage_write_back_input_data.rfile_rb_data
-							* __stage_write_back_input_data.rfile_rc_data);
-					end
-				end
-
-				else
-				begin
-					// Treat this instruction as a NOP (no write-back)
-				end
-			end
-
-			4'd1:
-			begin
-				if (__multi_stage_data_2.instr_opcode
-					< PkgInstrDecoder::Cpyhi_OneRegOneImm)
-				begin
-					if (__multi_stage_data_2.instr_opcode
-						!= PkgInstrDecoder::Muli_TwoRegsOneImm)
-					begin
-						prep_ra_write(__out_alu.data);
-					end
-
-					else
-					begin
-						// Temporarily pretend that 32-bit multiplies using
-						// * are synthesizeable
-						prep_ra_write
-							(__stage_write_back_input_data.rfile_rb_data
-							* {16'h0000, 
-							__stage_write_back_input_data.imm_val});
-					end
-				end
-
-				else if (__multi_stage_data_2.instr_opcode
-					== PkgInstrDecoder::Cpyhi_OneRegOneImm)
-				begin
-					// "cpyhi" does not change the lower 15 bits of rA
-					prep_ra_write({__multi_stage_data_2.instr_imm_val,
-						__stage_write_back_input_data.rfile_ra_data[15:0]});
-				end
-
-				//else if (__multi_stage_data_2.instr_opcode
-				//	== PkgInstrDecoder::Bne_TwoRegsOneSimm)
-				//begin
-				//	//__enable_set_pc <= !__enable_set_pc;
-
-				//	//request_set_pc_from_write_back
-				//	//	(__stage_write_back_data.next_pc);
-				//end
-
-				//else //if (__multi_stage_data_2.instr_opcode
-				//	//== PkgInstrDecoder::Beq_TwoRegsOneSimm)
-				//begin
-				//	//request_set_pc_from_write_back
-				//	//	(__stage_write_back_data.next_pc);
-				//end
-				else
-				begin
-				end
-			end
-
-			4'd2:
-			begin
-				
-			end
-
-			4'd3:
-			begin
-				
-			end
-
-			default:
-			begin
-				// Eek!
-			end
-		endcase
 	end
 
 endmodule
