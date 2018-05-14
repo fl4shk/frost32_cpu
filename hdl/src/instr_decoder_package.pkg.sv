@@ -12,6 +12,18 @@ package PkgInstrDecoder;
 //parameter POS_HIGH__RB_INDEX = 23;
 //parameter POS_LOW__RB_INDEX = 20;
 
+typedef enum logic [`MSB_POS__INSTR_LDST_TYPE:0]
+{
+	Ld32,
+	LdU16,
+	LdS16,
+	LdU8,
+	LdS8,
+	St32,
+	St16,
+	St8
+} LdstType;
+
 
 typedef struct packed
 {
@@ -19,6 +31,7 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index, rc_index;
 	logic [`MSB_POS__INSTR_OP_GROUP:0] opcode;
 	logic [`MSB_POS__INSTR_IMM_VALUE:0] imm_val;
+	logic [`MSB_POS__INSTR_LDST_TYPE:0] ldst_type;
 	logic causes_stall;
 } PortOut_InstrDecoder;
 

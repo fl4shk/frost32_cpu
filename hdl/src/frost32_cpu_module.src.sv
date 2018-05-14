@@ -25,7 +25,8 @@ module Frost32Cpu(input logic clk,
 		// 
 		// Applies mainly to control flow and memory access instructions,
 		// but will eventually apply to multiplication too once I implement
-		// that in a **generally** synthesizeable way.
+		// that in a **generally** synthesizeable way (i.e., NOT with the
+		// "*" operator of SystemVerilog).
 		logic [`MSB_POS__FROST32_CPU_DECODE_STAGE_STALL_COUNTER:0]
 			stall_counter;
 
@@ -96,12 +97,14 @@ module Frost32Cpu(input logic clk,
 		__multi_stage_data_0.instr_imm_val,
 		__multi_stage_data_0.instr_group,
 		__multi_stage_data_0.instr_opcode,
+		__multi_stage_data_0.instr_ldst_type,
 		__multi_stage_data_0.instr_causes_stall,
 		__multi_stage_data_0.pc_val}
 		= {__out_instr_decoder.ra_index, __out_instr_decoder.rb_index,
 		__out_instr_decoder.rc_index, __out_instr_decoder.imm_val,
 		__out_instr_decoder.group, __out_instr_decoder.opcode,
-		__out_instr_decoder.causes_stall, __locals.pc};
+		__out_instr_decoder.ldst_type, __out_instr_decoder.causes_stall, 
+		__locals.pc};
 
 
 	// This will need to be replaced with operand forwarding later
@@ -117,6 +120,9 @@ module Frost32Cpu(input logic clk,
 
 
 	// Tasks and functions
+	function logic in_stall();
+		return (__stage_instr_decode_data.stall_counter != 0);
+	endfunction
 
 	task prep_mem_read;
 		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
@@ -196,7 +202,8 @@ module Frost32Cpu(input logic clk,
 	// Stage 0:  Instruction Decode
 	always_ff @ (posedge clk)
 	begin
-		if (__stage_instr_decode_data.stall_counter > 0)
+		//if (__stage_instr_decode_data.stall_counter > 0)
+		if (in_stall())
 		begin
 			__stage_instr_decode_data.stall_counter
 				<= __stage_instr_decode_data.stall_counter - 1;
@@ -206,7 +213,9 @@ module Frost32Cpu(input logic clk,
 			begin
 				__locals.pc <= __stage_execute_output_data.next_pc;
 
-				// Prepare a load from memory of the next instruction
+				// Prepare a load from memory of the next instruction.
+				// "prep_mem_read()" and "prep_mem_write()" are **ONLY**
+				// performed in the decode stage.
 				prep_mem_read(__stage_execute_output_data.next_pc,
 					PkgFrost32Cpu::Dias32);
 			end
@@ -214,16 +223,21 @@ module Frost32Cpu(input logic clk,
 			else // if (we're in the middle of executing a multi-cycle
 				// instruction (and not about to finish it))
 			begin
-				// Memory access:  We've done the address computation
+				// Memory access:  We've done the address computation in
+				// the execute stage (within the "always_comb" block
+				// located after the "always_ff" block that performs the
+				// write back stage)
 				if ((__stage_instr_decode_data.stall_state
 					== PkgFrost32Cpu::StMemAccess)
-					&& (__stage_instr_decode_data.stall_counter == 2))
+					&& (__stage_instr_decode_data.stall_counter == 3))
 				begin
+					// We're at the start of 
 				end
 			end
 		end
 
-		else // if (__stage_instr_decode_data.stall_counter == 0)
+		//else // if (__stage_instr_decode_data.stall_counter == 0)
+		else // if (!in_stall())
 		begin
 			// Update the program counter via owner computes (only this
 			// always_ff block can perform an actual change to the program
@@ -250,11 +264,16 @@ module Frost32Cpu(input logic clk,
 			__in_reg_file.read_sel_rc 
 				<= __multi_stage_data_0.instr_rc_index;
 
+			// We only send new stuff to __multi_stage_data_1 when there's
+			// a new instruction (and NOT when we're in the middle of a
+			// stall).
 			__multi_stage_data_1 <= __multi_stage_data_0;
 		end
 	end
 
-	// Stage 1:  Execute
+	// Stage 1:  Execute 
+	// (Most of the interesting code for this stage is located in the
+	// "always_comb" block after the write back stage's "always_ff" block)
 	always_ff @ (posedge clk)
 	begin
 		__multi_stage_data_2 <= __multi_stage_data_1;

@@ -26,4 +26,8 @@
 `define WIDTH__INSTR_FILL 12
 `define MSB_POS__INSTR_FILL `WIDTH_TO_MSB_POS(`WIDTH__INSTR_FILL)
 
+`define WIDTH__INSTR_LDST_TYPE 3
+`define MSB_POS__INSTR_LDST_TYPE `WIDTH_TO_MSB_POS(`WIDTH__INSTR_LDST_TYPE)
+
+
 `endif		// src__slash__instr_decoder_defines_header_sv

@@ -23,6 +23,7 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_IMM_VALUE:0] instr_imm_val;
 	logic [`MSB_POS__INSTR_OP_GROUP:0] instr_group;
 	logic [`MSB_POS__INSTR_OPER:0] instr_opcode;
+	logic [`MSB_POS__INSTR_LDST_TYPE:0] instr_ldst_type;
 	logic instr_causes_stall;
 
 	// What the PC was for this instruction

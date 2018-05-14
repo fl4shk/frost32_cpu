@@ -31,6 +31,7 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = __iog0_instr.rc_index;
 				out.opcode = __iog0_instr.opcode;
 				out.imm_val = 0;
+				out.ldst_type = 0;
 				out.causes_stall = 0;
 			end
 
@@ -43,7 +44,10 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = 0;
 				out.opcode = __iog1_instr.opcode;
 				out.imm_val = __iog1_instr.imm_val;
+				out.ldst_type = 0;
 
+				// The only instructions from group 1 that can cause stalls
+				// are the conditional branches
 				out.causes_stall 
 					= (out.opcode >= PkgInstrDecoder::Bne_TwoRegsOneSimm);
 			end
@@ -57,7 +61,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = __iog2_instr.rc_index;
 				out.opcode = __iog2_instr.opcode;
 				out.imm_val = 0;
+				out.ldst_type = 0;
 
+				// Bad instructions don't dause stalls
 				out.causes_stall
 					= (out.opcode <= PkgInstrDecoder::Calleq_ThreeRegs);
 			end
@@ -71,7 +77,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rc_index = __iog3_instr.rc_index;
 				out.opcode = __iog3_instr.opcode;
 				out.imm_val = 0;
+				out.ldst_type = out.opcode[`MSB_POS__INSTR_LDST_TYPE:0];
 
+				// Bad instructions don't dause stalls
 				out.causes_stall
 					= (out.opcode <= PkgInstrDecoder::Stb_ThreeRegsLdst);
 			end
@@ -79,15 +87,7 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 			default:
 			begin
 				// Eek!  Invalid instruction!
-				// I should eventually signal that the instruction is
-				// invalid, but for now just pretend this is a group 0
-				// instruction... which will likely yield poor results!
-				out.group = 0;
-				out.ra_index = __iog0_instr.ra_index;
-				out.rb_index = __iog0_instr.rb_index;
-				out.rc_index = __iog0_instr.rc_index;
-				out.opcode = __iog0_instr.opcode;
-				out.imm_val = 0;
+				out = 0;
 			end
 		endcase
 	end
