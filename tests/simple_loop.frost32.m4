@@ -9,23 +9,23 @@ dnl
 .org 0x0000
 main:
 {
-	dnl WAIT()
 
-	subi u6, u6, 17
-	addi u5, u6, 1
+	;;subi u6, u6, 17
+	;;addi u5, u6, 1
 
-	dnl WAIT()
+	cpyi u0, 0x50
+	cpy u1, u0
 
-	bne u6, zero, quit
-
-	;cpyi u7, 6
+loop:
+	addi u1, u1, 1
+	
+	subi u0, u0, 1
+	bne u0, zero, loop
 }
 
 quit2:
 {
 	cpya u7, 0x9000
-
-	dnl WAIT()
 
 	bra quit
 }

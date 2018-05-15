@@ -267,8 +267,8 @@ module Frost32Cpu(input logic clk,
 	// Stage 0:  Instruction Decode
 	always @ (posedge clk)
 	begin
-		$display("Decode:  next_pc:  %h",
-			__stage_execute_output_data.next_pc);
+		//$display("Decode:  next_pc:  %h",
+		//	__stage_execute_output_data.next_pc);
 		//if (__stage_instr_decode_data.stall_counter > 0)
 		if (in_stall())
 		begin
@@ -282,8 +282,8 @@ module Frost32Cpu(input logic clk,
 			// where the PC should be changed).
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
-				$display("Frost32Cpu:  stall_counter == 1:  %h",
-					__stage_execute_output_data.next_pc);
+				//$display("Frost32Cpu:  stall_counter == 1:  %h",
+				//	__stage_execute_output_data.next_pc);
 				__locals.pc <= __stage_execute_output_data.next_pc;
 
 				// Prepare a load from memory of the next instruction.
@@ -442,7 +442,7 @@ module Frost32Cpu(input logic clk,
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_1.instr_ra_index;
 
-				$display("0:  Changing next_pc to %h", __following_pc);
+				//$display("0:  Changing next_pc to %h", __following_pc);
 
 				// The reason this is commented out is so that bubbles in
 				// the form of "add zero, zero, zero" can be used
@@ -463,9 +463,9 @@ module Frost32Cpu(input logic clk,
 					__stage_execute_output_data.prev_written_reg_index
 						<= __multi_stage_data_1.instr_ra_index;
 
-					$display("Execute stage:  non branch");
+					//$display("Execute stage:  non branch");
 
-					$display("1:  Changing next_pc to %h", __following_pc);
+					//$display("1:  Changing next_pc to %h", __following_pc);
 					__stage_execute_output_data.next_pc <= __following_pc;
 				end
 
@@ -476,21 +476,21 @@ module Frost32Cpu(input logic clk,
 					__stage_execute_output_data.prev_written_reg_index
 						<= 0;
 
-					$display("Execute stage:  bne:  ");
+					//$display("Execute stage:  bne:  ");
 					if (__stage_execute_input_data.rfile_ra_data
 						!= __stage_execute_input_data.rfile_rb_data)
 					begin
 						// Destination address computed by the ALU
-						$display("1:  Changing next_pc to %h", 
-							__out_alu.data);
+						//$display("1:  Changing next_pc to %h", 
+						//	__out_alu.data);
 						__stage_execute_output_data.next_pc 
 							<= __out_alu.data;
 					end
 
 					else
 					begin
-						$display("1:  Changing next_pc to %h", 
-							__following_pc);
+						//$display("1:  Changing next_pc to %h", 
+						//	__following_pc);
 						__stage_execute_output_data.next_pc
 							<= __following_pc;
 					end
@@ -503,12 +503,12 @@ module Frost32Cpu(input logic clk,
 					__stage_execute_output_data.prev_written_reg_index
 						<= 0;
 
-					$display("Execute stage:  beq:  ");
+					//$display("Execute stage:  beq:  ");
 					if (__stage_execute_input_data.rfile_ra_data
 						== __stage_execute_input_data.rfile_rb_data)
 					begin
-						$display("1:  Changing next_pc to %h", 
-							__out_alu.data);
+						//$display("1:  Changing next_pc to %h", 
+						//	__out_alu.data);
 						// Destination address computed by the ALU
 						__stage_execute_output_data.next_pc 
 							<= __out_alu.data;
@@ -516,8 +516,8 @@ module Frost32Cpu(input logic clk,
 
 					else
 					begin
-						$display("1:  Changing next_pc to %h", 
-							__following_pc);
+						//$display("1:  Changing next_pc to %h", 
+						//	__following_pc);
 						__stage_execute_output_data.next_pc
 							<= __following_pc;
 					end
@@ -526,7 +526,7 @@ module Frost32Cpu(input logic clk,
 
 			4'd2:
 			begin
-				$display("2:  Changing next_pc to %h", __following_pc);
+				//$display("2:  Changing next_pc to %h", __following_pc);
 				__stage_execute_output_data.next_pc <= __following_pc;
 
 				// Temporarily prevent operand forwarding
@@ -535,7 +535,7 @@ module Frost32Cpu(input logic clk,
 
 			4'd3:
 			begin
-				$display("3:  Changing next_pc to %h", __following_pc);
+				//$display("3:  Changing next_pc to %h", __following_pc);
 				__stage_execute_output_data.next_pc <= __following_pc;
 
 				// Prevent operand forwarding (none needed for loads since
