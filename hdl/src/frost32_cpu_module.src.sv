@@ -71,7 +71,9 @@ module Frost32Cpu(input logic clk,
 		// The program counter (written to ONLY by the instruction decode
 		// stage)
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] pc;
-		
+
+		logic [`MSB_POS__ALU_INOUT:0] mul_partial_result_x0_y0,
+			mul_partial_result_x1_y0, mul_partial_result_x0_y1;
 	} __locals;
 
 	logic [`MSB_POS__FROST32_CPU_ADDR:0] __following_pc;
@@ -426,8 +428,8 @@ module Frost32Cpu(input logic clk,
 	// "always_comb" block after the write back stage's "always" block)
 	always @ (posedge clk)
 	begin
-	if (!__multi_stage_data_1.nop)
-	begin
+	//if (!__multi_stage_data_1.nop)
+	//begin
 		//$display("Execute stage (part 1):  %h %h\t\t%h %h",
 		//	__multi_stage_data_1.pc_val,
 		//	__multi_stage_data_1.raw_instruction,
@@ -449,22 +451,34 @@ module Frost32Cpu(input logic clk,
 		case (__multi_stage_data_1.instr_group)
 			4'd0:
 			begin
-				// Temporary!  Doesn't perform multiplications properly!
-				__stage_write_back_input_data.n_reg_data <= __out_alu.data;
-
 				// For operand forwarding
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_1.instr_ra_index;
 
-				//$display("0:  Changing next_pc to %h", __following_pc);
+				if (__multi_stage_data_1.instr_opcode 
+					!= PkgInstrDecoder::Mul_ThreeRegs)
+				begin
+					__stage_write_back_input_data.n_reg_data 
+						<= __out_alu.data;
 
-				// The reason this is commented out is so that bubbles in
-				// the form of "add zero, zero, zero" can be used.  Don't
-				// uncomment this!
-				// Also, this assumes that no control flow is performed by
-				// group 0 instructions, which is true as of writing this
-				// comment.
-				//__stage_execute_output_data.next_pc <= __following_pc;
+					//$display("0:  Changing next_pc to %h", __following_pc);
+
+					// The reason this is commented out is so that bubbles
+					// in the form of "add zero, zero, zero" can be used.
+					// Don't uncomment this!  Also, this assumes that no
+					// control flow is performed by group 0 instructions,
+					// which is true as of writing this comment.
+					//__stage_execute_output_data.next_pc <= __following_pc;
+				end
+
+				else
+				begin
+					__stage_write_back_input_data.n_reg_data
+						<= ({(__locals.mul_partial_result_x1_y0
+						+ __locals.mul_partial_result_x0_y1),
+						16'h0000})
+						+ __locals.mul_partial_result_x0_y0;
+				end
 			end
 
 			4'd1:
@@ -472,19 +486,27 @@ module Frost32Cpu(input logic clk,
 				if (__multi_stage_data_1.instr_opcode
 					<= PkgInstrDecoder::Addsi_OneRegOnePcOneSimm)
 				begin
-					// Temporary!  Doesn't perform multiplications
-					// properly!
-					__stage_write_back_input_data.n_reg_data 
-						<= __out_alu.data;
-
 					// For operand forwarding
 					__stage_execute_output_data.prev_written_reg_index
 						<= __multi_stage_data_1.instr_ra_index;
 
-					//$display("Execute stage:  non branch");
-
-					//$display("1:  Changing next_pc to %h", __following_pc);
 					__stage_execute_output_data.next_pc <= __following_pc;
+
+					if (__multi_stage_data_1.instr_opcode
+						!= PkgInstrDecoder::Muli_TwoRegsOneImm)
+					begin
+						__stage_write_back_input_data.n_reg_data 
+							<= __out_alu.data;
+					end
+
+					else
+					begin
+						__stage_write_back_input_data.n_reg_data
+							<= ({(__locals.mul_partial_result_x1_y0
+							+ __locals.mul_partial_result_x0_y1),
+							16'h0000})
+							+ __locals.mul_partial_result_x0_y0;
+					end
 				end
 
 				else if (__multi_stage_data_1.instr_opcode
@@ -691,14 +713,14 @@ module Frost32Cpu(input logic clk,
 				__stage_execute_output_data.prev_written_reg_index <= 0;
 			end
 		endcase
-	end
+	//end
 	end
 
 	// Stage 2:  Write Back
 	always @ (posedge clk)
 	begin
-	if (!__multi_stage_data_2.nop)
-	begin
+	//if (!__multi_stage_data_2.nop)
+	//begin
 		case (__multi_stage_data_2.instr_group)
 			4'd0:
 			begin
@@ -836,7 +858,7 @@ module Frost32Cpu(input logic clk,
 				// Eek!
 			end
 		endcase
-	end
+	//end
 	end
 
 	// ALU input stuff (ONLY relevant to the execute stage, and almost
@@ -852,6 +874,20 @@ module Frost32Cpu(input logic clk,
 				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
 				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
 				__in_alu.oper = __multi_stage_data_1.instr_opcode;
+
+				if (__multi_stage_data_1.instr_opcode
+					== PkgInstrDecoder::Mul_ThreeRegs)
+				begin
+					__locals.mul_partial_result_x0_y0
+						= __stage_execute_input_data.rfile_rb_data[15:0]
+						* __stage_execute_input_data.rfile_rc_data[15:0];
+					__locals.mul_partial_result_x0_y1 
+						= __stage_execute_input_data.rfile_rb_data[15:0]
+						* __stage_execute_input_data.rfile_rc_data[31:16];
+					__locals.mul_partial_result_x1_y0
+						= __stage_execute_input_data.rfile_rb_data[31:16]
+						* __stage_execute_input_data.rfile_rc_data[15:0];
+				end
 			end
 
 			1:
@@ -859,6 +895,21 @@ module Frost32Cpu(input logic clk,
 				//__in_alu.oper = __multi_stage_data_1.instr_opcode;
 
 				case (__multi_stage_data_1.instr_opcode)
+					PkgInstrDecoder::Muli_TwoRegsOneImm:
+					begin
+						__locals.mul_partial_result_x0_y0
+							= __stage_execute_input_data
+							.rfile_rb_data[15:0]
+							* __multi_stage_data_1.instr_imm_val;
+						__locals.mul_partial_result_x0_y1 
+							= __stage_execute_input_data
+							.rfile_rb_data[15:0]
+							* 16'h0000;
+						__locals.mul_partial_result_x1_y0
+							= __stage_execute_input_data
+							.rfile_rb_data[31:16]
+							* __multi_stage_data_1.instr_imm_val;
+					end
 					PkgInstrDecoder::Sltsi_TwoRegsOneSimm:
 					begin
 						__in_alu.a

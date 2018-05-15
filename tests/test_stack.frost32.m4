@@ -27,6 +27,13 @@ main:
 
 	add u4, u2, u3
 
+	cpyi u0, 6
+	cpyi u1, 5
+	mul u0, u1
+
+	cpya u3, 0x9999aaaa
+	muli u2, u3, 0x9000bbbb
+
 	WAIT()
 
 
