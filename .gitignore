@@ -20,6 +20,7 @@ assembler_disassembler/*.elf
 *.txt.ignore
 *.vvp
 *.vhd
+*.vcd
 testing/*
 a.out
 *.E

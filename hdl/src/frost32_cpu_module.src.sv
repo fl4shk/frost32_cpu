@@ -68,6 +68,17 @@ module Frost32Cpu(input logic clk,
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] pc;
 	} __locals;
 
+	always @ (posedge clk)
+	begin
+		$display("Frost32Cpu (outputs):  %h %h %h %h", 
+			out.addr, out.data_inout_access_type,
+			out.data_inout_access_size, out.req_mem_access);
+		$display("Frost32Cpu (innards):  %h %h",
+			__multi_stage_data_0.raw_instruction,
+			__locals.pc);
+		$display();
+	end
+
 
 	PkgFrost32Cpu::MultiStageData __multi_stage_data_0, 
 		__multi_stage_data_1, __multi_stage_data_2;
@@ -311,6 +322,9 @@ module Frost32Cpu(input logic clk,
 			begin
 				// Every instruction is 4 bytes long
 				__locals.pc <= __locals.pc + 4;
+
+				prep_mem_read(__locals.pc + 4,
+					PkgFrost32Cpu::Dias32);
 			end
 
 			// For now, (before multiplication is implemented for real),
