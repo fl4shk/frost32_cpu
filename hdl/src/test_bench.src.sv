@@ -28,7 +28,7 @@
 //endmodule
 
 
-//`define DEBUG_MEM_ACCESS
+`define DEBUG_MEM_ACCESS
 
 
 module TestBench;
@@ -45,7 +45,7 @@ module TestBench;
 
 	bit [7:0] __main_mem[0 : __LAST_INDEX__MAIN_MEM];
 
-	logic [31:0] __cycles_counter;
+	//logic [31:0] __cycles_counter;
 
 	initial
 	begin
@@ -66,15 +66,15 @@ module TestBench;
 		//////////#1000
 		//$finish;
 
-		__cycles_counter = 0;
+		//__cycles_counter = 0;
 	end
 
-	always_ff @ (posedge __clk)
-	begin
-		__cycles_counter <= __cycles_counter + 1;
+	//always_ff @ (posedge __clk)
+	//begin
+	//	__cycles_counter <= __cycles_counter + 1;
 
-		$display("__cycles_counter:  %h", __cycles_counter);
-	end
+	//	$display("__cycles_counter:  %h", __cycles_counter);
+	//end
 
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;
 	PkgFrost32Cpu::PortOut_Frost32Cpu __out_frost32_cpu;

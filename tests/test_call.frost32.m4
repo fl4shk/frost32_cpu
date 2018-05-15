@@ -10,18 +10,18 @@ dnl
 main:
 {
 	// Assume top of available memory is here
-	cpya sp, 0xffff
+	cpya sp, 0xffff				; 0x0
 
 	;bra quit
 
-	calla test_subroutine
+	calla test_subroutine		; 0x4
 
 	;;cpya u0, (test_subroutine & 0xffff)
 	;;addi u0, test_subroutine
 	;cpyi u0, test_subroutine
 	;call u0
 
-	jmpa quit
+	jmpa quit					; 0x8
 	;cpyi u1, quit
 	;jmp u1
 }
@@ -29,41 +29,41 @@ main:
 test_subroutine:
 {
 preserve:
-	; Preserve lr, u0, u1, u2, u3
-	subi sp, 24
-	stri lr, [sp, 4]
+	;; Preserve lr, u0, u1, u2, u3
+	;subi sp, 24
+	;stri lr, [sp, 4]
 
-	stri u0, [sp, 8]
-	stri u1, [sp, 12]
-	stri u2, [sp, 16]
-	stri u3, [sp, 20]
+	;stri u0, [sp, 8]
+	;stri u1, [sp, 12]
+	;stri u2, [sp, 16]
+	;stri u3, [sp, 20]
 
 
 pre_loop:
-	cpya u0, data_0
-	cpyi u1, 0
-	cpyi u3, 70
+	cpya u0, data_0				; 0xc
+	cpyi u1, 0					; 0x10
+	cpyi u3, 70					; 0x14
 
 loop:
-	str u3, [u0, u1]
-	inc u1
+	str u3, [u0, u1]			; 0x18
+	inc u1						; 0x1c
 
-	inc u3
+	inc u3						; 0x20
 
-	sltui u2, u1, 20
-	bne u2, zero, loop
+	sltui u2, u1, 20			; 0x24
+	bne u2, zero, loop			; 0x28
 
 restore:
-	; Restore lr, u4, u5, u6, u7
-	ldri lr, [sp, 4]
-	ldri u0, [sp, 8]
-	ldri u1, [sp, 12]
-	ldri u2, [sp, 16]
-	ldri u3, [sp, 20]
-	addi sp, 24
+	;; Restore lr, u4, u5, u6, u7
+	;ldri lr, [sp, 4]
+	;ldri u0, [sp, 8]
+	;ldri u1, [sp, 12]
+	;ldri u2, [sp, 16]
+	;ldri u3, [sp, 20]
+	;addi sp, 24
 
 return:
-	jmp lr
+	jmp lr						; 0x2c
 }
 
 

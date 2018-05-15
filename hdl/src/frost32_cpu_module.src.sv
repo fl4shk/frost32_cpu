@@ -74,6 +74,8 @@ module Frost32Cpu(input logic clk,
 
 		logic [`MSB_POS__ALU_INOUT:0] mul_partial_result_x0_y0,
 			mul_partial_result_x1_y0, mul_partial_result_x0_y1;
+
+		logic [31:0] cycles_counter;
 	} __locals;
 
 	logic [`MSB_POS__FROST32_CPU_ADDR:0] __following_pc;
@@ -138,13 +140,10 @@ module Frost32Cpu(input logic clk,
 
 	always @ (posedge clk)
 	begin
-		//$display("Frost32Cpu (outputs):  %h %h %h %h", 
-		//	out.addr, out.data_inout_access_type,
-		//	out.data_inout_access_size, out.req_mem_access);
-		//$display("Frost32Cpu (innards):  %h %h",
-		//	__multi_stage_data_0.raw_instruction,
-		//	__locals.pc);
-		//$display("Frost32Cpu pc:  %h", __locals.pc);
+		__locals.cycles_counter <= __locals.cycles_counter + 1;
+
+		$display("Frost32Cpu __locals.cycles_counter:  %h", 
+			__locals.cycles_counter);
 		$display("Frost32Cpu pc's:  %h %h %h", 
 			__multi_stage_data_0.pc_val, 
 			__multi_stage_data_1.pc_val,
@@ -297,7 +296,8 @@ module Frost32Cpu(input logic clk,
 		__stage_write_back_input_data = 0;
 		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
 
-		__locals.pc <= 0;
+		__locals.pc = 0;
+		__locals.cycles_counter = 0;
 
 		// Prepare a read from memory
 		out.data = 0;
@@ -333,15 +333,81 @@ module Frost32Cpu(input logic clk,
 			// where the PC should be changed).
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
-				$display("Frost32Cpu:  stall_counter == 1:  %h",
-					__stage_execute_output_data.next_pc);
-				__locals.pc <= __stage_execute_output_data.next_pc;
+				if (__stage_instr_decode_data.stall_state
+					!= PkgFrost32Cpu::StCtrlFlow)
+				begin
+					//$display("Frost32Cpu:  stall_counter == 1:  %h",
+					//	__stage_execute_output_data.next_pc);
+					__locals.pc <= __stage_execute_output_data.next_pc;
 
-				// Prepare a load from memory of the next instruction.
-				// "prep_mem_read()" and "prep_mem_write()" are **ONLY**
-				// performed in the decode stage.
-				prep_mem_read(__stage_execute_output_data.next_pc,
-					PkgFrost32Cpu::Dias32);
+					// Prepare a load from memory of the next instruction.
+					// "prep_mem_read()" and "prep_mem_write()" are
+					// **ONLY** performed in the decode stage.
+					prep_mem_read(__stage_execute_output_data.next_pc,
+						PkgFrost32Cpu::Dias32);
+				end
+
+				// Resolve conditional execution in this stage
+				else
+				begin
+					//__locals.pc <= __stage_execute_
+					if (((__multi_stage_data_1.instr_group == 1)
+						&& (__multi_stage_data_1.instr_opcode 
+						== PkgInstrDecoder::Bne_TwoRegsOneSimm))
+						|| ((__multi_stage_data_1.instr_group == 2)
+						&& ((__multi_stage_data_1.instr_opcode
+						== PkgInstrDecoder::Jne_ThreeRegs)
+						|| (__multi_stage_data_1.instr_opcode
+						== PkgInstrDecoder::Callne_ThreeRegs))))
+					begin
+						if (__stage_execute_input_data.rfile_ra_data
+							!= __stage_execute_input_data.rfile_rb_data)
+						begin
+							__locals.pc <= __out_alu.data;
+							prep_mem_read(__out_alu.data, 
+								PkgFrost32Cpu::Dias32);
+						end
+
+						else
+						begin
+							__locals.pc <= __following_pc;
+							prep_mem_read(__following_pc, 
+								PkgFrost32Cpu::Dias32);
+						end
+					end
+
+					else if (((__multi_stage_data_1.instr_group == 1)
+						&& (__multi_stage_data_1.instr_opcode 
+						== PkgInstrDecoder::Beq_TwoRegsOneSimm))
+						|| ((__multi_stage_data_1.instr_group == 2)
+						&& ((__multi_stage_data_1.instr_opcode
+						== PkgInstrDecoder::Jeq_ThreeRegs)
+						|| (__multi_stage_data_1.instr_opcode
+						== PkgInstrDecoder::Calleq_ThreeRegs))))
+					begin
+						if (__stage_execute_input_data.rfile_ra_data
+							== __stage_execute_input_data.rfile_rb_data)
+						begin
+							__locals.pc <= __out_alu.data;
+							prep_mem_read(__out_alu.data, 
+								PkgFrost32Cpu::Dias32);
+						end
+
+						else
+						begin
+							__locals.pc <= __following_pc;
+							prep_mem_read(__following_pc, 
+								PkgFrost32Cpu::Dias32);
+						end
+					end
+
+					else
+					begin
+						// Eek!
+						prep_mem_read(__following_pc,
+							PkgFrost32Cpu::Dias32);
+					end
+				end
 			end
 
 			else // if (we're in the middle of executing a multi-cycle
@@ -354,7 +420,7 @@ module Frost32Cpu(input logic clk,
 				// write back stage)
 				if ((__stage_instr_decode_data.stall_state
 					== PkgFrost32Cpu::StMemAccess)
-					&& (__stage_instr_decode_data.stall_counter == 3))
+					&& (__stage_instr_decode_data.stall_counter == 2))
 				begin
 					// We're in the first cycle after initiating a
 					// multi-cycle load/store instruction.
@@ -408,12 +474,12 @@ module Frost32Cpu(input logic clk,
 						end
 					endcase
 				end
-				else if ((__stage_instr_decode_data.stall_state
-					== PkgFrost32Cpu::StMemAccess)
-					&& (__stage_instr_decode_data.stall_counter == 2))
-				begin
-					stop_mem_access();
-				end
+				//else if ((__stage_instr_decode_data.stall_state
+				//	== PkgFrost32Cpu::StMemAccess)
+				//	&& (__stage_instr_decode_data.stall_counter == 1))
+				//begin
+				//	stop_mem_access();
+				//end
 			end
 		end
 
@@ -433,14 +499,15 @@ module Frost32Cpu(input logic clk,
 
 			else // if (__multi_stage_data_0.instr_causes_stall)
 			begin
-
 				// Conditional branch or conditional jump or conditional
 				// call
-				if (__multi_stage_data_0.instr_group <= 1)
+				if ((__multi_stage_data_0.instr_group == 1)
+					|| (__multi_stage_data_0.instr_group == 2))
 				begin
 					__stage_instr_decode_data.stall_state
 						<= PkgFrost32Cpu::StCtrlFlow;
-					__stage_instr_decode_data.stall_counter <= 2;
+
+					__stage_instr_decode_data.stall_counter <= 1;
 				end
 
 				// All loads and stores are in group 3
@@ -448,7 +515,7 @@ module Frost32Cpu(input logic clk,
 				begin
 					__stage_instr_decode_data.stall_state 
 						<= PkgFrost32Cpu::StMemAccess;
-					__stage_instr_decode_data.stall_counter <= 3;
+					__stage_instr_decode_data.stall_counter <= 2;
 				end
 
 				// Temporary!
@@ -587,24 +654,24 @@ module Frost32Cpu(input logic clk,
 					__stage_execute_output_data.prev_written_reg_index
 						<= 0;
 
-					//$display("Execute stage:  bne:  ");
-					if (__stage_execute_input_data.rfile_ra_data
-						!= __stage_execute_input_data.rfile_rb_data)
-					begin
-						// Destination address computed by the ALU
-						//$display("1:  Changing next_pc to %h", 
-						//	__out_alu.data);
-						__stage_execute_output_data.next_pc 
-							<= __out_alu.data;
-					end
+					////$display("Execute stage:  bne:  ");
+					//if (__stage_execute_input_data.rfile_ra_data
+					//	!= __stage_execute_input_data.rfile_rb_data)
+					//begin
+					//	// Destination address computed by the ALU
+					//	//$display("1:  Changing next_pc to %h", 
+					//	//	__out_alu.data);
+					//	__stage_execute_output_data.next_pc 
+					//		<= __out_alu.data;
+					//end
 
-					else
-					begin
-						//$display("1:  Changing next_pc to %h", 
-						//	__following_pc);
-						__stage_execute_output_data.next_pc
-							<= __following_pc;
-					end
+					//else
+					//begin
+					//	//$display("1:  Changing next_pc to %h", 
+					//	//	__following_pc);
+					//	__stage_execute_output_data.next_pc
+					//		<= __following_pc;
+					//end
 				end
 
 				else if (__multi_stage_data_1.instr_opcode
@@ -614,24 +681,24 @@ module Frost32Cpu(input logic clk,
 					__stage_execute_output_data.prev_written_reg_index
 						<= 0;
 
-					//$display("Execute stage:  beq:  ");
-					if (__stage_execute_input_data.rfile_ra_data
-						== __stage_execute_input_data.rfile_rb_data)
-					begin
-						//$display("1:  Changing next_pc to %h", 
-						//	__out_alu.data);
-						// Destination address computed by the ALU
-						__stage_execute_output_data.next_pc 
-							<= __out_alu.data;
-					end
+					////$display("Execute stage:  beq:  ");
+					//if (__stage_execute_input_data.rfile_ra_data
+					//	== __stage_execute_input_data.rfile_rb_data)
+					//begin
+					//	//$display("1:  Changing next_pc to %h", 
+					//	//	__out_alu.data);
+					//	// Destination address computed by the ALU
+					//	__stage_execute_output_data.next_pc 
+					//		<= __out_alu.data;
+					//end
 
-					else
-					begin
-						//$display("1:  Changing next_pc to %h", 
-						//	__following_pc);
-						__stage_execute_output_data.next_pc
-							<= __following_pc;
-					end
+					//else
+					//begin
+					//	//$display("1:  Changing next_pc to %h", 
+					//	//	__following_pc);
+					//	__stage_execute_output_data.next_pc
+					//		<= __following_pc;
+					//end
 				end
 			end
 
@@ -650,23 +717,23 @@ module Frost32Cpu(input logic clk,
 						__stage_execute_output_data.prev_written_reg_index
 							<= 0;
 
-						if (__stage_execute_input_data.rfile_ra_data
-							!= __stage_execute_input_data.rfile_rb_data)
-						begin
-							__stage_execute_output_data.next_pc
-								<= __stage_execute_input_data
-								.rfile_rc_data;
-						//$display("Execute stage Jeq_ThreeRegs taken:  %h",
-						//	__stage_execute_input_data.rfile_rc_data);
-						end
+						//if (__stage_execute_input_data.rfile_ra_data
+						//	!= __stage_execute_input_data.rfile_rb_data)
+						//begin
+						//	__stage_execute_output_data.next_pc
+						//		<= __stage_execute_input_data
+						//		.rfile_rc_data;
+						////$display("Execute stage Jeq_ThreeRegs taken:  %h",
+						////	__stage_execute_input_data.rfile_rc_data);
+						//end
 
-						else
-						begin
-							__stage_execute_output_data.next_pc
-								<= __following_pc;
-						//$display("Execute stage Jne_ThreeRegs skip:  %h",
-						//	__following_pc);
-						end
+						//else
+						//begin
+						//	__stage_execute_output_data.next_pc
+						//		<= __following_pc;
+						////$display("Execute stage Jne_ThreeRegs skip:  %h",
+						////	__following_pc);
+						//end
 					end
 
 					PkgInstrDecoder::Jeq_ThreeRegs:
@@ -676,23 +743,23 @@ module Frost32Cpu(input logic clk,
 							<= 0;
 
 
-						if (__stage_execute_input_data.rfile_ra_data
-							== __stage_execute_input_data.rfile_rb_data)
-						begin
-							__stage_execute_output_data.next_pc
-								<= __stage_execute_input_data
-								.rfile_rc_data;
-						//$display("Execute stage Jeq_ThreeRegs taken:  %h",
-						//	__stage_execute_input_data.rfile_rc_data);
-						end
+						//if (__stage_execute_input_data.rfile_ra_data
+						//	== __stage_execute_input_data.rfile_rb_data)
+						//begin
+						//	__stage_execute_output_data.next_pc
+						//		<= __stage_execute_input_data
+						//		.rfile_rc_data;
+						////$display("Execute stage Jeq_ThreeRegs taken:  %h",
+						////	__stage_execute_input_data.rfile_rc_data);
+						//end
 
-						else
-						begin
-							__stage_execute_output_data.next_pc
-								<= __following_pc;
-						//$display("Execute stage Jeq_ThreeRegs skip:  %h",
-						//	__following_pc);
-						end
+						//else
+						//begin
+						//	__stage_execute_output_data.next_pc
+						//		<= __following_pc;
+						////$display("Execute stage Jeq_ThreeRegs skip:  %h",
+						////	__following_pc);
+						//end
 					end
 
 					PkgInstrDecoder::Callne_ThreeRegs:
@@ -1071,13 +1138,22 @@ module Frost32Cpu(input logic clk,
 				//	__in_alu.a, __in_alu.b, __in_alu.oper);
 			end
 
-			//2:
-			//begin
-			//	// Perform a bogus add
-			//	__in_alu.a = 0;
-			//	__in_alu.b = 0;
-			//	__in_alu.oper = 0;
-			//end
+			2:
+			begin
+				//// Perform a bogus add
+				//__in_alu.a = 0;
+				//__in_alu.b = 0;
+				//__in_alu.oper = 0;
+
+				// Allows resolving conditional jump destinations with code
+				// that is very similar to the branch destination
+				// resolving.
+				// 
+				// (See the decode stage's stalling stuff)
+				__in_alu.a = __stage_execute_input_data.rfile_rc_data;
+				__in_alu.b = 0;
+				__in_alu.oper = PkgAlu::Add;
+			end
 
 			3:
 			begin
