@@ -28,7 +28,7 @@
 //endmodule
 
 
-`define DEBUG_MEM_ACCESS
+//`define DEBUG_MEM_ACCESS
 
 
 module TestBench;
@@ -73,7 +73,7 @@ module TestBench;
 	begin
 		__cycles_counter <= __cycles_counter + 1;
 
-		//$display("__cycles_counter:  %h", __cycles_counter);
+		$display("__cycles_counter:  %h", __cycles_counter);
 	end
 
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;

@@ -83,6 +83,50 @@ module Frost32Cpu(input logic clk,
 
 
 
+
+
+	// Module instantiations
+	logic [`MSB_POS__INSTRUCTION:0] __in_instr_decoder;
+	PkgInstrDecoder::PortOut_InstrDecoder __out_instr_decoder;
+	InstrDecoder __inst_instr_decoder(.in(__in_instr_decoder), 
+		.out(__out_instr_decoder));
+
+	PkgRegisterFile::PortIn_RegFile __in_reg_file;
+	PkgRegisterFile::PortOut_RegFile __out_reg_file;
+	logic [`MSB_POS__REG_FILE_DATA:0] 
+		__out_debug_reg_zero, 
+		__out_debug_reg_u0, __out_debug_reg_u1, 
+		__out_debug_reg_u2, __out_debug_reg_u3,
+		__out_debug_reg_u4, __out_debug_reg_u5, 
+		__out_debug_reg_u6, __out_debug_reg_u7,
+		__out_debug_reg_u8, __out_debug_reg_u9, 
+		__out_debug_reg_u10, 
+		__out_debug_reg_temp, __out_debug_reg_lr, 
+		__out_debug_reg_fp, __out_debug_reg_sp;
+	RegisterFile __inst_reg_file(.clk(clk), .in(__in_reg_file),
+		.out(__out_reg_file),
+		.out_debug_zero(__out_debug_reg_zero), 
+		.out_debug_u0(__out_debug_reg_u0),
+		.out_debug_u1(__out_debug_reg_u1),
+		.out_debug_u2(__out_debug_reg_u2),
+		.out_debug_u3(__out_debug_reg_u3),
+		.out_debug_u4(__out_debug_reg_u4),
+		.out_debug_u5(__out_debug_reg_u5),
+		.out_debug_u6(__out_debug_reg_u6),
+		.out_debug_u7(__out_debug_reg_u7),
+		.out_debug_u8(__out_debug_reg_u8),
+		.out_debug_u9(__out_debug_reg_u9),
+		.out_debug_u10(__out_debug_reg_u10),
+		.out_debug_temp(__out_debug_reg_temp),
+		.out_debug_lr(__out_debug_reg_lr),
+		.out_debug_fp(__out_debug_reg_fp),
+		.out_debug_sp(__out_debug_reg_sp));
+
+	PkgAlu::PortIn_Alu __in_alu;
+	PkgAlu::PortOut_Alu __out_alu;
+	Alu __inst_alu(.in(__in_alu), .out(__out_alu));
+
+	// Debug stuff
 	always @ (posedge clk)
 	begin
 		if (__locals.pc >= 32'h8000)
@@ -105,25 +149,20 @@ module Frost32Cpu(input logic clk,
 			__multi_stage_data_0.pc_val, 
 			__multi_stage_data_1.pc_val,
 			__multi_stage_data_2.pc_val);
+		$display("Frost32Cpu regs (0 to 3):  %h %h %h %h",
+			__out_debug_reg_zero, __out_debug_reg_u0, 
+			__out_debug_reg_u1, __out_debug_reg_u2);
+		$display("Frost32Cpu regs (4 to 7):  %h %h %h %h",
+			__out_debug_reg_u3, __out_debug_reg_u4, 
+			__out_debug_reg_u5, __out_debug_reg_u6);
+		$display("Frost32Cpu regs (8 to 11):  %h %h %h %h",
+			__out_debug_reg_u7, __out_debug_reg_u8, 
+			__out_debug_reg_u9, __out_debug_reg_u10);
+		$display("Frost32Cpu regs (12 to 15):  %h %h %h %h",
+			__out_debug_reg_temp, __out_debug_reg_lr, 
+			__out_debug_reg_fp, __out_debug_reg_sp);
 		$display();
 	end
-
-
-	// Module instantiations
-	logic [`MSB_POS__INSTRUCTION:0] __in_instr_decoder;
-	PkgInstrDecoder::PortOut_InstrDecoder __out_instr_decoder;
-	InstrDecoder __inst_instr_decoder(.in(__in_instr_decoder), 
-		.out(__out_instr_decoder));
-
-	PkgRegisterFile::PortIn_RegFile __in_reg_file;
-	PkgRegisterFile::PortOut_RegFile __out_reg_file;
-	RegisterFile __inst_reg_file(.clk(clk), .in(__in_reg_file),
-		.out(__out_reg_file));
-
-	PkgAlu::PortIn_Alu __in_alu;
-	PkgAlu::PortOut_Alu __out_alu;
-	Alu __inst_alu(.in(__in_alu), .out(__out_alu));
-
 
 	// Assignments
 	assign __following_pc = __multi_stage_data_1.pc_val + 4;
@@ -294,8 +333,8 @@ module Frost32Cpu(input logic clk,
 			// where the PC should be changed).
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
-				//$display("Frost32Cpu:  stall_counter == 1:  %h",
-				//	__stage_execute_output_data.next_pc);
+				$display("Frost32Cpu:  stall_counter == 1:  %h",
+					__stage_execute_output_data.next_pc);
 				__locals.pc <= __stage_execute_output_data.next_pc;
 
 				// Prepare a load from memory of the next instruction.
@@ -401,7 +440,7 @@ module Frost32Cpu(input logic clk,
 				begin
 					__stage_instr_decode_data.stall_state
 						<= PkgFrost32Cpu::StCtrlFlow;
-					__stage_instr_decode_data.stall_counter <= 3;
+					__stage_instr_decode_data.stall_counter <= 2;
 				end
 
 				// All loads and stores are in group 3

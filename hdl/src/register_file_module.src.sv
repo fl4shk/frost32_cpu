@@ -18,12 +18,13 @@
 // Asynchronous reads (three ports), synchronous writes (one port)
 module RegisterFile(input logic clk,
 	input PkgRegisterFile::PortIn_RegFile in,
-	output PkgRegisterFile::PortOut_RegFile out);
-	//output logic [`MSB_POS__REG_FILE_DATA:0] 
-	//	out_debug_r0, out_debug_r1, out_debug_r2, out_debug_r3,
-	//	out_debug_r4, out_debug_r5, out_debug_r6, out_debug_r7,
-	//	out_debug_r8, out_debug_r9, out_debug_r10, out_debug_r11,
-	//	out_debug_r12, out_debug_r13, out_debug_r14, out_debug_r15);
+	output PkgRegisterFile::PortOut_RegFile out,
+	output logic [`MSB_POS__REG_FILE_DATA:0] 
+		out_debug_zero, 
+		out_debug_u0, out_debug_u1, out_debug_u2, out_debug_u3,
+		out_debug_u4, out_debug_u5, out_debug_u6, out_debug_u7,
+		out_debug_u8, out_debug_u9, out_debug_u10, 
+		out_debug_temp, out_debug_lr, out_debug_fp, out_debug_sp);
 
 	import PkgRegisterFile::*;
 
@@ -35,22 +36,22 @@ module RegisterFile(input logic clk,
 	logic [`MSB_POS__REG_FILE_DATA:0]
 		__regfile[0 : __LAST_INDEX__NUM_REGISTERS];
 
-	//assign out_debug_r0 = __regfile[0];
-	//assign out_debug_r1 = __regfile[1];
-	//assign out_debug_r2 = __regfile[2];
-	//assign out_debug_r3 = __regfile[3];
-	//assign out_debug_r4 = __regfile[4];
-	//assign out_debug_r5 = __regfile[5];
-	//assign out_debug_r6 = __regfile[6];
-	//assign out_debug_r7 = __regfile[7];
-	//assign out_debug_r8 = __regfile[8];
-	//assign out_debug_r9 = __regfile[9];
-	//assign out_debug_r10 = __regfile[10];
-	//assign out_debug_r11 = __regfile[11];
-	//assign out_debug_r12 = __regfile[12];
-	//assign out_debug_r13 = __regfile[13];
-	//assign out_debug_r14 = __regfile[14];
-	//assign out_debug_r15 = __regfile[15];
+	assign out_debug_zero = __regfile[0];
+	assign out_debug_u0 = __regfile[1];
+	assign out_debug_u1 = __regfile[2];
+	assign out_debug_u2 = __regfile[3];
+	assign out_debug_u3 = __regfile[4];
+	assign out_debug_u4 = __regfile[5];
+	assign out_debug_u5 = __regfile[6];
+	assign out_debug_u6 = __regfile[7];
+	assign out_debug_u7 = __regfile[8];
+	assign out_debug_u8 = __regfile[9];
+	assign out_debug_u9 = __regfile[10];
+	assign out_debug_u10 = __regfile[11];
+	assign out_debug_temp = __regfile[12];
+	assign out_debug_lr = __regfile[13];
+	assign out_debug_fp = __regfile[14];
+	assign out_debug_sp = __regfile[15];
 
 	initial
 	begin
@@ -72,21 +73,21 @@ module RegisterFile(input logic clk,
 			__regfile[in.write_sel] <= in.write_data;
 		end
 
-		//$display("RegisterFile:  inputs:  %h %h %h", 
-		//	in.write_en, in.write_sel, in.write_data);
-		$display("RegisterFile (0 to 3):  %h %h %h %h",
-			__regfile[0], __regfile[1], __regfile[2], __regfile[3]);
-		$display("RegisterFile (4 to 7):  %h %h %h %h",
-			__regfile[4], __regfile[5], __regfile[6], __regfile[7]);
-		//$display("RegisterFile (8 to 11):  %h %h %h %h",
-		//	__regfile[8], __regfile[9], __regfile[10], __regfile[11]);
-		//$display("RegisterFile (12 to 15):  %h %h %h %h",
-		//	__regfile[12], __regfile[13], __regfile[14], __regfile[15]);
+		////$display("RegisterFile:  inputs:  %h %h %h", 
+		////	in.write_en, in.write_sel, in.write_data);
+		//$display("RegisterFile (0 to 3):  %h %h %h %h",
+		//	__regfile[0], __regfile[1], __regfile[2], __regfile[3]);
+		//$display("RegisterFile (4 to 7):  %h %h %h %h",
+		//	__regfile[4], __regfile[5], __regfile[6], __regfile[7]);
+		////$display("RegisterFile (8 to 11):  %h %h %h %h",
+		////	__regfile[8], __regfile[9], __regfile[10], __regfile[11]);
+		////$display("RegisterFile (12 to 15):  %h %h %h %h",
+		////	__regfile[12], __regfile[13], __regfile[14], __regfile[15]);
 
-		$display();
+		//$display();
 	end
 
-	always @ (posedge clk)
-	begin
-	end
+	//always @ (posedge clk)
+	//begin
+	//end
 endmodule
