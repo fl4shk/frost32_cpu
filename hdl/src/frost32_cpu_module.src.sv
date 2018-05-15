@@ -452,7 +452,7 @@ module Frost32Cpu(input logic clk,
 			4'd1:
 			begin
 				if (__multi_stage_data_1.instr_opcode
-					< PkgInstrDecoder::Bne_TwoRegsOneSimm)
+					<= PkgInstrDecoder::Addsi_OneRegOnePcOneSimm)
 				begin
 					// Temporary!  Doesn't perform multiplications
 					// properly!
@@ -466,6 +466,21 @@ module Frost32Cpu(input logic clk,
 					//$display("Execute stage:  non branch");
 
 					//$display("1:  Changing next_pc to %h", __following_pc);
+					__stage_execute_output_data.next_pc <= __following_pc;
+				end
+
+				else if (__multi_stage_data_1.instr_opcode
+					== PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				begin
+					// cpyhi only changes the high 15 bits of rA
+					__stage_write_back_input_data.n_reg_data
+						<= {__multi_stage_data_1.instr_imm_val,
+						__stage_execute_input_data.rfile_ra_data[15:0]};
+
+					// For operand forwarding
+					__stage_execute_output_data.prev_written_reg_index
+						<= __multi_stage_data_1.instr_ra_index;
+
 					__stage_execute_output_data.next_pc <= __following_pc;
 				end
 

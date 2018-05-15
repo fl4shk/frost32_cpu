@@ -25,7 +25,14 @@ loop:
 
 quit2:
 {
-	cpya u7, 0x9000
+	;cpya u4, 0x9000
+	;cpyi u4, 0x9000
+	;cpyhi u4, 0x0000
+	;cpya u4, 0x9000
+	cpya u4, 0x80ab9000
+	;cpyhi u4, 0x9000
+
+	WAIT()
 
 	bra quit
 }
