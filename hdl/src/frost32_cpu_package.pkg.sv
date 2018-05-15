@@ -7,7 +7,8 @@ package PkgFrost32Cpu;
 typedef enum logic [`MSB_POS__FROST32_CPU_STATE:0]
 {
 	StInit,
-	StMulDiv,
+	StMul,
+	StDiv,
 	StCtrlFlow,
 	StMemAccess
 } StallState;
