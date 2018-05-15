@@ -54,11 +54,13 @@ module TestBench;
 		////$dumpfile("test.vcd");
 		////$dumpvars(0, TestBench);
 
-		////#2000
-		////#20
+		///#2000
+		#40
 		//#100
+		//#200
+		//#300
 		//////#1000
-		//$finish;
+		$finish;
 	end
 
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;

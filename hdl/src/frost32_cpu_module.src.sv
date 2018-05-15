@@ -13,6 +13,9 @@ module Frost32Cpu(input logic clk,
 	import PkgRegisterFile::*;
 	import PkgFrost32Cpu::*;
 
+	parameter __REG_LR_INDEX = 13;
+	parameter __REG_SP_INDEX = 15;
+
 
 	// Data output by or used by the Instruction Decode stage
 	struct packed
@@ -48,6 +51,9 @@ module Frost32Cpu(input logic clk,
 		// the instruction decode stage for updating the program counter in
 		// the case of these instructions)
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
+
+		logic [`MSB_POS__REG_FILE_SEL:0] prev_written_reg_index;
+		//logic [`MSB_POS__REG_FILE_DATA:0] prev_written_reg_data;
 	} __stage_execute_output_data;
 
 	// Data input to the write back stage (output
@@ -66,7 +72,10 @@ module Frost32Cpu(input logic clk,
 		// The program counter (written to ONLY by the instruction decode
 		// stage)
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] pc;
+		
 	} __locals;
+
+	logic [`MSB_POS__FROST32_CPU_ADDR:0] following_pc;
 
 	always @ (posedge clk)
 	begin
@@ -109,6 +118,7 @@ module Frost32Cpu(input logic clk,
 
 
 	// Assignments
+	assign following_pc = __multi_stage_data_1.pc_val + 4;
 	assign __in_instr_decoder = in.data;
 	assign __multi_stage_data_0.raw_instruction = __in_instr_decoder;
 	assign {__multi_stage_data_0.instr_ra_index,
@@ -127,15 +137,27 @@ module Frost32Cpu(input logic clk,
 		__locals.pc};
 
 
-	// This will need to be replaced with operand forwarding later
-	// (probably with another always_comb statement)
-	assign __stage_execute_input_data.rfile_ra_data 
-		= __out_reg_file.read_data_ra;
-	assign __stage_execute_input_data.rfile_rb_data 
-		= __out_reg_file.read_data_rb;
-	assign __stage_execute_input_data.rfile_rc_data 
-		= __out_reg_file.read_data_rc;
-
+	// This is the operand forwarding.  It's so simple!
+	// We only write to one register at a time, so we only need one
+	// multiplexer per rfile_r..._data
+	assign __stage_execute_input_data.rfile_ra_data
+		= (__stage_execute_output_data.prev_written_reg_index
+		== __multi_stage_data_1.instr_ra_index
+		&& (__stage_execute_output_data.prev_written_reg_index != 0)) 
+		? __stage_write_back_input_data.n_reg_data
+		: __out_reg_file.read_data_ra;
+	assign __stage_execute_input_data.rfile_rb_data
+		= (__stage_execute_output_data.prev_written_reg_index
+		== __multi_stage_data_1.instr_rb_index
+		&& (__stage_execute_output_data.prev_written_reg_index != 0)) 
+		? __stage_write_back_input_data.n_reg_data
+		: __out_reg_file.read_data_rb;
+	assign __stage_execute_input_data.rfile_rc_data
+		= (__stage_execute_output_data.prev_written_reg_index
+		== __multi_stage_data_1.instr_rc_index
+		&& (__stage_execute_output_data.prev_written_reg_index != 0)) 
+		? __stage_write_back_input_data.n_reg_data
+		: __out_reg_file.read_data_rc;
 
 
 
@@ -208,6 +230,8 @@ module Frost32Cpu(input logic clk,
 		__stage_write_back_input_data = 0;
 		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
 
+		__locals.pc <= 0;
+
 		// Prepare a read from memory
 		out.data = 0;
 		out.addr = __locals.pc;
@@ -233,18 +257,27 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data.stall_counter
 				<= __stage_instr_decode_data.stall_counter - 1;
 
-			// Send bubbles through while we're stalled a (actually
-			// performs "add zero, zero, zero", but that does nothing
-			// interesting anyway... besides maybe power consumption)
+			//// Send bubbles through while we're stalled a (actually
+			//// performs "add zero, zero, zero", but that does nothing
+			//// interesting anyway... besides maybe power consumption)
 			//__in_reg_file.read_sel_ra <= 0;
 			//__in_reg_file.read_sel_rb <= 0;
 			//__in_reg_file.read_sel_rc <= 0;
-			//__multi_stage_data_1 <= 0;
+			////__multi_stage_data_1 <= 0;
+			//__multi_stage_data_1.instr_ra_index <= 0;
+			//__multi_stage_data_1.instr_rb_index <= 0;
+			//__multi_stage_data_1.instr_rc_index <= 0;
+			//__multi_stage_data_1.instr_group <= 0;
+			//__multi_stage_data_1.instr_opcode <= 0;
+			//__multi_stage_data_1.instr_ldst_type <= 0;
+			//__multi_stage_data_1.instr_causes_stall <= 0;
 
 			// The last stall_counter value before it hits zero (this is
 			// where the PC should be changed).
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
+				$display("Frost32Cpu:  stall_counter == 1:  %h",
+					__stage_execute_output_data.next_pc);
 				__locals.pc <= __stage_execute_output_data.next_pc;
 
 				// Prepare a load from memory of the next instruction.
@@ -376,6 +409,12 @@ module Frost32Cpu(input logic clk,
 	// "always_comb" block after the write back stage's "always" block)
 	always @ (posedge clk)
 	begin
+		$display("Execute stage (part 1):  %h %h\t\t%h %h",
+			__multi_stage_data_1.pc_val,
+			__multi_stage_data_1.raw_instruction,
+			__multi_stage_data_1.instr_group,
+			__multi_stage_data_1.instr_opcode);
+
 		__multi_stage_data_2 <= __multi_stage_data_1;
 
 		__stage_write_back_input_data.rfile_ra_data 
@@ -394,187 +433,41 @@ module Frost32Cpu(input logic clk,
 				// Temporary!  Doesn't perform multiplications properly!
 				__stage_write_back_input_data.n_reg_data <= __out_alu.data;
 
-				// Sneaky way to just use the updated PC from the previous
-				// stage (4 was added to it)
-				__stage_execute_output_data.next_pc <= __locals.pc;
+				// For operand forwarding
+				__stage_execute_output_data.prev_written_reg_index
+					<= __multi_stage_data_1.instr_ra_index;
+
+				__stage_execute_output_data.next_pc <= following_pc;
 			end
 
 			4'd1:
 			begin
+				__stage_write_back_input_data.n_reg_data <= __out_alu.data;
+				$display("Execute stage:  instr group 1:  %h",
+					__out_alu.data);
 
-				//// "cpyhi" does not change the lower 15 bits of rA
-				//prep_ra_write({__multi_stage_data_2.instr_imm_val,
-				//	__stage_write_back_input_data.rfile_ra_data[15:0]});
+				// For operand forwarding
+				__stage_execute_output_data.prev_written_reg_index
+					<= __multi_stage_data_1.instr_ra_index;
 
-				if (__multi_stage_data_1.instr_opcode
-					== PkgInstrDecoder::Cpyhi_OneRegOneImm)
-				begin
-					__stage_write_back_input_data.n_reg_data
-						<= {__multi_stage_data_1.instr_imm_val,
-						__stage_execute_input_data.rfile_ra_data[15:0]};
-				end
-
-				else if (__multi_stage_data_1.instr_opcode 
-					== PkgInstrDecoder::Bne_TwoRegsOneSimm)
-				begin
-					// Temporary!  Doesn't perform multiplications properly!
-					__stage_write_back_input_data.n_reg_data 
-						<= __out_alu.data;
-
-					if (__stage_execute_input_data.rfile_ra_data
-						!= __stage_execute_input_data.rfile_rb_data)
-					begin
-						__stage_execute_output_data.next_pc 
-							<= __out_alu.data;
-					end
-
-					else
-					begin
-						// Sneaky way to just use the updated PC from the
-						// previous stage (4 was added to it)
-						__stage_execute_output_data.next_pc <= __locals.pc;
-					end
-				end
-
-				else if (__multi_stage_data_1.instr_opcode
-					== PkgInstrDecoder::Beq_TwoRegsOneSimm)
-				begin
-					// Temporary!  Doesn't perform multiplications properly!
-					__stage_write_back_input_data.n_reg_data 
-						<= __out_alu.data;
-
-					if (__stage_execute_input_data.rfile_ra_data
-						== __stage_execute_input_data.rfile_rb_data)
-					begin
-						__stage_execute_output_data.next_pc 
-							<= __out_alu.data;
-					end
-
-					else
-					begin
-						// Sneaky way to just use the updated PC from the
-						// previous stage (4 was added to it)
-						__stage_execute_output_data.next_pc <= __locals.pc;
-					end
-				end
-
-				else
-				begin
-					// Temporary!  Doesn't perform multiplications properly!
-					__stage_write_back_input_data.n_reg_data 
-						<= __out_alu.data;
-
-					// Sneaky way to just use the updated PC from the
-					// previous stage (4 was added to it)
-					__stage_execute_output_data.next_pc <= __locals.pc;
-				end
+				__stage_execute_output_data.next_pc <= following_pc;
 			end
 
 			4'd2:
 			begin
-				case (__multi_stage_data_1.instr_opcode)
-					PkgInstrDecoder::Jne_ThreeRegs:
-					begin
-						if (__stage_execute_input_data.rfile_ra_data
-							!= __stage_execute_input_data.rfile_rb_data)
-						begin
-							__stage_execute_output_data.next_pc
-								<= __stage_execute_input_data
-								.rfile_rc_data;
-						end
+				__stage_execute_output_data.next_pc <= following_pc;
 
-						else
-						begin
-							// Sneaky way to just use the updated PC from
-							// the previous stage (4 was added to it)
-							__stage_execute_output_data.next_pc 
-								<= __locals.pc;
-						end
-					end
-
-					PkgInstrDecoder::Jeq_ThreeRegs:
-					begin
-						if (__stage_execute_input_data.rfile_ra_data
-							== __stage_execute_input_data.rfile_rb_data)
-						begin
-							__stage_execute_output_data.next_pc
-								<= __stage_execute_input_data
-								.rfile_rc_data;
-						end
-
-						else
-						begin
-							// Sneaky way to just use the updated PC from
-							// the previous stage (4 was added to it)
-							__stage_execute_output_data.next_pc 
-								<= __locals.pc;
-						end
-					end
-
-					PkgInstrDecoder::Callne_ThreeRegs:
-					begin
-						if (__stage_execute_input_data.rfile_ra_data
-							!= __stage_execute_input_data.rfile_rb_data)
-						begin
-							__stage_execute_output_data.next_pc
-								<= __stage_execute_input_data
-								.rfile_rc_data;
-							
-							// New lr value
-							// Sneaky way to just use the updated PC from
-							// the previous stage (4 was added to it)
-							__stage_write_back_input_data.n_reg_data 
-								<= __locals.pc;
-						end
-
-						else
-						begin
-							// Sneaky way to just use the updated PC from
-							// the previous stage (4 was added to it)
-							__stage_execute_output_data.next_pc 
-								<= __locals.pc;
-						end
-					end
-
-					PkgInstrDecoder::Calleq_ThreeRegs:
-					begin
-						if (__stage_execute_input_data.rfile_ra_data
-							== __stage_execute_input_data.rfile_rb_data)
-						begin
-							__stage_execute_output_data.next_pc
-								<= __stage_execute_input_data
-								.rfile_rc_data;
-							
-							// New lr value
-							// Sneaky way to just use the updated PC from
-							// the previous stage (4 was added to it)
-							__stage_write_back_input_data.n_reg_data 
-								<= __locals.pc;
-						end
-
-						else
-						begin
-							// Sneaky way to just use the updated PC from
-							// the previous stage (4 was added to it)
-							__stage_execute_output_data.next_pc 
-								<= __locals.pc;
-						end
-					end
-
-					default:
-					begin
-						// Sneaky way to just use the updated PC from the
-						// previous stage (4 was added to it)
-						__stage_execute_output_data.next_pc <= __locals.pc;
-					end
-				endcase
+				// Temporarily prevent operand forwarding
+				__stage_execute_output_data.prev_written_reg_index <= 0;
 			end
 
 			4'd3:
 			begin
-				// Sneaky way to just use the updated PC from the previous
-				// stage (4 was added to it)
-				__stage_execute_output_data.next_pc <= __locals.pc;
+				__stage_execute_output_data.next_pc <= following_pc;
+
+				// Prevent operand forwarding (none needed for loads since
+				// they stall until the new value's been written)
+				__stage_execute_output_data.prev_written_reg_index <= 0;
 			end
 		endcase
 	end
@@ -733,11 +626,7 @@ module Frost32Cpu(input logic clk,
 					//end
 					PkgInstrDecoder::Bne_TwoRegsOneSimm:
 					begin
-						// Sneaky way to use the value
-						// __multi_stage_data_1.pc_val + 4 as input to the
-						// ALU without an extra addition (in theory, at
-						// least....)
-						__in_alu.a = __multi_stage_data_0.pc_val;
+						__in_alu.a = __multi_stage_data_1.pc_val + 4;
 
 						// Sign extend the immediate value
 						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
@@ -751,11 +640,7 @@ module Frost32Cpu(input logic clk,
 
 					PkgInstrDecoder::Beq_TwoRegsOneSimm:
 					begin
-						// Sneaky way to use the value
-						// __multi_stage_data_1.pc_val + 4 as input to the
-						// ALU without an extra addition (in theory, at
-						// least....)
-						__in_alu.a = __multi_stage_data_0.pc_val;
+						__in_alu.a = __multi_stage_data_1.pc_val + 4;
 
 						// Sign extend the immediate value
 						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]

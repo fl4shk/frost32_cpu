@@ -35,12 +35,12 @@ private:		// variables
 	AssemblerGrammarParser::ProgramContext* __program_ctx;
 	int __pass;
 
-	bool __show_ws;
+	bool __show_words;
 
 	ScopedTableNode<Symbol>* __curr_scope_node = nullptr;
 
 public:		// functions
-	Assembler(AssemblerGrammarParser& parser, bool s_show_ws=false);
+	Assembler(AssemblerGrammarParser& parser, bool s_show_words=false);
 
 	int run();
 
@@ -70,13 +70,13 @@ private:		// functions
 		printerr("Error:  ", msg, "\n");
 		exit(1);
 	}
-	inline void print_ws_if_allowed(const std::string some_ws)
-	{
-		if (__pass && __show_ws)
-		{
-			printout(some_ws);
-		}
-	}
+	//inline void print_words_if_allowed(const std::string some_words)
+	//{
+	//	if (__pass && __show_words)
+	//	{
+	//		printout(some_words);
+	//	}
+	//}
 
 	template<typename CtxType>
 	auto get_reg_encodings(CtxType *ctx) const;
@@ -140,7 +140,7 @@ private:		// functions
 	}
 
 	// Generate data
-	void gen_no_ws(u16 data);
+	void gen_words(u16 data);
 	void gen_8(u8 data);
 	void gen_16(u16 data);
 	void gen_32(u32 data);

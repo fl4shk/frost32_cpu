@@ -26,10 +26,11 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_LDST_TYPE:0] instr_ldst_type;
 	logic instr_causes_stall;
 
+	//logic nop;
+
 	// What the PC was for this instruction
 	logic [`MSB_POS__REG_FILE_DATA:0] pc_val;
 
-	//logic nop;
 
 } MultiStageData;
 

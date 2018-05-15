@@ -20,8 +20,8 @@
 		push_str(cstm_strdup(arg->toString())); \
 	}
 
-Assembler::Assembler(AssemblerGrammarParser& parser, bool s_show_ws)
-	: __show_ws(s_show_ws)
+Assembler::Assembler(AssemblerGrammarParser& parser, bool s_show_words)
+	: __show_words(s_show_words)
 {
 	__program_ctx = parser.program();
 
@@ -69,7 +69,7 @@ inline auto Assembler::get_one_reg_encoding(const std::string& reg_name)
 	return __encoding_stuff.reg_names_map().at(cstm_strdup(reg_name));
 }
 
-void Assembler::gen_no_ws(u16 data)
+void Assembler::gen_words(u16 data)
 {
 	if (__pass)
 	{
@@ -129,23 +129,54 @@ void Assembler::gen_8(u8 data)
 	__pc.curr += sizeof(data);
 	__pc.back_up();
 
-	print_ws_if_allowed("\n");
+	//print_words_if_allowed("\n");
+	printout("\n");
 }
 void Assembler::gen_16(u16 data)
 {
-	//gen_no_ws(data);
-	//print_ws_if_allowed("\n");
-	gen_8(get_bits_with_range(data, 15, 8));
-	gen_8(get_bits_with_range(data, 7, 0));
+	//gen_no_words(data);
+	//print_words_if_allowed("\n");
+	//gen_8(get_bits_with_range(data, 15, 8));
+	//gen_8(get_bits_with_range(data, 7, 0));
+
+	if (__pass)
+	{
+		if (__show_words)
+		{
+			gen_words(data);
+			printout("\n");
+		}
+		else
+		{
+			gen_8(get_bits_with_range(data, 15, 8));
+			gen_8(get_bits_with_range(data, 7, 0));
+		}
+	}
 }
 void Assembler::gen_32(u32 data)
 {
-	//gen_no_ws(get_bits_with_range(data, 31, 16));
-	//print_ws_if_allowed(" ");
-	//gen_no_ws(get_bits_with_range(data, 15, 0));
-	//print_ws_if_allowed("\n");
-	gen_16(get_bits_with_range(data, 31, 16));
-	gen_16(get_bits_with_range(data, 15, 0));
+	//gen_no_words(get_bits_with_range(data, 31, 16));
+	//print_words_if_allowed(" ");
+	//gen_no_words(get_bits_with_range(data, 15, 0));
+	//print_words_if_allowed("\n");
+
+	if (__pass)
+	{
+		if (__show_words)
+		{
+			gen_words(get_bits_with_range(data, 31, 16));
+			printout(" ");
+			gen_words(get_bits_with_range(data, 15, 0));
+			printout("\n");
+		}
+		else
+		{
+			gen_8(get_bits_with_range(data, 31, 24));
+			gen_8(get_bits_with_range(data, 23, 16));
+			gen_8(get_bits_with_range(data, 15, 8));
+			gen_8(get_bits_with_range(data, 7, 0));
+		}
+	}
 
 }
 

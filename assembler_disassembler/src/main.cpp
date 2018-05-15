@@ -6,7 +6,7 @@ int main(int argc, char** argv)
 {
 	auto usage = [&argv]() -> void
 	{
-		printerr("Usage:  ", argv[0], "{-a,-d}\n");
+		printerr("Usage:  ", argv[0], "{-a,-b,-d}\n");
 		exit(1);
 	};
 
@@ -30,8 +30,25 @@ int main(int argc, char** argv)
 			(new AsmDisasmErrorListener());
 		parser.addErrorListener(asm_disasm_error_listener.get());
 
+		Assembler visitor(parser, false);
+		return visitor.run();
+	}
+	if (std::string(argv[1]) == "-b")
+	{
+		std::string from_stdin(get_stdin_as_str());
+
+		antlr4::ANTLRInputStream input(from_stdin);
+		AssemblerGrammarLexer lexer(&input);
+		antlr4::CommonTokenStream tokens(&lexer);
+		tokens.fill();
+
+		AssemblerGrammarParser parser(&tokens);
+		parser.removeErrorListeners();
+		std::unique_ptr<AsmDisasmErrorListener> asm_disasm_error_listener
+			(new AsmDisasmErrorListener());
+		parser.addErrorListener(asm_disasm_error_listener.get());
+
 		Assembler visitor(parser, true);
-		//Assembler visitor(parser);
 		return visitor.run();
 	}
 	else if (std::string(argv[1]) == "-d")
