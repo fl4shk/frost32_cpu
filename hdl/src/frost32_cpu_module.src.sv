@@ -362,6 +362,12 @@ module Frost32Cpu(input logic clk,
 						end
 					endcase
 				end
+				else if ((__stage_instr_decode_data.stall_state
+					== PkgFrost32Cpu::StMemAccess)
+					&& (__stage_instr_decode_data.stall_counter == 2))
+				begin
+					stop_mem_access();
+				end
 			end
 		end
 
