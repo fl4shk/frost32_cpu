@@ -42,7 +42,7 @@ quit2:
 	jmpa quit
 }
 
-.org 0x800000
+.org 0x8000
 quit:
 {
 	WAIT()

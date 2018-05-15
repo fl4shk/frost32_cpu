@@ -78,10 +78,15 @@ module Frost32Cpu(input logic clk,
 
 	logic [`MSB_POS__FROST32_CPU_ADDR:0] __following_pc;
 
+	PkgFrost32Cpu::MultiStageData __multi_stage_data_0, 
+		__multi_stage_data_1, __multi_stage_data_2;
+
+
+
 	always @ (posedge clk)
 	begin
-		//if (__locals.pc >= 32'h8000)
-		if (__locals.pc >= 32'h800000)
+		if (__locals.pc >= 32'h8000)
+		//if (__locals.pc >= 32'h800000)
 		begin
 			$finish;
 		end
@@ -95,13 +100,13 @@ module Frost32Cpu(input logic clk,
 		//$display("Frost32Cpu (innards):  %h %h",
 		//	__multi_stage_data_0.raw_instruction,
 		//	__locals.pc);
-		$display("Frost32Cpu pc:  %h", __locals.pc);
+		//$display("Frost32Cpu pc:  %h", __locals.pc);
+		$display("Frost32Cpu pc's:  %h %h %h", 
+			__multi_stage_data_0.pc_val, 
+			__multi_stage_data_1.pc_val,
+			__multi_stage_data_2.pc_val);
 		$display();
 	end
-
-
-	PkgFrost32Cpu::MultiStageData __multi_stage_data_0, 
-		__multi_stage_data_1, __multi_stage_data_2;
 
 
 	// Module instantiations
@@ -289,8 +294,8 @@ module Frost32Cpu(input logic clk,
 			// where the PC should be changed).
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
-				//$display("Frost32Cpu:  stall_counter == 1:  %h",
-				//	__stage_execute_output_data.next_pc);
+				$display("Frost32Cpu:  stall_counter == 1:  %h",
+					__stage_execute_output_data.next_pc);
 				__locals.pc <= __stage_execute_output_data.next_pc;
 
 				// Prepare a load from memory of the next instruction.
@@ -437,6 +442,11 @@ module Frost32Cpu(input logic clk,
 		//	__multi_stage_data_1.instr_opcode);
 
 		__multi_stage_data_2 <= __multi_stage_data_1;
+
+		//$display("Execute stage:  %h %h %h",
+		//	__stage_execute_input_data.rfile_ra_data,
+		//	__stage_execute_input_data.rfile_rb_data,
+		//	__stage_execute_input_data.rfile_rc_data);
 
 		__stage_write_back_input_data.rfile_ra_data 
 			<= __stage_execute_input_data.rfile_ra_data;
@@ -600,12 +610,16 @@ module Frost32Cpu(input logic clk,
 							__stage_execute_output_data.next_pc
 								<= __stage_execute_input_data
 								.rfile_rc_data;
+						//$display("Execute stage Jeq_ThreeRegs taken:  %h",
+						//	__stage_execute_input_data.rfile_rc_data);
 						end
 
 						else
 						begin
 							__stage_execute_output_data.next_pc
 								<= __following_pc;
+						//$display("Execute stage Jne_ThreeRegs skip:  %h",
+						//	__following_pc);
 						end
 					end
 
@@ -615,23 +629,31 @@ module Frost32Cpu(input logic clk,
 						__stage_execute_output_data.prev_written_reg_index
 							<= 0;
 
+
 						if (__stage_execute_input_data.rfile_ra_data
 							== __stage_execute_input_data.rfile_rb_data)
 						begin
 							__stage_execute_output_data.next_pc
 								<= __stage_execute_input_data
 								.rfile_rc_data;
+						//$display("Execute stage Jeq_ThreeRegs taken:  %h",
+						//	__stage_execute_input_data.rfile_rc_data);
 						end
 
 						else
 						begin
 							__stage_execute_output_data.next_pc
 								<= __following_pc;
+						//$display("Execute stage Jeq_ThreeRegs skip:  %h",
+						//	__following_pc);
 						end
 					end
 
 					PkgInstrDecoder::Callne_ThreeRegs:
 					begin
+						// Prevent operand forwarding
+						__stage_execute_output_data
+							.prev_written_reg_index <= 0;
 						if (__stage_execute_input_data.rfile_ra_data
 							!= __stage_execute_input_data.rfile_rb_data)
 						begin
@@ -639,28 +661,35 @@ module Frost32Cpu(input logic clk,
 								<= __stage_execute_input_data
 								.rfile_rc_data;
 
-							// Operand forwarding for the "lr" register.
-							__stage_execute_output_data
-								.prev_written_reg_index <= __REG_LR_INDEX;
+							//// Operand forwarding for the "lr" register.
+							//__stage_execute_output_data
+							//	.prev_written_reg_index <= __REG_LR_INDEX;
 
 							// We want to return to the value of
 							// __following_pc.
 							__stage_write_back_input_data.n_reg_data 
 								<= __following_pc;
+							//$display("Callne_ThreeRegs return addr:  %h",
+							//	__following_pc);
+
+						//$display("Execute stage Callne_ThreeRegs taken:  %h",
+						//	__stage_execute_input_data.rfile_rc_data);
 						end
 
 						else
 						begin
-							// Prevent operand forwarding
-							__stage_execute_output_data
-								.prev_written_reg_index <= 0;
 							__stage_execute_output_data.next_pc
 								<= __following_pc;
+						//$display("Execute stage Callne_ThreeRegs skip:  %h",
+						//	__following_pc);
 						end
 					end
 
 					PkgInstrDecoder::Calleq_ThreeRegs:
 					begin
+						// Prevent operand forwarding
+						__stage_execute_output_data
+							.prev_written_reg_index <= 0;
 						if (__stage_execute_input_data.rfile_ra_data
 							== __stage_execute_input_data.rfile_rb_data)
 						begin
@@ -668,23 +697,24 @@ module Frost32Cpu(input logic clk,
 								<= __stage_execute_input_data
 								.rfile_rc_data;
 
-							// Operand forwarding for the "lr" register.
-							__stage_execute_output_data
-								.prev_written_reg_index <= __REG_LR_INDEX;
+							//// Operand forwarding for the "lr" register.
+							//__stage_execute_output_data
+							//	.prev_written_reg_index <= __REG_LR_INDEX;
 
 							// We want to return to the value of
 							// __following_pc.
 							__stage_write_back_input_data.n_reg_data 
 								<= __following_pc;
+						//$display("Execute stage Calleq_ThreeRegs taken:  %h",
+						//	__stage_execute_input_data.rfile_rc_data);
 						end
 
 						else
 						begin
-							// Prevent operand forwarding
-							__stage_execute_output_data
-								.prev_written_reg_index <= 0;
 							__stage_execute_output_data.next_pc
 								<= __following_pc;
+						//$display("Execute stage Calleq_ThreeRegs skip:  %h",
+						//	__following_pc);
 						end
 					end
 
@@ -753,12 +783,16 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Callne_ThreeRegs:
 					begin
 						// Make sure to write back to lr!
+						//$display("Write back callne:  %h",
+						//	__stage_write_back_input_data.n_reg_data);
 						prep_reg_write(__REG_LR_INDEX,
 							__stage_write_back_input_data.n_reg_data);
 					end
 					PkgInstrDecoder::Calleq_ThreeRegs:
 					begin
 						// Make sure to write back to lr!
+						//$display("Write back calleq:  %h",
+						//	__stage_write_back_input_data.n_reg_data);
 						prep_reg_write(__REG_LR_INDEX,
 							__stage_write_back_input_data.n_reg_data);
 					end
@@ -874,6 +908,8 @@ module Frost32Cpu(input logic clk,
 				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
 				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
 				__in_alu.oper = __multi_stage_data_1.instr_opcode;
+				//$display("always_comb thing:  %h %h %h",
+				//	__in_alu.a, __in_alu.b, __in_alu.oper);
 
 				if (__multi_stage_data_1.instr_opcode
 					== PkgInstrDecoder::Mul_ThreeRegs)
@@ -985,6 +1021,8 @@ module Frost32Cpu(input logic clk,
 							.instr_opcode;
 					end
 				endcase
+				//$display("always_comb thing:  %h %h %h",
+				//	__in_alu.a, __in_alu.b, __in_alu.oper);
 			end
 
 			//2:

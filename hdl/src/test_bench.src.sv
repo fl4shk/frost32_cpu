@@ -38,7 +38,8 @@ module TestBench;
 	MainClockGenerator __inst_main_clk_gen(.clk(__clk));
 	HalfClockGenerator __inst_half_clk_gen(.clk(__half_clk));
 
-	parameter __ARR_SIZE__MAIN_MEM = 1 << 24;
+	parameter __ARR_SIZE__MAIN_MEM = 1 << 16;
+	//parameter __ARR_SIZE__MAIN_MEM = 1 << 24;
 	parameter __LAST_INDEX__MAIN_MEM 
 		= `ARR_SIZE_TO_LAST_INDEX(__ARR_SIZE__MAIN_MEM);
 
@@ -55,12 +56,12 @@ module TestBench;
 		////$dumpfile("test.vcd");
 		////$dumpvars(0, TestBench);
 
-		////#2000
-		////#40
-		//#100
-		////#200
-		////#300
-		////////#1000
+		//////#2000
+		//////#40
+		//#50
+		//////#200
+		//////#300
+		//////////#1000
 		//$finish;
 	end
 
@@ -78,14 +79,17 @@ module TestBench;
 
 	logic [31:0] __addr_0, __addr_1, __addr_2, __addr_3;
 
-	assign __addr_0 = (__out_frost32_cpu.addr & 32'hffffff);
-	assign __addr_1 = ((__out_frost32_cpu.addr + 1) & 32'hffffff);
-	assign __addr_2 = ((__out_frost32_cpu.addr + 2) & 32'hffffff);
-	assign __addr_3 = ((__out_frost32_cpu.addr + 3) & 32'hffffff);
+	parameter __MOD_THING = 32'hffff;
+	//parameter __MOD_THING = 32'hff_ffff;
+
+	assign __addr_0 = (__out_frost32_cpu.addr & __MOD_THING);
+	assign __addr_1 = ((__out_frost32_cpu.addr + 1) & __MOD_THING);
+	assign __addr_2 = ((__out_frost32_cpu.addr + 2) & __MOD_THING);
+	assign __addr_3 = ((__out_frost32_cpu.addr + 3) & __MOD_THING);
 
 
-	//always_ff @ (posedge __clk)
 	`ifdef DEBUG_MEM_ACCESS
+	//always_ff @ (posedge __clk)
 	always_ff @ (posedge __half_clk)
 	begin
 		if (__out_frost32_cpu.req_mem_access 

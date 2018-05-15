@@ -9,8 +9,8 @@ dnl
 .org 0x0000
 main:
 {
-	// Assume top of available memory is
-	cpya sp, 0xffffff
+	// Assume top of available memory is here
+	cpya sp, 0xffff
 
 	subi sp, 20
 	cpyi u0, 9
@@ -32,7 +32,9 @@ main:
 	mul u0, u1
 
 	cpya u3, 0x9999aaaa
-	muli u2, u3, 0x9000bbbb
+	;muli u2, u3, 0x9000bbbb
+	cpya temp, 0x9000bbbb
+	mul u2, u3, temp
 
 	WAIT()
 
@@ -48,7 +50,7 @@ data_0:
 data_1:
 	.space 20
 
-.org 0x800000
+.org 0xc000
 quit:
 {
 	WAIT()

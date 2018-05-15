@@ -130,7 +130,11 @@ void Assembler::gen_8(u8 data)
 	__pc.back_up();
 
 	//print_words_if_allowed("\n");
-	printout("\n");
+
+	if (__pass)
+	{
+		printout("\n");
+	}
 }
 void Assembler::gen_16(u16 data)
 {
@@ -139,12 +143,16 @@ void Assembler::gen_16(u16 data)
 	//gen_8(get_bits_with_range(data, 15, 8));
 	//gen_8(get_bits_with_range(data, 7, 0));
 
-	if (__pass)
+	//if (__pass)
 	{
 		if (__show_words)
 		{
 			gen_words(data);
-			printout("\n");
+
+			if (__pass)
+			{
+				printout("\n");
+			}
 		}
 		else
 		{
@@ -160,14 +168,22 @@ void Assembler::gen_32(u32 data)
 	//gen_no_words(get_bits_with_range(data, 15, 0));
 	//print_words_if_allowed("\n");
 
-	if (__pass)
+	//if (__pass)
 	{
 		if (__show_words)
 		{
 			gen_words(get_bits_with_range(data, 31, 16));
-			printout(" ");
+
+			if (__pass)
+			{
+				printout(" ");
+			}
 			gen_words(get_bits_with_range(data, 15, 0));
-			printout("\n");
+
+			if (__pass)
+			{
+				printout("\n");
+			}
 		}
 		else
 		{
