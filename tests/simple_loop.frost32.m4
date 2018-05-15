@@ -17,9 +17,13 @@ main:
 	cpy u1, u0
 
 loop:
-	addi u1, u1, 1
+	;addi u1, u1, 1
+	addi u1, 1
+	;inc u1
 	
-	subi u0, u0, 1
+	;subi u0, u0, 1
+	;dec u0
+	subi u0, 1
 	bne u0, zero, loop
 }
 
@@ -34,10 +38,11 @@ quit2:
 
 	WAIT()
 
-	bra quit
+	;bra quit
+	jmpa quit
 }
 
-.org 0x8000
+.org 0x800000
 quit:
 {
 	WAIT()

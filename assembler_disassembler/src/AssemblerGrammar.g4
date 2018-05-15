@@ -108,6 +108,11 @@ pseudoInstruction:
 	| pseudoInstrOpCall
 	| pseudoInstrOpJmpa
 	| pseudoInstrOpCalla
+	| pseudoInstrOpJmpaCallaConditional
+	| pseudoInstrOpIncDec
+	| pseudoInstrOpAluOpTwoReg
+	| pseudoInstrOpAluOpOneRegOneImm
+	| pseudoInstrOpAluOpOneRegOneSimm
 	;
 
 pseudoInstrOpInv:
@@ -155,6 +160,39 @@ pseudoInstrOpJmpa:
 pseudoInstrOpCalla:
 	TokPseudoInstrNameCalla
 	expr
+	;
+
+pseudoInstrOpJmpaCallaConditional:
+	(TokPseudoInstrNameJmpane | TokPseudoInstrNameJmpaeq
+	| TokPseudoInstrNameCallane | TokPseudoInstrNameCallaeq)
+	TokReg TokComma TokReg TokComma expr
+	;
+
+pseudoInstrOpIncDec:
+	(TokPseudoInstrNameInc | TokPseudoInstrNameDec)
+	TokReg
+	;
+pseudoInstrOpAluOpTwoReg:
+	(TokInstrNameAdd | TokInstrNameSub 
+	| TokInstrNameSltu | TokInstrNameSlts
+	| TokInstrNameMul | TokInstrNameAnd 
+	| TokInstrNameOrr | TokInstrNameXor
+	| TokInstrNameNor | TokInstrNameLsl 
+	| TokInstrNameLsr | TokInstrNameAsr)
+	TokReg TokComma TokReg
+	;
+pseudoInstrOpAluOpOneRegOneImm:
+	(TokInstrNameAddi | TokInstrNameSubi
+	| TokInstrNameSltui | 
+	| TokInstrNameMuli | TokInstrNameAndi
+	| TokInstrNameOrri | TokInstrNameXori
+	| TokInstrNameNori | TokInstrNameLsli 
+	| TokInstrNameLsri | TokInstrNameAsri)
+	TokReg TokComma expr
+	;
+pseudoInstrOpAluOpOneRegOneSimm:
+	TokInstrNameSltsi
+	TokReg TokComma expr
 	;
 
 // Assembler directives 
@@ -281,7 +319,10 @@ pseudoInstrName:
 	| TokPseudoInstrNameCpyi | TokPseudoInstrNameCpya
 	| TokPseudoInstrNameBra 
 	| TokPseudoInstrNameJmp | TokPseudoInstrNameCall
-	| TokPseudoInstrNameJmpa | TokPseudoInstrNameCalla)
+	| TokPseudoInstrNameJmpa | TokPseudoInstrNameCalla
+	| TokPseudoInstrNameJmpane | TokPseudoInstrNameJmpaeq
+	| TokPseudoInstrNameCallane | TokPseudoInstrNameCallaeq
+	| TokPseudoInstrNameInc | TokPseudoInstrNameDec)
 	;
 
 numExpr: TokDecNum | TokHexNum | TokBinNum;
@@ -366,6 +407,12 @@ TokPseudoInstrNameJmp: 'jmp' ;
 TokPseudoInstrNameCall: 'call' ;
 TokPseudoInstrNameJmpa: 'jmpa' ;
 TokPseudoInstrNameCalla: 'calla' ;
+TokPseudoInstrNameJmpane: 'jmpane' ;
+TokPseudoInstrNameJmpaeq: 'jmpaeq' ;
+TokPseudoInstrNameCallane: 'callane' ;
+TokPseudoInstrNameCallaeq: 'callaeq' ;
+TokPseudoInstrNameInc: 'inc' ;
+TokPseudoInstrNameDec: 'dec' ;
 
 // Directives
 TokDotOrg: '.org' ;

@@ -206,6 +206,19 @@ private:		// visitor functions
 		(AssemblerGrammarParser::PseudoInstrOpJmpaContext *ctx);
 	antlrcpp::Any visitPseudoInstrOpCalla
 		(AssemblerGrammarParser::PseudoInstrOpCallaContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpJmpaCallaConditional
+		(AssemblerGrammarParser::PseudoInstrOpJmpaCallaConditionalContext 
+		*ctx);
+	antlrcpp::Any visitPseudoInstrOpIncDec
+		(AssemblerGrammarParser::PseudoInstrOpIncDecContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpAluOpTwoReg
+		(AssemblerGrammarParser::PseudoInstrOpAluOpTwoRegContext *ctx);
+	antlrcpp::Any visitPseudoInstrOpAluOpOneRegOneImm
+		(AssemblerGrammarParser::PseudoInstrOpAluOpOneRegOneImmContext
+		*ctx);
+	antlrcpp::Any visitPseudoInstrOpAluOpOneRegOneSimm
+		(AssemblerGrammarParser::PseudoInstrOpAluOpOneRegOneSimmContext
+		*ctx);
 
 
 	// directive:
@@ -306,6 +319,10 @@ private:		// functions
 	gen_getter_and_setter_by_val(pc);
 	gen_getter_by_ref(sym_tbl);
 
+	void __encode_alu_op_three_regs(const std::string& instr_name,
+		u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
+	void __encode_alu_op_two_regs_one_imm(const std::string& instr_name,
+		u32 reg_a_index, u32 reg_b_index, s64 immediate);
 	void __encode_inv(u32 reg_a_index, u32 reg_b_index);
 	void __encode_invi(u32 reg_a_index, s64 immediate);
 	void __encode_cpy_ra_rb(u32 reg_a_index, u32 reg_b_index);

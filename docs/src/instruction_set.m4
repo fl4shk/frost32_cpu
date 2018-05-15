@@ -192,6 +192,42 @@ NEWLINE()NEWLINE()
 			CODE(`cpya temp, imm32')
 			NEWLINE()
 			CODE(`call temp')
+	* BOLD(jmpane) rA, rB, imm32
+		* Conditional jump absolute (to directly encoded address)
+		* Encoded as
+			NEWLINE()
+			CODE(`cpya temp, imm32')
+			NEWLINE()
+			CODE(`jne rA, rB temp')
+	* BOLD(jmpaeq) rA, rB, imm32
+		* Conditional jump absolute (to directly encoded address)
+		* Encoded as
+			NEWLINE()
+			CODE(`cpya temp, imm32')
+			NEWLINE()
+			CODE(`jeq rA, rB temp')
+	* BOLD(callane) rA, rB, imm32
+		* Conditional call absolute (to directly encoded address)
+		* Encoded as
+			NEWLINE()
+			CODE(`cpya temp, imm32')
+			NEWLINE()
+			CODE(`callne rA, rB, temp')
+	* BOLD(callaeq) rA, rB, imm32
+		* Conditional call absolute (to directly encoded address)
+		* Encoded as
+			NEWLINE()
+			CODE(`cpya temp, imm32')
+			NEWLINE()
+			CODE(`calleq rA, rB, temp')
+	* BOLD(inc) rA
+		* Encoded as CODE(`addi rA, rA, 1')
+	* BOLD(dec) rA
+		* Encoded as CODE(`subi rA, rA, 1')
+	* BOLD(alu\_op\_three\_regs) rA, rB
+		* Encoded as CODE(`alu\_op\_three\_regs rA, rA, rB')
+	* BOLD(alu\_op\_two\_regs\_one\_immediate) rA, imm16
+		* Encoded as CODE(`alu\_op\_two\_regs\_one\_immediate rA, rA, imm16')
 	dnl * BOLD(bne) rA, rB, imm16
 	dnl 	* Relative branch if (rA != rB)
 	dnl 	* Encoded as

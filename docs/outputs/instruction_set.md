@@ -182,4 +182,40 @@
 			<code>cpya temp, imm32</code>
 			<br>
 			<code>call temp</code>
+	* <b>jmpane</b> rA, rB, imm32
+		* Conditional jump absolute (to directly encoded address)
+		* Encoded as
+			<br>
+			<code>cpya temp, imm32</code>
+			<br>
+			<code>jne rA, rB temp</code>
+	* <b>jmpaeq</b> rA, rB, imm32
+		* Conditional jump absolute (to directly encoded address)
+		* Encoded as
+			<br>
+			<code>cpya temp, imm32</code>
+			<br>
+			<code>jeq rA, rB temp</code>
+	* <b>callane</b> rA, rB, imm32
+		* Conditional call absolute (to directly encoded address)
+		* Encoded as
+			<br>
+			<code>cpya temp, imm32</code>
+			<br>
+			<code>callne rA, rB, temp</code>
+	* <b>callaeq</b> rA, rB, imm32
+		* Conditional call absolute (to directly encoded address)
+		* Encoded as
+			<br>
+			<code>cpya temp, imm32</code>
+			<br>
+			<code>calleq rA, rB, temp</code>
+	* <b>inc</b> rA
+		* Encoded as <code>addi rA, rA, 1</code>
+	* <b>dec</b> rA
+		* Encoded as <code>subi rA, rA, 1</code>
+	* <b>alu\_op\_three\_regs</b> rA, rB
+		* Encoded as <code>alu\_op\_three\_regs rA, rA, rB</code>
+	* <b>alu\_op\_two\_regs\_one\_immediate</b> rA, imm16
+		* Encoded as <code>alu\_op\_two\_regs\_one\_immediate rA, rA, imm16</code>
 																																							

@@ -37,7 +37,7 @@ module TestBench;
 	MainClockGenerator __inst_main_clk_gen(.clk(__clk));
 	HalfClockGenerator __inst_half_clk_gen(.clk(__half_clk));
 
-	parameter __ARR_SIZE__MAIN_MEM = 1 << 16;
+	parameter __ARR_SIZE__MAIN_MEM = 1 << 24;
 	parameter __LAST_INDEX__MAIN_MEM 
 		= `ARR_SIZE_TO_LAST_INDEX(__ARR_SIZE__MAIN_MEM);
 
