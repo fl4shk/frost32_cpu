@@ -54,9 +54,9 @@ module TestBench;
 		////$dumpfile("test.vcd");
 		////$dumpvars(0, TestBench);
 
-		///#2000
-		#40
-		//#100
+		//#2000
+		//#40
+		#100
 		//#200
 		//#300
 		//////#1000

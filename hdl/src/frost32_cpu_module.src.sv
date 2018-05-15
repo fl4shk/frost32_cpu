@@ -267,6 +267,8 @@ module Frost32Cpu(input logic clk,
 	// Stage 0:  Instruction Decode
 	always @ (posedge clk)
 	begin
+		$display("Decode:  next_pc:  %h",
+			__stage_execute_output_data.next_pc);
 		//if (__stage_instr_decode_data.stall_counter > 0)
 		if (in_stall())
 		begin
@@ -440,24 +442,91 @@ module Frost32Cpu(input logic clk,
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_1.instr_ra_index;
 
-				__stage_execute_output_data.next_pc <= __following_pc;
+				$display("0:  Changing next_pc to %h", __following_pc);
+
+				// The reason this is commented out is so that bubbles in
+				// the form of "add zero, zero, zero" can be used
+				//__stage_execute_output_data.next_pc <= __following_pc;
 			end
 
 			4'd1:
 			begin
-				__stage_write_back_input_data.n_reg_data <= __out_alu.data;
-				//$display("Execute stage:  instr group 1:  %h",
-				//	__out_alu.data);
+				if (__multi_stage_data_1.instr_opcode
+					< PkgInstrDecoder::Bne_TwoRegsOneSimm)
+				begin
+					// Temporary!  Doesn't perform multiplications
+					// properly!
+					__stage_write_back_input_data.n_reg_data 
+						<= __out_alu.data;
 
-				// For operand forwarding
-				__stage_execute_output_data.prev_written_reg_index
-					<= __multi_stage_data_1.instr_ra_index;
+					// For operand forwarding
+					__stage_execute_output_data.prev_written_reg_index
+						<= __multi_stage_data_1.instr_ra_index;
 
-				__stage_execute_output_data.next_pc <= __following_pc;
+					$display("Execute stage:  non branch");
+
+					$display("1:  Changing next_pc to %h", __following_pc);
+					__stage_execute_output_data.next_pc <= __following_pc;
+				end
+
+				else if (__multi_stage_data_1.instr_opcode
+					== PkgInstrDecoder::Bne_TwoRegsOneSimm)
+				begin
+					// Prevent operand forwarding
+					__stage_execute_output_data.prev_written_reg_index
+						<= 0;
+
+					$display("Execute stage:  bne:  ");
+					if (__stage_execute_input_data.rfile_ra_data
+						!= __stage_execute_input_data.rfile_rb_data)
+					begin
+						// Destination address computed by the ALU
+						$display("1:  Changing next_pc to %h", 
+							__out_alu.data);
+						__stage_execute_output_data.next_pc 
+							<= __out_alu.data;
+					end
+
+					else
+					begin
+						$display("1:  Changing next_pc to %h", 
+							__following_pc);
+						__stage_execute_output_data.next_pc
+							<= __following_pc;
+					end
+				end
+
+				else if (__multi_stage_data_1.instr_opcode
+					== PkgInstrDecoder::Beq_TwoRegsOneSimm)
+				begin
+					// Prevent operand forwarding
+					__stage_execute_output_data.prev_written_reg_index
+						<= 0;
+
+					$display("Execute stage:  beq:  ");
+					if (__stage_execute_input_data.rfile_ra_data
+						== __stage_execute_input_data.rfile_rb_data)
+					begin
+						$display("1:  Changing next_pc to %h", 
+							__out_alu.data);
+						// Destination address computed by the ALU
+						__stage_execute_output_data.next_pc 
+							<= __out_alu.data;
+					end
+
+					else
+					begin
+						$display("1:  Changing next_pc to %h", 
+							__following_pc);
+						__stage_execute_output_data.next_pc
+							<= __following_pc;
+					end
+				end
 			end
 
 			4'd2:
 			begin
+				$display("2:  Changing next_pc to %h", __following_pc);
 				__stage_execute_output_data.next_pc <= __following_pc;
 
 				// Temporarily prevent operand forwarding
@@ -466,10 +535,11 @@ module Frost32Cpu(input logic clk,
 
 			4'd3:
 			begin
+				$display("3:  Changing next_pc to %h", __following_pc);
 				__stage_execute_output_data.next_pc <= __following_pc;
 
 				// Prevent operand forwarding (none needed for loads since
-				// they stall until the new value's been written)
+				// they stall until the new value's really been written)
 				__stage_execute_output_data.prev_written_reg_index <= 0;
 			end
 		endcase
@@ -510,7 +580,7 @@ module Frost32Cpu(input logic clk,
 			4'd1:
 			begin
 				if (__multi_stage_data_2.instr_opcode
-					< PkgInstrDecoder::Cpyhi_OneRegOneImm)
+					<= PkgInstrDecoder::Cpyhi_OneRegOneImm)
 				begin
 					//if (__multi_stage_data_2.instr_opcode
 					//	!= PkgInstrDecoder::Muli_TwoRegsOneImm)
@@ -530,21 +600,21 @@ module Frost32Cpu(input logic clk,
 					//end
 				end
 
-				else if (__multi_stage_data_2.instr_opcode
-					== PkgInstrDecoder::Addsi_OneRegOnePcOneSimm)
-				begin
-					prep_ra_write(__stage_write_back_input_data.n_reg_data);
-				end
+				//else if (__multi_stage_data_2.instr_opcode
+				//	== PkgInstrDecoder::Addsi_OneRegOnePcOneSimm)
+				//begin
+				//	prep_ra_write(__stage_write_back_input_data.n_reg_data);
+				//end
 
-				else if (__multi_stage_data_2.instr_opcode
-					== PkgInstrDecoder::Cpyhi_OneRegOneImm)
-				begin
-					//// "cpyhi" does not change the lower 15 bits of rA
-					//prep_ra_write({__multi_stage_data_2.instr_imm_val,
-					//	__stage_write_back_input_data.rfile_ra_data[15:0]});
+				//else if (__multi_stage_data_2.instr_opcode
+				//	== PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				//begin
+				//	//// "cpyhi" does not change the lower 15 bits of rA
+				//	//prep_ra_write({__multi_stage_data_2.instr_imm_val,
+				//	//	__stage_write_back_input_data.rfile_ra_data[15:0]});
 
-					prep_ra_write(__stage_write_back_input_data.n_reg_data);
-				end
+				//	prep_ra_write(__stage_write_back_input_data.n_reg_data);
+				//end
 
 				//else if (__multi_stage_data_2.instr_opcode
 				//	== PkgInstrDecoder::Bne_TwoRegsOneSimm)
@@ -683,7 +753,8 @@ module Frost32Cpu(input logic clk,
 					//end
 					PkgInstrDecoder::Bne_TwoRegsOneSimm:
 					begin
-						__in_alu.a = __multi_stage_data_1.pc_val + 4;
+						//__in_alu.a = __multi_stage_data_1.pc_val + 4;
+						__in_alu.a = __following_pc;
 
 						// Sign extend the immediate value
 						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
@@ -697,7 +768,8 @@ module Frost32Cpu(input logic clk,
 
 					PkgInstrDecoder::Beq_TwoRegsOneSimm:
 					begin
-						__in_alu.a = __multi_stage_data_1.pc_val + 4;
+						//__in_alu.a = __multi_stage_data_1.pc_val + 4;
+						__in_alu.a = __following_pc;
 
 						// Sign extend the immediate value
 						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]

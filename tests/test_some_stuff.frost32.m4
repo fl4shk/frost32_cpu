@@ -25,7 +25,7 @@ quit2:
 {
 	cpya u7, 0x9000
 
-	WAIT()
+	dnl WAIT()
 
 	bra quit
 }
