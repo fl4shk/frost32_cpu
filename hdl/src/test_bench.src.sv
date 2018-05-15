@@ -85,6 +85,63 @@ module TestBench;
 
 
 	//always_ff @ (posedge __clk)
+	`ifdef DEBUG_MEM_ACCESS
+	always_ff @ (posedge __half_clk)
+	begin
+		if (__out_frost32_cpu.req_mem_access 
+			&& (__out_frost32_cpu.data_inout_access_type
+			== PkgFrost32Cpu::DiatRead))
+		begin
+			if (__out_frost32_cpu.data_inout_access_size
+				== PkgFrost32Cpu::Dias32)
+			begin
+				$display("Reading %h from address %h",
+					{__main_mem[__addr_0], __main_mem[__addr_1],
+					__main_mem[__addr_2], __main_mem[__addr_3]}, __addr_0);
+			end
+
+			else if (__out_frost32_cpu.data_inout_access_size
+				== PkgFrost32Cpu::Dias16)
+			begin
+				$display("Reading %h from address %h",
+					{__main_mem[__addr_0], __main_mem[__addr_1]},
+					__addr_0);
+			end
+
+			else
+			begin
+				$display("Reading %h from address %h",
+					__main_mem[__addr_0], __addr_0);
+			end
+		end
+
+		else if (__out_frost32_cpu.req_mem_access
+			&& (__out_frost32_cpu.data_inout_access_type
+			== PkgFrost32Cpu::DiatWrite))
+		begin
+			if (__out_frost32_cpu.data_inout_access_size
+				== PkgFrost32Cpu::Dias32)
+			begin
+				$display("Writing %h to address %h",
+					__out_frost32_cpu.data, __addr_0);
+			end
+
+			else if (__out_frost32_cpu.data_inout_access_size
+				== PkgFrost32Cpu::Dias16)
+			begin
+				$display("Writing %h to address %h",
+					__out_frost32_cpu.data[15:0], __addr_0);
+			end
+
+			else
+			begin
+				$display("Writing %h to address %h",
+					__out_frost32_cpu.data[7:0], __addr_0);
+			end
+		end
+	end
+	`endif
+
 	always_ff @ (posedge __clk)
 	begin
 		if (__out_frost32_cpu.req_mem_access 
@@ -97,12 +154,6 @@ module TestBench;
 				__in_frost32_cpu.data 
 					<= {__main_mem[__addr_0], __main_mem[__addr_1],
 					__main_mem[__addr_2], __main_mem[__addr_3]};
-
-				`ifdef DEBUG_MEM_ACCESS
-				$display("Reading %h from address %h",
-					{__main_mem[__addr_0], __main_mem[__addr_1],
-					__main_mem[__addr_2], __main_mem[__addr_3]}, __addr_0);
-				`endif
 			end
 
 			else if (__out_frost32_cpu.data_inout_access_size
@@ -110,22 +161,11 @@ module TestBench;
 			begin
 				__in_frost32_cpu.data
 					<= {__main_mem[__addr_0], __main_mem[__addr_1]};
-
-				`ifdef DEBUG_MEM_ACCESS
-				$display("Reading %h from address %h",
-					{__main_mem[__addr_0], __main_mem[__addr_1]},
-					__addr_0);
-				`endif
 			end
 
 			else
 			begin
 				__in_frost32_cpu.data <= __main_mem[__addr_0];
-
-				`ifdef DEBUG_MEM_ACCESS
-				$display("Reading %h from address %h",
-					__main_mem[__addr_0], __addr_0);
-				`endif
 			end
 		end
 
@@ -139,11 +179,6 @@ module TestBench;
 				{__main_mem[__addr_0], __main_mem[__addr_1],
 				__main_mem[__addr_2], __main_mem[__addr_3]}
 					<= __out_frost32_cpu.data;
-
-				`ifdef DEBUG_MEM_ACCESS
-				$display("Writing %h to address %h",
-					__out_frost32_cpu.data, __addr_0);
-				`endif
 			end
 
 			else if (__out_frost32_cpu.data_inout_access_size
@@ -151,22 +186,12 @@ module TestBench;
 			begin
 				{__main_mem[__addr_0], __main_mem[__addr_1]}
 					<= __out_frost32_cpu.data[15:0];
-
-				`ifdef DEBUG_MEM_ACCESS
-				$display("Writing %h to address %h",
-					__out_frost32_cpu.data[15:0], __addr_0);
-				`endif
 			end
 
 			else
 			begin
 				__main_mem[__addr_0]
 					<= __out_frost32_cpu.data[7:0];
-
-				`ifdef DEBUG_MEM_ACCESS
-				$display("Writing %h to address %h",
-					__out_frost32_cpu.data[7:0], __addr_0);
-				`endif
 			end
 		end
 	end
