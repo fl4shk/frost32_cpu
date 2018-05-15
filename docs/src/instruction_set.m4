@@ -128,10 +128,11 @@ NEWLINE()NEWLINE()
 			* OPCODE(0b0011)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0011)
-	* Encoding:  MDCODE(0b0011 aaaa bbbb cccc  0000 0000 0000 oooo)
+	* Encoding:  MDCODE(0b0011 aaaa bbbb cccc  iiii iiii iiii oooo)
 		* MDCODE(a):  rA
 		* MDCODE(b):  rB
 		* MDCODE(c):  rC
+		* MDCODE(i):  sign-extended 12-bit immediate
 		* MDCODE(o):  opcode
 	* Instructions:
 		* BOLD(ldr) rA, [rB, rC]
@@ -150,6 +151,22 @@ NEWLINE()NEWLINE()
 			* OPCODE(0b0110)
 		* BOLD(stb) rA, [rB, rC]
 			* OPCODE(0b0111)
+		* BOLD(ldri) rA, [rB, simm12]
+			* OPCODE(0b1000)
+		* BOLD(ldhi) rA, [rB, simm12]
+			* OPCODE(0b1001)
+		* BOLD(ldshi) rA, [rB, simm12]
+			* OPCODE(0b1010)
+		* BOLD(ldbi) rA, [rB, simm12]
+			* OPCODE(0b1011)
+		* BOLD(ldsbi) rA, [rB, simm12]
+			* OPCODE(0b1100)
+		* BOLD(stri) rA, [rB, simm12]
+			* OPCODE(0b1101)
+		* BOLD(sthi) rA, [rB, simm12]
+			* OPCODE(0b1110)
+		* BOLD(stbi) rA, [rB, simm12]
+			* OPCODE(0b1111)
 NEWLINE()NEWLINE()
 * Pseudo Instructions:
 	* BOLD(inv) rA, rB

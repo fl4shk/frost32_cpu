@@ -118,10 +118,11 @@
 			* Opcode:  0b0011
 <br><br>
 * Opcode Group:  0b0011
-	* Encoding:  ``0b0011 aaaa bbbb cccc  0000 0000 0000 oooo``
+	* Encoding:  ``0b0011 aaaa bbbb cccc  iiii iiii iiii oooo``
 		* ``a``:  rA
 		* ``b``:  rB
 		* ``c``:  rC
+		* ``i``:  sign-extended 12-bit immediate
 		* ``o``:  opcode
 	* Instructions:
 		* <b>ldr</b> rA, [rB, rC]
@@ -140,6 +141,22 @@
 			* Opcode:  0b0110
 		* <b>stb</b> rA, [rB, rC]
 			* Opcode:  0b0111
+		* <b>ldri</b> rA, [rB, simm12]
+			* Opcode:  0b1000
+		* <b>ldhi</b> rA, [rB, simm12]
+			* Opcode:  0b1001
+		* <b>ldshi</b> rA, [rB, simm12]
+			* Opcode:  0b1010
+		* <b>ldbi</b> rA, [rB, simm12]
+			* Opcode:  0b1011
+		* <b>ldsbi</b> rA, [rB, simm12]
+			* Opcode:  0b1100
+		* <b>stri</b> rA, [rB, simm12]
+			* Opcode:  0b1101
+		* <b>sthi</b> rA, [rB, simm12]
+			* Opcode:  0b1110
+		* <b>stbi</b> rA, [rB, simm12]
+			* Opcode:  0b1111
 <br><br>
 * Pseudo Instructions:
 	* <b>inv</b> rA, rB

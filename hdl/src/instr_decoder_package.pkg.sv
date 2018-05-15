@@ -72,8 +72,9 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_OP_GROUP:0] group;
 	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index, rc_index;
 
-	// blank (should be filled with zeroes)
-	logic [`MSB_POS__INSTR_FILL:0] fill;
+	//// blank (should be filled with zeroes)
+	//logic [`MSB_POS__INSTR_FILL:0] fill;
+	logic [`MSB_POS__INSTR_LDST_IMM_VAL_12:0] imm_val_12;
 	logic [`MSB_POS__INSTR_OPER:0] opcode;
 } Iog3Instr;
 
@@ -158,16 +159,15 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 	Sth_ThreeRegsLdst,
 	Stb_ThreeRegsLdst,
 
-	Bad0_Iog3,
-	Bad1_Iog3,
-	Bad2_Iog3,
-	Bad3_Iog3,
+	Ldri_TwoRegsOneSimm12Ldst,
+	Ldhi_TwoRegsOneSimm12Ldst,
+	Ldshi_TwoRegsOneSimm12Ldst,
+	Ldbi_TwoRegsOneSimm12Ldst,
 
-	Bad4_Iog3,
-	Bad5_Iog3,
-	Bad6_Iog3,
-	Bad7_Iog3
-
+	Ldsbi_TwoRegsOneSimm12Ldst,
+	Stri_TwoRegsOneSimm12Ldst,
+	Sthi_TwoRegsOneSimm12Ldst,
+	Stbi_TwoRegsOneSimm12Ldst
 } Iog3Oper;
 
 

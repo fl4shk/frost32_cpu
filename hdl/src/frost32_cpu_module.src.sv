@@ -53,7 +53,6 @@ module Frost32Cpu(input logic clk,
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
 
 		logic [`MSB_POS__REG_FILE_SEL:0] prev_written_reg_index;
-		//logic [`MSB_POS__REG_FILE_DATA:0] prev_written_reg_data;
 	} __stage_execute_output_data;
 
 	// Data input to the write back stage (output
@@ -445,7 +444,11 @@ module Frost32Cpu(input logic clk,
 				//$display("0:  Changing next_pc to %h", __following_pc);
 
 				// The reason this is commented out is so that bubbles in
-				// the form of "add zero, zero, zero" can be used
+				// the form of "add zero, zero, zero" can be used.  Don't
+				// uncomment this!
+				// Also, this assumes that no control flow is performed by
+				// group 0 instructions, which is true as of writing this
+				// comment.
 				//__stage_execute_output_data.next_pc <= __following_pc;
 			end
 
@@ -541,11 +544,124 @@ module Frost32Cpu(input logic clk,
 
 			4'd2:
 			begin
-				//$display("2:  Changing next_pc to %h", __following_pc);
-				__stage_execute_output_data.next_pc <= __following_pc;
+				////$display("2:  Changing next_pc to %h", __following_pc);
+				//__stage_execute_output_data.next_pc <= __following_pc;
 
-				// Temporarily prevent operand forwarding
-				__stage_execute_output_data.prev_written_reg_index <= 0;
+				//// Temporarily prevent operand forwarding
+				//__stage_execute_output_data.prev_written_reg_index <= 0;
+
+				case (__multi_stage_data_1.instr_opcode)
+					PkgInstrDecoder::Jne_ThreeRegs:
+					begin
+						// Prevent operand forwarding
+						__stage_execute_output_data.prev_written_reg_index
+							<= 0;
+
+						if (__stage_execute_input_data.rfile_ra_data
+							!= __stage_execute_input_data.rfile_rb_data)
+						begin
+							__stage_execute_output_data.next_pc
+								<= __stage_execute_input_data
+								.rfile_rc_data;
+						end
+
+						else
+						begin
+							__stage_execute_output_data.next_pc
+								<= __following_pc;
+						end
+					end
+
+					PkgInstrDecoder::Jeq_ThreeRegs:
+					begin
+						// Prevent operand forwarding
+						__stage_execute_output_data.prev_written_reg_index
+							<= 0;
+
+						if (__stage_execute_input_data.rfile_ra_data
+							== __stage_execute_input_data.rfile_rb_data)
+						begin
+							__stage_execute_output_data.next_pc
+								<= __stage_execute_input_data
+								.rfile_rc_data;
+						end
+
+						else
+						begin
+							__stage_execute_output_data.next_pc
+								<= __following_pc;
+						end
+					end
+
+					PkgInstrDecoder::Callne_ThreeRegs:
+					begin
+						if (__stage_execute_input_data.rfile_ra_data
+							!= __stage_execute_input_data.rfile_rb_data)
+						begin
+							__stage_execute_output_data.next_pc
+								<= __stage_execute_input_data
+								.rfile_rc_data;
+
+							// Operand forwarding for the "lr" register.
+							__stage_execute_output_data
+								.prev_written_reg_index <= __REG_LR_INDEX;
+
+							// We want to return to the value of
+							// __following_pc.
+							__stage_write_back_input_data.n_reg_data 
+								<= __following_pc;
+						end
+
+						else
+						begin
+							// Prevent operand forwarding
+							__stage_execute_output_data
+								.prev_written_reg_index <= 0;
+							__stage_execute_output_data.next_pc
+								<= __following_pc;
+						end
+					end
+
+					PkgInstrDecoder::Calleq_ThreeRegs:
+					begin
+						if (__stage_execute_input_data.rfile_ra_data
+							== __stage_execute_input_data.rfile_rb_data)
+						begin
+							__stage_execute_output_data.next_pc
+								<= __stage_execute_input_data
+								.rfile_rc_data;
+
+							// Operand forwarding for the "lr" register.
+							__stage_execute_output_data
+								.prev_written_reg_index <= __REG_LR_INDEX;
+
+							// We want to return to the value of
+							// __following_pc.
+							__stage_write_back_input_data.n_reg_data 
+								<= __following_pc;
+						end
+
+						else
+						begin
+							// Prevent operand forwarding
+							__stage_execute_output_data
+								.prev_written_reg_index <= 0;
+							__stage_execute_output_data.next_pc
+								<= __following_pc;
+						end
+					end
+
+					default:
+					begin
+						__stage_execute_output_data.next_pc 
+							<= __following_pc;
+
+						// Prevent operand forwarding
+						__stage_execute_output_data.prev_written_reg_index 
+							<= 0;
+					end
+				endcase
+
 			end
 
 			4'd3:
@@ -554,7 +670,9 @@ module Frost32Cpu(input logic clk,
 				__stage_execute_output_data.next_pc <= __following_pc;
 
 				// Prevent operand forwarding (none needed for loads since
-				// they stall until the new value's really been written)
+				// they stall until the new value has **really** been
+				// written, and of course stores don't need operand
+				// forwarding either)
 				__stage_execute_output_data.prev_written_reg_index <= 0;
 			end
 		endcase
@@ -569,21 +687,7 @@ module Frost32Cpu(input logic clk,
 				if (__multi_stage_data_2.instr_opcode
 					< PkgInstrDecoder::Bad0_Iog0)
 				begin
-					//if (__multi_stage_data_2.instr_opcode
-					//	!= PkgInstrDecoder::Mul_ThreeRegs)
-					//begin
-						prep_ra_write
-							(__stage_write_back_input_data.n_reg_data);
-					//end
-
-					//else
-					//begin
-					//	// Temporarily pretend that 32-bit multiplies using
-					//	// * are synthesizeable
-					//	prep_ra_write
-					//		(__stage_write_back_input_data.rfile_rb_data
-					//		* __stage_write_back_input_data.rfile_rc_data);
-					//end
+					prep_ra_write(__stage_write_back_input_data.n_reg_data);
 				end
 
 				else
@@ -597,49 +701,8 @@ module Frost32Cpu(input logic clk,
 				if (__multi_stage_data_2.instr_opcode
 					<= PkgInstrDecoder::Cpyhi_OneRegOneImm)
 				begin
-					//if (__multi_stage_data_2.instr_opcode
-					//	!= PkgInstrDecoder::Muli_TwoRegsOneImm)
-					//begin
-						prep_ra_write
-							(__stage_write_back_input_data.n_reg_data);
-					//end
-
-					//else
-					//begin
-					//	// Temporarily pretend that 32-bit multiplies using
-					//	// * are synthesizeable
-					//	prep_ra_write
-					//		(__stage_write_back_input_data.rfile_rb_data
-					//		* {16'h0000, 
-					//		__stage_write_back_input_data.imm_val});
-					//end
+					prep_ra_write(__stage_write_back_input_data.n_reg_data);
 				end
-
-				//else if (__multi_stage_data_2.instr_opcode
-				//	== PkgInstrDecoder::Addsi_OneRegOnePcOneSimm)
-				//begin
-				//	prep_ra_write(__stage_write_back_input_data.n_reg_data);
-				//end
-
-				//else if (__multi_stage_data_2.instr_opcode
-				//	== PkgInstrDecoder::Cpyhi_OneRegOneImm)
-				//begin
-				//	//// "cpyhi" does not change the lower 15 bits of rA
-				//	//prep_ra_write({__multi_stage_data_2.instr_imm_val,
-				//	//	__stage_write_back_input_data.rfile_ra_data[15:0]});
-
-				//	prep_ra_write(__stage_write_back_input_data.n_reg_data);
-				//end
-
-				//else if (__multi_stage_data_2.instr_opcode
-				//	== PkgInstrDecoder::Bne_TwoRegsOneSimm)
-				//begin
-				//end
-
-				//else //if (__multi_stage_data_2.instr_opcode
-				//	//== PkgInstrDecoder::Beq_TwoRegsOneSimm)
-				//begin
-				//end
 			end
 
 			4'd2:
@@ -647,18 +710,21 @@ module Frost32Cpu(input logic clk,
 				case (__multi_stage_data_2.instr_opcode)
 					PkgInstrDecoder::Callne_ThreeRegs:
 					begin
+						// Make sure to write back to lr!
 						prep_reg_write(__REG_LR_INDEX,
 							__stage_write_back_input_data.n_reg_data);
 					end
 					PkgInstrDecoder::Calleq_ThreeRegs:
 					begin
+						// Make sure to write back to lr!
 						prep_reg_write(__REG_LR_INDEX,
 							__stage_write_back_input_data.n_reg_data);
 					end
 
 					default:
 					begin
-						
+						// Don't need to write back anything for other
+						// instructions
 					end
 				endcase
 			end
@@ -680,9 +746,10 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Ldsh_ThreeRegsLdst:
 					begin
 						// Sign extend
-						prep_ra_write(in.data[15]
-							? {16'hffff, in.data[15:0]}
-							: {16'h0000, in.data[15:0]});
+						//prep_ra_write(in.data[15]
+						//	? {16'hffff, in.data[15:0]}
+						//	: {16'h0000, in.data[15:0]});
+						prep_ra_write({{16{in.data[15]}}, in.data[15:0]});
 					end
 
 					PkgInstrDecoder::Ldb_ThreeRegsLdst:
@@ -694,9 +761,10 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Ldsb_ThreeRegsLdst:
 					begin
 						// Sign extend
-						prep_ra_write(in.data[7]
-							? {24'hffffff, in.data[7:0]}
-							: {24'h000000, in.data[7:0]});
+						//prep_ra_write(in.data[7]
+						//	? {24'hffffff, in.data[7:0]}
+						//	: {24'h000000, in.data[7:0]});
+						prep_ra_write({{24{in.data[7]}}, in.data[7:0]});
 					end
 
 					default:
@@ -739,11 +807,14 @@ module Frost32Cpu(input logic clk,
 							= __stage_execute_input_data.rfile_rb_data;
 
 						// Sign extend the immediate value
-						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
-							? {16'hffff, 
-							__multi_stage_data_1.instr_imm_val}
-							: {16'h0000,
-							__multi_stage_data_1.instr_imm_val};
+						//__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+						//	? {16'hffff, 
+						//	__multi_stage_data_1.instr_imm_val}
+						//	: {16'h0000,
+						//	__multi_stage_data_1.instr_imm_val};
+						__in_alu.b 
+							= {{16{__multi_stage_data_1.instr_imm_val
+							[15]}}, __multi_stage_data_1.instr_imm_val};
 
 						__in_alu.oper = PkgAlu::Slts;
 					end
@@ -753,11 +824,14 @@ module Frost32Cpu(input logic clk,
 						__in_alu.a = __multi_stage_data_1.pc_val;
 
 						// Sign extend the immediate value
-						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
-							? {16'hffff, 
-							__multi_stage_data_1.instr_imm_val}
-							: {16'h0000,
-							__multi_stage_data_1.instr_imm_val};
+						//__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+						//	? {16'hffff, 
+						//	__multi_stage_data_1.instr_imm_val}
+						//	: {16'h0000,
+						//	__multi_stage_data_1.instr_imm_val};
+						__in_alu.b 
+							= {{16{__multi_stage_data_1.instr_imm_val
+							[15]}}, __multi_stage_data_1.instr_imm_val};
 
 						__in_alu.oper = PkgAlu::Add;
 					end
@@ -772,11 +846,14 @@ module Frost32Cpu(input logic clk,
 						__in_alu.a = __following_pc;
 
 						// Sign extend the immediate value
-						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
-							? {16'hffff, 
-							__multi_stage_data_1.instr_imm_val}
-							: {16'h0000,
-							__multi_stage_data_1.instr_imm_val};
+						//__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+						//	? {16'hffff, 
+						//	__multi_stage_data_1.instr_imm_val}
+						//	: {16'h0000,
+						//	__multi_stage_data_1.instr_imm_val};
+						__in_alu.b 
+							= {{16{__multi_stage_data_1.instr_imm_val
+							[15]}}, __multi_stage_data_1.instr_imm_val};
 
 						__in_alu.oper = PkgAlu::Add;
 					end
@@ -787,11 +864,14 @@ module Frost32Cpu(input logic clk,
 						__in_alu.a = __following_pc;
 
 						// Sign extend the immediate value
-						__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
-							? {16'hffff, 
-							__multi_stage_data_1.instr_imm_val}
-							: {16'h0000,
-							__multi_stage_data_1.instr_imm_val};
+						//__in_alu.b = __multi_stage_data_1.instr_imm_val[15]
+						//	? {16'hffff, 
+						//	__multi_stage_data_1.instr_imm_val}
+						//	: {16'h0000,
+						//	__multi_stage_data_1.instr_imm_val};
+						__in_alu.b 
+							= {{16{__multi_stage_data_1.instr_imm_val
+							[15]}}, __multi_stage_data_1.instr_imm_val};
 
 						__in_alu.oper = PkgAlu::Add;
 					end
@@ -823,15 +903,26 @@ module Frost32Cpu(input logic clk,
 
 			3:
 			begin
-				// memory address computation:  rB + rC
-				//__in_alu.a = __stage_execute_input_data.rfile_rb_data;
-				//__in_alu.b = __stage_execute_input_data.rfile_rc_data;
-
-				// Sometimes this causes the ALU to perform a bogus add,
-				// specifically whenever it's an invalid group 3
-				// instruction.
 				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
-				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
+
+				// Immediate-indexed loads and stores have
+				// (__multi_stage_data_1.instr_opcode[3] == 1)
+				if (__multi_stage_data_1.instr_opcode[3])
+				begin
+					// memory address computation:  rB + sign-extended
+					// immediate (actually sign extended twice since the
+					// instruction decoder **also** performed a sign
+					// extend, from 12-bit to 16-bit)
+					__in_alu.b = {{16{__multi_stage_data_1.instr_imm_val
+						[`MSB_POS__INSTR_IMM_VALUE]}},
+						__multi_stage_data_1.instr_imm_val};
+				end
+
+				else
+				begin
+					// memory address computation:  rB + rC
+					__in_alu.b = __stage_execute_input_data.rfile_rc_data;
+				end
 				__in_alu.oper = PkgAlu::Add;
 			end
 

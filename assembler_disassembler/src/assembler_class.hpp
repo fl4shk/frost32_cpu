@@ -125,7 +125,7 @@ private:		// functions
 		gen_32(to_gen);
 	}
 
-	inline void encode_instr_opcode_group_3(u32 reg_a_index, 
+	inline void encode_instr_opcode_group_3_no_simm(u32 reg_a_index, 
 		u32 reg_b_index, u32 reg_c_index, u32 opcode)
 	{
 		u64 to_gen = 0;
@@ -134,6 +134,19 @@ private:		// functions
 		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
 		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
 		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
+		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+
+		gen_32(to_gen);
+	}
+	inline void encode_instr_opcode_group_3_with_simm(u32 reg_a_index,
+		u32 reg_b_index, u32 opcode, u32 immediate)
+	{
+		u64 to_gen = 0;
+
+		clear_and_set_bits_with_range(to_gen, 0b0011, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, immediate, 15, 4);
 		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
 
 		gen_32(to_gen);
@@ -184,6 +197,9 @@ private:		// visitor functions
 		(AssemblerGrammarParser::InstrOpGrp2ThreeRegsContext *ctx);
 	antlrcpp::Any visitInstrOpGrp3ThreeRegsLdst
 		(AssemblerGrammarParser::InstrOpGrp3ThreeRegsLdstContext *ctx);
+	antlrcpp::Any visitInstrOpGrp3TwoRegsOneSimmLdst
+		(AssemblerGrammarParser::InstrOpGrp3TwoRegsOneSimmLdstContext
+		*ctx);
 
 	// pseudoInstruction:
 	antlrcpp::Any visitPseudoInstrOpInv
@@ -337,6 +353,10 @@ private:		// functions
 		u32 reg_c_index);
 	void __encode_calleq(u32 reg_a_index, u32 reg_b_index, 
 		u32 reg_c_index);
+	void __encode_ldst_three_regs(const std::string& instr_name,
+		u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
+	void __encode_ldst_two_regs_one_simm(const std::string& instr_name,
+		u32 reg_a_index, u32 reg_b_index, s64 immediate);
 
 	u32 __get_reg_temp_index() const;
 

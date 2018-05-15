@@ -105,6 +105,14 @@ EncodingStuff::EncodingStuff()
 	__iog3_three_regs_ldst_map[cstm_strdup("str")] = temp++;
 	__iog3_three_regs_ldst_map[cstm_strdup("sth")] = temp++;
 	__iog3_three_regs_ldst_map[cstm_strdup("stb")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("ldri")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("ldhi")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("ldshi")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("ldbi")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("ldsbi")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("stri")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("sthi")] = temp++;
+	__iog3_two_regs_one_simm_ldst_map[cstm_strdup("stbi")] = temp++;
 }
 
 
@@ -161,6 +169,8 @@ void EncodingStuff::get_iog3_instr_from_opcode(u32 opcode,
 	std::string*& instr_name, EncodingStuff::ArgsType& args_type) const
 {
 	DECODE_ITERATION(iog3_three_regs_ldst_map, ArgsType::ThreeRegsLdst);
+	DECODE_ITERATION(iog3_two_regs_one_simm_ldst_map,
+		ArgsType::TwoRegsOneSimmLdst);
 
 	instr_name = cstm_strdup("unknown_instruction");
 	args_type = ArgsType::Unknown;

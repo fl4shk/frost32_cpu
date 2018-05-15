@@ -36,6 +36,7 @@ instruction:
 
 	| instrOpGrp2ThreeRegs
 	| instrOpGrp3ThreeRegsLdst
+	| instrOpGrp3TwoRegsOneSimmLdst
 	;
 
 instrOpGrp0ThreeRegs:
@@ -95,6 +96,13 @@ instrOpGrp3ThreeRegsLdst:
 	| TokInstrNameLdb | TokInstrNameLdsb
 	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
 	TokReg TokComma TokLBracket TokReg TokComma TokReg TokRBracket
+	;
+instrOpGrp3TwoRegsOneSimmLdst:
+	(TokInstrNameLdri
+	| TokInstrNameLdhi | TokInstrNameLdshi
+	| TokInstrNameLdbi | TokInstrNameLdsbi
+	| TokInstrNameStri | TokInstrNameSthi | TokInstrNameStbi)
+	TokReg TokComma TokLBracket TokReg TokComma expr TokRBracket
 	;
 
 pseudoInstruction:
@@ -310,7 +318,12 @@ instrName:
 	| TokInstrNameLdr
 	| TokInstrNameLdh | TokInstrNameLdsh
 	| TokInstrNameLdb | TokInstrNameLdsb
-	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
+	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb
+
+	| TokInstrNameLdri
+	| TokInstrNameLdhi | TokInstrNameLdshi
+	| TokInstrNameLdbi | TokInstrNameLdsbi
+	| TokInstrNameStri | TokInstrNameSthi | TokInstrNameStbi)
 	;
 
 pseudoInstrName:
@@ -396,6 +409,14 @@ TokInstrNameLdsb: 'ldsb' ;
 TokInstrNameStr: 'str' ;
 TokInstrNameSth: 'sth' ;
 TokInstrNameStb: 'stb' ;
+TokInstrNameLdri: 'ldri' ;
+TokInstrNameLdhi: 'ldhi' ;
+TokInstrNameLdshi: 'ldshi' ;
+TokInstrNameLdbi: 'ldbi' ;
+TokInstrNameLdsbi: 'ldsbi' ;
+TokInstrNameStri: 'stri' ;
+TokInstrNameSthi: 'sthi' ;
+TokInstrNameStbi: 'stbi' ;
 
 TokPseudoInstrNameInv: 'inv' ;
 TokPseudoInstrNameInvi: 'invi' ;

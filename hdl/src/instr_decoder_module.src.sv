@@ -76,12 +76,17 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rb_index = __iog3_instr.rb_index;
 				out.rc_index = __iog3_instr.rc_index;
 				out.opcode = __iog3_instr.opcode;
-				out.imm_val = 0;
+
+				// Sign extend the 12-bit immediate value... to 16-bit
+				out.imm_val = {{4{__iog3_instr.imm_val_12
+					[`MSB_POS__INSTR_LDST_IMM_VAL_12]}},
+					__iog3_instr.imm_val_12};
+
+				// Make use of the opcode ordering
 				out.ldst_type = out.opcode[`MSB_POS__INSTR_LDST_TYPE:0];
 
-				// Bad instructions don't dause stalls
-				out.causes_stall
-					= (out.opcode <= PkgInstrDecoder::Stb_ThreeRegsLdst);
+				// All load/store instructions cause a stall
+				out.causes_stall = 1;
 			end
 
 			default:
