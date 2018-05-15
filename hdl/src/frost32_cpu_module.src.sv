@@ -75,7 +75,7 @@ module Frost32Cpu(input logic clk,
 		
 	} __locals;
 
-	logic [`MSB_POS__FROST32_CPU_ADDR:0] following_pc;
+	logic [`MSB_POS__FROST32_CPU_ADDR:0] __following_pc;
 
 	always @ (posedge clk)
 	begin
@@ -118,7 +118,7 @@ module Frost32Cpu(input logic clk,
 
 
 	// Assignments
-	assign following_pc = __multi_stage_data_1.pc_val + 4;
+	assign __following_pc = __multi_stage_data_1.pc_val + 4;
 	assign __in_instr_decoder = in.data;
 	assign __multi_stage_data_0.raw_instruction = __in_instr_decoder;
 	assign {__multi_stage_data_0.instr_ra_index,
@@ -217,6 +217,23 @@ module Frost32Cpu(input logic clk,
 		__in_reg_file.write_en <= 0;
 	endtask
 
+	task make_bubble;
+		// Send a bubble through while we're stalled a (actually
+		// performs "add zero, zero, zero", but that does nothing
+		// interesting anyway... besides maybe power consumption)
+		__in_reg_file.read_sel_ra <= 0;
+		__in_reg_file.read_sel_rb <= 0;
+		__in_reg_file.read_sel_rc <= 0;
+		//__multi_stage_data_1 <= 0;
+		__multi_stage_data_1.instr_ra_index <= 0;
+		__multi_stage_data_1.instr_rb_index <= 0;
+		__multi_stage_data_1.instr_rc_index <= 0;
+		__multi_stage_data_1.instr_group <= 0;
+		__multi_stage_data_1.instr_opcode <= 0;
+		__multi_stage_data_1.instr_ldst_type <= 0;
+		__multi_stage_data_1.instr_causes_stall <= 0;
+	endtask
+
 
 	initial
 	begin
@@ -257,20 +274,7 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data.stall_counter
 				<= __stage_instr_decode_data.stall_counter - 1;
 
-			//// Send bubbles through while we're stalled a (actually
-			//// performs "add zero, zero, zero", but that does nothing
-			//// interesting anyway... besides maybe power consumption)
-			//__in_reg_file.read_sel_ra <= 0;
-			//__in_reg_file.read_sel_rb <= 0;
-			//__in_reg_file.read_sel_rc <= 0;
-			////__multi_stage_data_1 <= 0;
-			//__multi_stage_data_1.instr_ra_index <= 0;
-			//__multi_stage_data_1.instr_rb_index <= 0;
-			//__multi_stage_data_1.instr_rc_index <= 0;
-			//__multi_stage_data_1.instr_group <= 0;
-			//__multi_stage_data_1.instr_opcode <= 0;
-			//__multi_stage_data_1.instr_ldst_type <= 0;
-			//__multi_stage_data_1.instr_causes_stall <= 0;
+			make_bubble();
 
 			// The last stall_counter value before it hits zero (this is
 			// where the PC should be changed).
@@ -364,8 +368,7 @@ module Frost32Cpu(input logic clk,
 				// Every instruction is 4 bytes long
 				__locals.pc <= __locals.pc + 4;
 
-				prep_mem_read(__locals.pc + 4,
-					PkgFrost32Cpu::Dias32);
+				prep_mem_read(__locals.pc + 4, PkgFrost32Cpu::Dias32);
 			end
 
 			// For now, (before multiplication is implemented for real),
@@ -409,11 +412,11 @@ module Frost32Cpu(input logic clk,
 	// "always_comb" block after the write back stage's "always" block)
 	always @ (posedge clk)
 	begin
-		$display("Execute stage (part 1):  %h %h\t\t%h %h",
-			__multi_stage_data_1.pc_val,
-			__multi_stage_data_1.raw_instruction,
-			__multi_stage_data_1.instr_group,
-			__multi_stage_data_1.instr_opcode);
+		//$display("Execute stage (part 1):  %h %h\t\t%h %h",
+		//	__multi_stage_data_1.pc_val,
+		//	__multi_stage_data_1.raw_instruction,
+		//	__multi_stage_data_1.instr_group,
+		//	__multi_stage_data_1.instr_opcode);
 
 		__multi_stage_data_2 <= __multi_stage_data_1;
 
@@ -437,25 +440,25 @@ module Frost32Cpu(input logic clk,
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_1.instr_ra_index;
 
-				__stage_execute_output_data.next_pc <= following_pc;
+				__stage_execute_output_data.next_pc <= __following_pc;
 			end
 
 			4'd1:
 			begin
 				__stage_write_back_input_data.n_reg_data <= __out_alu.data;
-				$display("Execute stage:  instr group 1:  %h",
-					__out_alu.data);
+				//$display("Execute stage:  instr group 1:  %h",
+				//	__out_alu.data);
 
 				// For operand forwarding
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_1.instr_ra_index;
 
-				__stage_execute_output_data.next_pc <= following_pc;
+				__stage_execute_output_data.next_pc <= __following_pc;
 			end
 
 			4'd2:
 			begin
-				__stage_execute_output_data.next_pc <= following_pc;
+				__stage_execute_output_data.next_pc <= __following_pc;
 
 				// Temporarily prevent operand forwarding
 				__stage_execute_output_data.prev_written_reg_index <= 0;
@@ -463,7 +466,7 @@ module Frost32Cpu(input logic clk,
 
 			4'd3:
 			begin
-				__stage_execute_output_data.next_pc <= following_pc;
+				__stage_execute_output_data.next_pc <= __following_pc;
 
 				// Prevent operand forwarding (none needed for loads since
 				// they stall until the new value's been written)
@@ -556,12 +559,66 @@ module Frost32Cpu(input logic clk,
 
 			4'd2:
 			begin
-				
+				case (__multi_stage_data_2.instr_opcode)
+					PkgInstrDecoder::Callne_ThreeRegs:
+					begin
+						prep_reg_write(__REG_LR_INDEX,
+							__stage_write_back_input_data.n_reg_data);
+					end
+					PkgInstrDecoder::Calleq_ThreeRegs:
+					begin
+						prep_reg_write(__REG_LR_INDEX,
+							__stage_write_back_input_data.n_reg_data);
+					end
+
+					default:
+					begin
+						
+					end
+				endcase
 			end
 
 			4'd3:
 			begin
-				
+				case (__multi_stage_data_2.instr_opcode)
+					PkgInstrDecoder::Ldr_ThreeRegsLdst:
+					begin
+						prep_ra_write(in.data);
+					end
+
+					PkgInstrDecoder::Ldh_ThreeRegsLdst:
+					begin
+						// Zero extend
+						prep_ra_write({16'h0000, in.data[15:0]});
+					end
+
+					PkgInstrDecoder::Ldsh_ThreeRegsLdst:
+					begin
+						// Sign extend
+						prep_ra_write(in.data[15]
+							? {16'hffff, in.data[15:0]}
+							: {16'h0000, in.data[15:0]});
+					end
+
+					PkgInstrDecoder::Ldb_ThreeRegsLdst:
+					begin
+						// Zero extend
+						prep_ra_write({24'h000000, in.data[7:0]});
+					end
+
+					PkgInstrDecoder::Ldsb_ThreeRegsLdst:
+					begin
+						// Sign extend
+						prep_ra_write(in.data[7]
+							? {24'hffffff, in.data[7:0]}
+							: {24'h000000, in.data[7:0]});
+					end
+
+					default:
+					begin
+						
+					end
+				endcase
 			end
 
 			default:

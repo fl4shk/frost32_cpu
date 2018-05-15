@@ -14,17 +14,21 @@ main:
 	subi u6, u6, 17
 	addi u5, u6, 1
 
-	WAIT()
+	dnl WAIT()
 
-	;bne u6, zero, quit
+	bne u6, zero, quit
 
 	;cpyi u7, 6
 }
 
-;infin:
-;{
-;	bra quit
-;}
+quit2:
+{
+	cpya u7, 0x9000
+
+	WAIT()
+
+	bra quit
+}
 
 .org 0x8000
 quit:
