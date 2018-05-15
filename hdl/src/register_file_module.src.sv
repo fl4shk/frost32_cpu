@@ -50,8 +50,8 @@ module RegisterFile(input logic clk,
 			__regfile[in.write_sel] <= in.write_data;
 		end
 
-		$display("RegisterFile:  inputs:  %h %h %h", 
-			in.write_en, in.write_sel, in.write_data);
+		//$display("RegisterFile:  inputs:  %h %h %h", 
+		//	in.write_en, in.write_sel, in.write_data);
 		$display("RegisterFile (0 to 3):  %h %h %h %h",
 			__regfile[0], __regfile[1], __regfile[2], __regfile[3]);
 		$display("RegisterFile (4 to 7):  %h %h %h %h",

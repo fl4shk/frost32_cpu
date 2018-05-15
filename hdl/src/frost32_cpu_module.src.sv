@@ -70,9 +70,17 @@ module Frost32Cpu(input logic clk,
 
 	always @ (posedge clk)
 	begin
-		$display("Frost32Cpu (outputs):  %h %h %h %h", 
-			out.addr, out.data_inout_access_type,
-			out.data_inout_access_size, out.req_mem_access);
+		if (__locals.pc >= 32'h8000)
+		begin
+			$finish;
+		end
+	end
+
+	always @ (posedge clk)
+	begin
+		//$display("Frost32Cpu (outputs):  %h %h %h %h", 
+		//	out.addr, out.data_inout_access_type,
+		//	out.data_inout_access_size, out.req_mem_access);
 		$display("Frost32Cpu (innards):  %h %h",
 			__multi_stage_data_0.raw_instruction,
 			__locals.pc);
@@ -228,10 +236,10 @@ module Frost32Cpu(input logic clk,
 			// Send bubbles through while we're stalled a (actually
 			// performs "add zero, zero, zero", but that does nothing
 			// interesting anyway... besides maybe power consumption)
-			__in_reg_file.read_sel_ra <= 0;
-			__in_reg_file.read_sel_rb <= 0;
-			__in_reg_file.read_sel_rc <= 0;
-			__multi_stage_data_1 <= 0;
+			//__in_reg_file.read_sel_ra <= 0;
+			//__in_reg_file.read_sel_rb <= 0;
+			//__in_reg_file.read_sel_rc <= 0;
+			//__multi_stage_data_1 <= 0;
 
 			// The last stall_counter value before it hits zero (this is
 			// where the PC should be changed).

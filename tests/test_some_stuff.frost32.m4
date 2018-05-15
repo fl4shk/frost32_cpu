@@ -14,13 +14,24 @@ main:
 	cpyi u3, 6
 	cpyi u4, 5
 
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add u5, u1, u2
+	WAIT()
+
+	add u5, u0, u1
+
+	WAIT()
+
+	subi u6, u5, 17
+
+	WAIT()
+
+	;bra quit
+	;bne u6, zero, quit
+	beq u6, zero, quit
+	bra main
+}
+
+.org 0x8000
+quit:
+{
+	WAIT()
 }

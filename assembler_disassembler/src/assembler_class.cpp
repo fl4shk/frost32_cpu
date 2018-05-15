@@ -42,8 +42,7 @@ int Assembler::run()
 		__curr_scope_node = sym_tbl().tree().children.front();
 
 		visitProgram(__program_ctx);
-
-	};
+	}
 
 	return 0;
 }
@@ -134,17 +133,20 @@ void Assembler::gen_8(u8 data)
 }
 void Assembler::gen_16(u16 data)
 {
-	gen_no_ws(data);
-
-	print_ws_if_allowed("\n");
+	//gen_no_ws(data);
+	//print_ws_if_allowed("\n");
+	gen_8(get_bits_with_range(data, 15, 8));
+	gen_8(get_bits_with_range(data, 7, 0));
 }
 void Assembler::gen_32(u32 data)
 {
-	gen_no_ws(get_bits_with_range(data, 31, 16));
-	print_ws_if_allowed(" ");
-	gen_no_ws(get_bits_with_range(data, 15, 0));
+	//gen_no_ws(get_bits_with_range(data, 31, 16));
+	//print_ws_if_allowed(" ");
+	//gen_no_ws(get_bits_with_range(data, 15, 0));
+	//print_ws_if_allowed("\n");
+	gen_16(get_bits_with_range(data, 31, 16));
+	gen_16(get_bits_with_range(data, 15, 0));
 
-	print_ws_if_allowed("\n");
 }
 
 antlrcpp::Any Assembler::visitProgram

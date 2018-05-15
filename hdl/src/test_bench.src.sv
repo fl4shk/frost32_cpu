@@ -45,16 +45,20 @@ module TestBench;
 
 	initial
 	begin
+		for (int i=0; i<__ARR_SIZE__MAIN_MEM; i=i+1)
+		begin
+			__main_mem[i] = 0;
+		end
 		$readmemh("main_mem.txt.ignore", __main_mem);
 
-		$dumpfile("test.vcd");
-		$dumpvars(0, TestBench);
+		////$dumpfile("test.vcd");
+		////$dumpvars(0, TestBench);
 
-		//#2000
-		//#20
-		#100
-		//#1000
-		$finish;
+		////#2000
+		////#20
+		//#100
+		//////#1000
+		//$finish;
 	end
 
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;
@@ -104,7 +108,29 @@ module TestBench;
 			&& (__out_frost32_cpu.data_inout_access_type
 			== PkgFrost32Cpu::DiatWrite))
 		begin
-			
+			if (__out_frost32_cpu.data_inout_access_size
+				== PkgFrost32Cpu::Dias32)
+			begin
+				{__main_mem[(__out_frost32_cpu.addr & 16'hffff)],
+				__main_mem[((__out_frost32_cpu.addr + 1) & 16'hfff)],
+				__main_mem[((__out_frost32_cpu.addr + 2) & 16'hfff)],
+				__main_mem[((__out_frost32_cpu.addr + 3) & 16'hfff)]}
+					<= __out_frost32_cpu.data;
+			end
+
+			else if (__out_frost32_cpu.data_inout_access_size
+				== PkgFrost32Cpu::Dias16)
+			begin
+				{__main_mem[(__out_frost32_cpu.addr & 16'hffff)],
+				__main_mem[((__out_frost32_cpu.addr + 1) & 16'hffff)]}
+					<= __out_frost32_cpu.data[15:0];
+			end
+
+			else
+			begin
+				__main_mem[(__out_frost32_cpu.addr & 16'hffff)]
+					<= __out_frost32_cpu.data[7:0];
+			end
 		end
 	end
 
