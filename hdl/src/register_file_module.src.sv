@@ -19,6 +19,11 @@
 module RegisterFile(input logic clk,
 	input PkgRegisterFile::PortIn_RegFile in,
 	output PkgRegisterFile::PortOut_RegFile out);
+	//output logic [`MSB_POS__REG_FILE_DATA:0] 
+	//	out_debug_r0, out_debug_r1, out_debug_r2, out_debug_r3,
+	//	out_debug_r4, out_debug_r5, out_debug_r6, out_debug_r7,
+	//	out_debug_r8, out_debug_r9, out_debug_r10, out_debug_r11,
+	//	out_debug_r12, out_debug_r13, out_debug_r14, out_debug_r15);
 
 	import PkgRegisterFile::*;
 
@@ -29,6 +34,23 @@ module RegisterFile(input logic clk,
 
 	logic [`MSB_POS__REG_FILE_DATA:0]
 		__regfile[0 : __LAST_INDEX__NUM_REGISTERS];
+
+	//assign out_debug_r0 = __regfile[0];
+	//assign out_debug_r1 = __regfile[1];
+	//assign out_debug_r2 = __regfile[2];
+	//assign out_debug_r3 = __regfile[3];
+	//assign out_debug_r4 = __regfile[4];
+	//assign out_debug_r5 = __regfile[5];
+	//assign out_debug_r6 = __regfile[6];
+	//assign out_debug_r7 = __regfile[7];
+	//assign out_debug_r8 = __regfile[8];
+	//assign out_debug_r9 = __regfile[9];
+	//assign out_debug_r10 = __regfile[10];
+	//assign out_debug_r11 = __regfile[11];
+	//assign out_debug_r12 = __regfile[12];
+	//assign out_debug_r13 = __regfile[13];
+	//assign out_debug_r14 = __regfile[14];
+	//assign out_debug_r15 = __regfile[15];
 
 	initial
 	begin

@@ -12,6 +12,8 @@ main:
 	// Assume top of available memory is here
 	cpya sp, 0xffff
 
+	;bra quit
+
 	calla test_subroutine
 
 	;;cpya u0, (test_subroutine & 0xffff)

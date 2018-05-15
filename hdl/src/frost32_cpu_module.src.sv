@@ -294,8 +294,8 @@ module Frost32Cpu(input logic clk,
 			// where the PC should be changed).
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
-				$display("Frost32Cpu:  stall_counter == 1:  %h",
-					__stage_execute_output_data.next_pc);
+				//$display("Frost32Cpu:  stall_counter == 1:  %h",
+				//	__stage_execute_output_data.next_pc);
 				__locals.pc <= __stage_execute_output_data.next_pc;
 
 				// Prepare a load from memory of the next instruction.
@@ -392,18 +392,24 @@ module Frost32Cpu(input logic clk,
 				prep_mem_read(__locals.pc + 4, PkgFrost32Cpu::Dias32);
 			end
 
-			// For now, (before multiplication is implemented for real),
-			// assume that all multi-cycle instructions actually take three
-			// cycles (thus set the stall_counter to 3)
 			else // if (__multi_stage_data_0.instr_causes_stall)
 			begin
-				__stage_instr_decode_data.stall_counter <= 3;
+
+				// Conditional branch or conditional jump or conditional
+				// call
+				if (__multi_stage_data_0.instr_group <= 1)
+				begin
+					__stage_instr_decode_data.stall_state
+						<= PkgFrost32Cpu::StCtrlFlow;
+					__stage_instr_decode_data.stall_counter <= 3;
+				end
 
 				// All loads and stores are in group 3
-				if (__multi_stage_data_0.instr_group == 3)
+				else if (__multi_stage_data_0.instr_group == 3)
 				begin
 					__stage_instr_decode_data.stall_state 
 						<= PkgFrost32Cpu::StMemAccess;
+					__stage_instr_decode_data.stall_counter <= 3;
 				end
 
 				// Temporary!
@@ -411,6 +417,7 @@ module Frost32Cpu(input logic clk,
 				begin
 					__stage_instr_decode_data.stall_state 
 						<= PkgFrost32Cpu::StInit;
+					__stage_instr_decode_data.stall_counter <= 3;
 				end
 			end
 
