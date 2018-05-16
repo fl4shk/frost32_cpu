@@ -96,7 +96,7 @@ antlrcpp::Any Disassembler::visitLine
 					break;
 				case 0x2:
 					decode_instr_opcode_group_2(instruction, reg_a_index,
-						reg_b_index, reg_c_index, opcode);
+						reg_b_index, opcode, immediate);
 					__encoding_stuff.get_iog2_instr_from_opcode(opcode,
 						instr_name, args_type);
 					break;
@@ -104,6 +104,18 @@ antlrcpp::Any Disassembler::visitLine
 					decode_instr_opcode_group_3(instruction, reg_a_index,
 						reg_b_index, reg_c_index, opcode);
 					__encoding_stuff.get_iog3_instr_from_opcode(opcode,
+						instr_name, args_type);
+					break;
+				case 0x4:
+					decode_instr_opcode_group_4(instruction, reg_a_index,
+						reg_b_index, reg_c_index, opcode);
+					__encoding_stuff.get_iog4_instr_from_opcode(opcode,
+						instr_name, args_type);
+					break;
+				case 0x5:
+					decode_instr_opcode_group_5(instruction, reg_a_index,
+						reg_b_index, reg_c_index, opcode);
+					__encoding_stuff.get_iog5_instr_from_opcode(opcode,
 						instr_name, args_type);
 					break;
 				default:
@@ -162,7 +174,10 @@ antlrcpp::Any Disassembler::visitLine
 					printout(*instr_name, " ", *reg_a_name, ", ", 
 						"[", *reg_b_name, ", ", *reg_c_name, "]");
 					break;
-
+				case EncodingStuff::ArgsType::TwoRegsOneSimmLdst:
+					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
+						"[", *reg_b_name, ", ", "0x", immediate, std::dec);
+					break;
 				case EncodingStuff::ArgsType::Unknown:
 					show_unknown_instruction_as_dot_db();
 					printout("\n");

@@ -26,36 +26,35 @@ label:
 
 instruction:
 	instrOpGrp0ThreeRegs
-	//| instrOpGrp0TwoRegs
 
 	| instrOpGrp1TwoRegsOneImm
 	| instrOpGrp1TwoRegsOneSimm
 	| instrOpGrp1OneRegOnePcOneSimm
 	| instrOpGrp1OneRegOneImm
-	| instrOpGrp1Branch
 
-	| instrOpGrp2ThreeRegs
-	| instrOpGrp3ThreeRegsLdst
-	| instrOpGrp3TwoRegsOneSimmLdst
+	| instrOpGrp2Branch
+	| instrOpGrp3Jump
+	| instrOpGrp4Call
+
+	| instrOpGrp5ThreeRegsLdst
+	| instrOpGrp5TwoRegsOneSimm12Ldst
 	;
 
 instrOpGrp0ThreeRegs:
 	(TokInstrNameAdd | TokInstrNameSub 
 	| TokInstrNameSltu | TokInstrNameSlts
+	| TokInstrNameSgtu | TokInstrNameSgts
 	| TokInstrNameMul | TokInstrNameAnd 
 	| TokInstrNameOrr | TokInstrNameXor
 	| TokInstrNameNor | TokInstrNameLsl 
 	| TokInstrNameLsr | TokInstrNameAsr)
 	TokReg TokComma TokReg TokComma TokReg
 	;
-//instrOpGrp0TwoRegs:
-//	TokInstrNameInv
-//	TokReg TokComma TokReg
-//	;
 
 instrOpGrp1TwoRegsOneImm:
 	(TokInstrNameAddi | TokInstrNameSubi
 	| TokInstrNameSltui 
+	| TokInstrNameSgtui
 	| TokInstrNameMuli | TokInstrNameAndi
 	| TokInstrNameOrri | TokInstrNameXori
 	| TokInstrNameLsli 
@@ -64,7 +63,7 @@ instrOpGrp1TwoRegsOneImm:
 	;
 
 instrOpGrp1TwoRegsOneSimm:
-	TokInstrNameSltsi
+	(TokInstrNameSltsi | TokInstrNameSgtsi)
 	TokReg TokComma TokReg TokComma expr
 	;
 
@@ -78,30 +77,67 @@ instrOpGrp1OneRegOneImm:
 	TokReg TokComma expr
 	;
 
-// Branches must be separate because they're pc-relative
-instrOpGrp1Branch:
-	(TokInstrNameBne | TokInstrNameBeq)
+
+instrOpGrp2Branch:
+	(TokInstrNameBne
+	| TokInstrNameBeq
+	| TokInstrNameBltu
+	| TokInstrNameBgeu
+	| TokInstrNameBleu
+	| TokInstrNameBgtu
+	| TokInstrNameBlts
+	| TokInstrNameBges
+	| TokInstrNameBles
+	| TokInstrNameBgts)
 	TokReg TokComma TokReg TokComma expr
 	;
-
-instrOpGrp2ThreeRegs:
-	(TokInstrNameJne | TokInstrNameJeq 
-	| TokInstrNameCallne | TokInstrNameCalleq)
+instrOpGrp3Jump:
+	(TokInstrNameJne
+	| TokInstrNameJeq
+	| TokInstrNameJltu
+	| TokInstrNameJgeu
+	| TokInstrNameJleu
+	| TokInstrNameJgtu
+	| TokInstrNameJlts
+	| TokInstrNameJges
+	| TokInstrNameJles
+	| TokInstrNameJgts)
+	TokReg TokComma TokReg TokComma TokReg
+	;
+instrOpGrp4Call:
+	(TokInstrNameCne
+	| TokInstrNameCeq
+	| TokInstrNameCltu
+	| TokInstrNameCgeu
+	| TokInstrNameCleu
+	| TokInstrNameCgtu
+	| TokInstrNameClts
+	| TokInstrNameCges
+	| TokInstrNameCles
+	| TokInstrNameCgts)
 	TokReg TokComma TokReg TokComma TokReg
 	;
 
-instrOpGrp3ThreeRegsLdst:
+instrOpGrp5ThreeRegsLdst:
 	(TokInstrNameLdr
-	| TokInstrNameLdh | TokInstrNameLdsh
-	| TokInstrNameLdb | TokInstrNameLdsb
-	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb)
+	| TokInstrNameLdh
+	| TokInstrNameLdsh
+	| TokInstrNameLdb
+	| TokInstrNameLdsb
+	| TokInstrNameStr
+	| TokInstrNameSth
+	| TokInstrNameStb)
 	TokReg TokComma TokLBracket TokReg TokComma TokReg TokRBracket
 	;
-instrOpGrp3TwoRegsOneSimmLdst:
+instrOpGrp5TwoRegsOneSimm12Ldst:
 	(TokInstrNameLdri
-	| TokInstrNameLdhi | TokInstrNameLdshi
-	| TokInstrNameLdbi | TokInstrNameLdsbi
-	| TokInstrNameStri | TokInstrNameSthi | TokInstrNameStbi)
+	| TokInstrNameLdhi
+	| TokInstrNameLdshi
+	| TokInstrNameLdbi
+	| TokInstrNameLdsbi
+	| TokInstrNameStri
+	| TokInstrNameSthi
+	| TokInstrNameStbi)
 	TokReg TokComma TokLBracket TokReg TokComma expr TokRBracket
 	;
 
@@ -183,6 +219,7 @@ pseudoInstrOpIncDec:
 pseudoInstrOpAluOpTwoReg:
 	(TokInstrNameAdd | TokInstrNameSub 
 	| TokInstrNameSltu | TokInstrNameSlts
+	| TokInstrNameSgtu | TokInstrNameSgts
 	| TokInstrNameMul | TokInstrNameAnd 
 	| TokInstrNameOrr | TokInstrNameXor
 	| TokInstrNameNor | TokInstrNameLsl 
@@ -191,7 +228,8 @@ pseudoInstrOpAluOpTwoReg:
 	;
 pseudoInstrOpAluOpOneRegOneImm:
 	(TokInstrNameAddi | TokInstrNameSubi
-	| TokInstrNameSltui | 
+	| TokInstrNameSltui 
+	| TokInstrNameSgtui
 	| TokInstrNameMuli | TokInstrNameAndi
 	| TokInstrNameOrri | TokInstrNameXori
 	| TokInstrNameNori | TokInstrNameLsli 
@@ -199,7 +237,7 @@ pseudoInstrOpAluOpOneRegOneImm:
 	TokReg TokComma expr
 	;
 pseudoInstrOpAluOpOneRegOneSimm:
-	TokInstrNameSltsi
+	(TokInstrNameSltsi | TokInstrNameSgtsi)
 	TokReg TokComma expr
 	;
 
@@ -292,50 +330,108 @@ exprLogNot: TokExclamPoint expr ;
 identName: TokIdent | instrName | pseudoInstrName | TokReg | TokPcReg ;
 
 instrName:
-	(TokInstrNameAdd | TokInstrNameSub
-	| TokInstrNameSltu | TokInstrNameSlts
-	| TokInstrNameMul | TokInstrNameAnd
-	| TokInstrNameOrr | TokInstrNameXor
-	| TokInstrNameNor | TokInstrNameLsl
-	| TokInstrNameLsr | TokInstrNameAsr
+	TokInstrNameAdd
+	| TokInstrNameSub
+	| TokInstrNameSltu
+	| TokInstrNameSlts
+	| TokInstrNameSgtu
+	| TokInstrNameSgts
+	| TokInstrNameMul
+	| TokInstrNameAnd
+	| TokInstrNameOrr
+	| TokInstrNameXor
+	| TokInstrNameNor
+	| TokInstrNameLsl
+	| TokInstrNameLsr
+	| TokInstrNameAsr
 
-	| TokInstrNameAddi | TokInstrNameSubi
-	| TokInstrNameSltui | TokInstrNameSltsi
-	| TokInstrNameMuli | TokInstrNameAndi
-	| TokInstrNameOrri | TokInstrNameXori
-	| TokInstrNameNori | TokInstrNameLsli
-	| TokInstrNameLsri | TokInstrNameAsri
+	| TokInstrNameAddi
+	| TokInstrNameSubi
+	| TokInstrNameSltui
+	| TokInstrNameSltsi
+	| TokInstrNameSgtui
+	| TokInstrNameSgtsi
+	| TokInstrNameMuli
+	| TokInstrNameAndi
+	| TokInstrNameOrri
+	| TokInstrNameXori
+	| TokInstrNameNori
+	| TokInstrNameLsli
+	| TokInstrNameLsri
+	| TokInstrNameAsri
 
 	| TokInstrNameAddsi
 
 	| TokInstrNameCpyhi
 
-	| TokInstrNameBne | TokInstrNameBeq
+	| TokInstrNameBne
+	| TokInstrNameBeq
+	| TokInstrNameBltu
+	| TokInstrNameBgeu
+	| TokInstrNameBleu
+	| TokInstrNameBgtu
+	| TokInstrNameBlts
+	| TokInstrNameBges
+	| TokInstrNameBles
+	| TokInstrNameBgts
 
-	| TokInstrNameJne | TokInstrNameJeq
-	| TokInstrNameCallne | TokInstrNameCalleq
+	| TokInstrNameJne
+	| TokInstrNameJeq
+	| TokInstrNameJltu
+	| TokInstrNameJgeu
+	| TokInstrNameJleu
+	| TokInstrNameJgtu
+	| TokInstrNameJlts
+	| TokInstrNameJges
+	| TokInstrNameJles
+	| TokInstrNameJgts
+
+	| TokInstrNameCne
+	| TokInstrNameCeq
+	| TokInstrNameCltu
+	| TokInstrNameCgeu
+	| TokInstrNameCleu
+	| TokInstrNameCgtu
+	| TokInstrNameClts
+	| TokInstrNameCges
+	| TokInstrNameCles
+	| TokInstrNameCgts
 
 	| TokInstrNameLdr
-	| TokInstrNameLdh | TokInstrNameLdsh
-	| TokInstrNameLdb | TokInstrNameLdsb
-	| TokInstrNameStr | TokInstrNameSth | TokInstrNameStb
-
+	| TokInstrNameLdh
+	| TokInstrNameLdsh
+	| TokInstrNameLdb
+	| TokInstrNameLdsb
+	| TokInstrNameStr
+	| TokInstrNameSth
+	| TokInstrNameStb
 	| TokInstrNameLdri
-	| TokInstrNameLdhi | TokInstrNameLdshi
-	| TokInstrNameLdbi | TokInstrNameLdsbi
-	| TokInstrNameStri | TokInstrNameSthi | TokInstrNameStbi)
+	| TokInstrNameLdhi
+	| TokInstrNameLdshi
+	| TokInstrNameLdbi
+	| TokInstrNameLdsbi
+	| TokInstrNameStri
+	| TokInstrNameSthi
+	| TokInstrNameStbi
 	;
 
 pseudoInstrName:
-	(TokPseudoInstrNameInv | TokPseudoInstrNameInvi
-	| TokPseudoInstrNameCpy 
-	| TokPseudoInstrNameCpyi | TokPseudoInstrNameCpya
-	| TokPseudoInstrNameBra 
-	| TokPseudoInstrNameJmp | TokPseudoInstrNameCall
-	| TokPseudoInstrNameJmpa | TokPseudoInstrNameCalla
-	| TokPseudoInstrNameJmpane | TokPseudoInstrNameJmpaeq
-	| TokPseudoInstrNameCallane | TokPseudoInstrNameCallaeq
-	| TokPseudoInstrNameInc | TokPseudoInstrNameDec)
+	TokPseudoInstrNameInv
+	| TokPseudoInstrNameInvi
+	| TokPseudoInstrNameCpy
+	| TokPseudoInstrNameCpyi
+	| TokPseudoInstrNameCpya
+	| TokPseudoInstrNameBra
+	| TokPseudoInstrNameJmp
+	| TokPseudoInstrNameCall
+	| TokPseudoInstrNameJmpa
+	| TokPseudoInstrNameCalla
+	| TokPseudoInstrNameJmpane
+	| TokPseudoInstrNameJmpaeq
+	| TokPseudoInstrNameCallane
+	| TokPseudoInstrNameCallaeq
+	| TokPseudoInstrNameInc
+	| TokPseudoInstrNameDec
 	;
 
 numExpr: TokDecNum | TokHexNum | TokBinNum;
@@ -367,6 +463,8 @@ TokInstrNameAdd: 'add' ;
 TokInstrNameSub: 'sub' ;
 TokInstrNameSltu: 'sltu' ;
 TokInstrNameSlts: 'slts' ;
+TokInstrNameSgtu: 'gltu' ;
+TokInstrNameSgts: 'glts' ;
 TokInstrNameMul: 'mul' ;
 TokInstrNameAnd: 'and' ;
 TokInstrNameOrr: 'orr' ;
@@ -380,6 +478,8 @@ TokInstrNameAddi: 'addi' ;
 TokInstrNameSubi: 'subi' ;
 TokInstrNameSltui: 'sltui' ;
 TokInstrNameSltsi: 'sltsi' ;
+TokInstrNameSgtui: 'sgtui' ;
+TokInstrNameSgtsi: 'sgtsi' ;
 TokInstrNameMuli: 'muli' ;
 TokInstrNameAndi: 'andi' ;
 TokInstrNameOrri: 'orri' ;
@@ -395,11 +495,36 @@ TokInstrNameCpyhi: 'cpyhi' ;
 
 TokInstrNameBne: 'bne' ;
 TokInstrNameBeq: 'beq' ;
+TokInstrNameBltu: 'bltu' ;
+TokInstrNameBgeu: 'bgeu' ;
+TokInstrNameBleu: 'bleu' ;
+TokInstrNameBgtu: 'bgtu' ;
+TokInstrNameBlts: 'blts' ;
+TokInstrNameBges: 'bges' ;
+TokInstrNameBles: 'bles' ;
+TokInstrNameBgts: 'bgts' ;
 
 TokInstrNameJne: 'jne' ;
 TokInstrNameJeq: 'jeq' ;
-TokInstrNameCallne: 'callne' ;
-TokInstrNameCalleq: 'calleq' ;
+TokInstrNameJltu: 'jltu' ;
+TokInstrNameJgeu: 'jgeu' ;
+TokInstrNameJleu: 'jleu' ;
+TokInstrNameJgtu: 'jgtu' ;
+TokInstrNameJlts: 'jlts' ;
+TokInstrNameJges: 'jges' ;
+TokInstrNameJles: 'jles' ;
+TokInstrNameJgts: 'jgts' ;
+
+TokInstrNameCne: 'cne' ;
+TokInstrNameCeq: 'ceq' ;
+TokInstrNameCltu: 'cltu' ;
+TokInstrNameCgeu: 'cgeu' ;
+TokInstrNameCleu: 'cleu' ;
+TokInstrNameCgtu: 'cgtu' ;
+TokInstrNameClts: 'clts' ;
+TokInstrNameCges: 'cges' ;
+TokInstrNameCles: 'cles' ;
+TokInstrNameCgts: 'cgts' ;
 
 TokInstrNameLdr: 'ldr' ;
 TokInstrNameLdh: 'ldh' ;

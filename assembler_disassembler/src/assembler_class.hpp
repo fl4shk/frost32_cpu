@@ -110,22 +110,21 @@ private:		// functions
 
 		gen_32(to_gen);
 	}
-
-	inline void encode_instr_opcode_group_2(u32 reg_a_index, 
-		u32 reg_b_index, u32 reg_c_index, u32 opcode)
+	inline void encode_instr_opcode_group_2(u32 reg_a_index,
+		u32 reg_b_index, u32 opcode, u32 immediate)
 	{
 		u64 to_gen = 0;
 
 		clear_and_set_bits_with_range(to_gen, 0b0010, 31, 28);
 		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
 		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
-		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
-		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+		clear_and_set_bits_with_range(to_gen, opcode, 19, 16);
+		clear_and_set_bits_with_range(to_gen, immediate, 15, 0);
 
 		gen_32(to_gen);
 	}
 
-	inline void encode_instr_opcode_group_3_no_simm(u32 reg_a_index, 
+	inline void encode_instr_opcode_group_3(u32 reg_a_index, 
 		u32 reg_b_index, u32 reg_c_index, u32 opcode)
 	{
 		u64 to_gen = 0;
@@ -138,12 +137,39 @@ private:		// functions
 
 		gen_32(to_gen);
 	}
-	inline void encode_instr_opcode_group_3_with_simm(u32 reg_a_index,
+	inline void encode_instr_opcode_group_4(u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index, u32 opcode)
+	{
+		u64 to_gen = 0;
+
+		clear_and_set_bits_with_range(to_gen, 0b0100, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
+		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+
+		gen_32(to_gen);
+	}
+
+	inline void encode_instr_opcode_group_5_no_simm(u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index, u32 opcode)
+	{
+		u64 to_gen = 0;
+
+		clear_and_set_bits_with_range(to_gen, 0b0101, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
+		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+
+		gen_32(to_gen);
+	}
+	inline void encode_instr_opcode_group_5_with_simm(u32 reg_a_index,
 		u32 reg_b_index, u32 opcode, u32 immediate)
 	{
 		u64 to_gen = 0;
 
-		clear_and_set_bits_with_range(to_gen, 0b0011, 31, 28);
+		clear_and_set_bits_with_range(to_gen, 0b0101, 31, 28);
 		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
 		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
 		clear_and_set_bits_with_range(to_gen, immediate, 15, 4);
@@ -191,14 +217,16 @@ private:		// visitor functions
 		(AssemblerGrammarParser::InstrOpGrp1OneRegOnePcOneSimmContext *ctx);
 	antlrcpp::Any visitInstrOpGrp1OneRegOneImm
 		(AssemblerGrammarParser::InstrOpGrp1OneRegOneImmContext *ctx);
-	antlrcpp::Any visitInstrOpGrp1Branch
-		(AssemblerGrammarParser::InstrOpGrp1BranchContext *ctx);
-	antlrcpp::Any visitInstrOpGrp2ThreeRegs
-		(AssemblerGrammarParser::InstrOpGrp2ThreeRegsContext *ctx);
-	antlrcpp::Any visitInstrOpGrp3ThreeRegsLdst
-		(AssemblerGrammarParser::InstrOpGrp3ThreeRegsLdstContext *ctx);
-	antlrcpp::Any visitInstrOpGrp3TwoRegsOneSimmLdst
-		(AssemblerGrammarParser::InstrOpGrp3TwoRegsOneSimmLdstContext
+	antlrcpp::Any visitInstrOpGrp2Branch
+		(AssemblerGrammarParser::InstrOpGrp2BranchContext *ctx);
+	antlrcpp::Any visitInstrOpGrp3Jump
+		(AssemblerGrammarParser::InstrOpGrp3JumpContext *ctx);
+	antlrcpp::Any visitInstrOpGrp4Call
+		(AssemblerGrammarParser::InstrOpGrp4CallContext *ctx);
+	antlrcpp::Any visitInstrOpGrp5ThreeRegsLdst
+		(AssemblerGrammarParser::InstrOpGrp5ThreeRegsLdstContext *ctx);
+	antlrcpp::Any visitInstrOpGrp5TwoRegsOneSimm12Ldst
+		(AssemblerGrammarParser::InstrOpGrp5TwoRegsOneSimm12LdstContext
 		*ctx);
 
 	// pseudoInstruction:
@@ -345,14 +373,14 @@ private:		// functions
 	void __encode_cpy_ra_pc(u32 reg_a_index);
 	void __encode_cpyi(u32 reg_a_index, s64 immediate);
 	void __encode_cpya(u32 reg_a_index, s64 immediate);
+
+
 	void __encode_relative_branch(const std::string& instr_name, 
 		u32 reg_a_index, u32 reg_b_index, s64 raw_immediate);
-	void __encode_jne(u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
-	void __encode_jeq(u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
-	void __encode_callne(u32 reg_a_index, u32 reg_b_index, 
-		u32 reg_c_index);
-	void __encode_calleq(u32 reg_a_index, u32 reg_b_index, 
-		u32 reg_c_index);
+	void __encode_jump(const std::string& instr_name, u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index);
+	void __encode_call(const std::string& instr_name, u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index);
 	void __encode_ldst_three_regs(const std::string& instr_name,
 		u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
 	void __encode_ldst_two_regs_one_simm(const std::string& instr_name,

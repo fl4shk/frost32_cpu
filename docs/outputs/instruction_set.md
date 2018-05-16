@@ -15,58 +15,62 @@
 
 
 * General Purpose Registers (32-bit):
-	* ``zero`` (always zero), ``u0``, ``u1``, ``u2``, 
-	``u3``, ``u4``, ``u5``, ``u6``,
-	``u7``, ``u8``, ``u9``, ``u10``,
+	* `zero` (always zero), `u0`, `u1`, `u2`, 
+	`u3`, `u4`, `u5`, `u6`,
+	`u7`, `u8`, `u9`, `u10`,
 <br>
-	``temp`` (assembler temporary (but can be used otherwise)), 
+	`temp` (assembler temporary (but can be used otherwise)), 
 <br>
-	``lr`` (upon any call instruction, return address stored here), 
+	`lr` (upon any call instruction, return address stored here), 
 <br>
-	``fp`` (recommended for use as the frame pointer), 
+	`fp` (recommended for use as the frame pointer), 
 <br>
-	``sp`` (recommended for use as the stack pointer)
+	`sp` (recommended for use as the stack pointer)
 * Special Purpose Registers (32-bit)
-	* ``pc`` (program counter)
+	* `pc` (program counter)
 <br><br>
 * Opcode Group:  0b0000
-	* Encoding:  ``0000 aaaa bbbb cccc  0000 0000 0000 oooo``
-		* ``a``:  rA
-		* ``b``:  rB
-		* ``c``:  rC
-		* ``o``:  opcode
+	* Encoding:  `0000 aaaa bbbb cccc  0000 0000 0000 oooo`
+		* `a`:  rA
+		* `b`:  rB
+		* `c`:  rC
+		* `o`:  opcode
 	* Instructions:
 		* <b>add</b> rA, rB, rC
-			* Opcode:  0b0000
+			* Opcode:  0x0
 		* <b>sub</b> rA, rB, rC
-			* Opcode:  0b0001
+			* Opcode:  0x1
 		* <b>sltu</b> rA, rB, rC
-			* Opcode:  0b0010
+			* Opcode:  0x2
 		* <b>slts</b> rA, rB, rC
-			* Opcode:  0b0011
+			* Opcode:  0x3
+		* <b>sgtu</b> rA, rB, rC
+			* Opcode:  0x4
+		* <b>sgts</b> rA, rB, rC
+			* Opcode:  0x5
 		* <b>mul</b> rA, rB, rC
-			* Opcode:  0b0100
+			* Opcode:  0x6
 		* <b>and</b> rA, rB, rC
-			* Opcode:  0b0101
+			* Opcode:  0x7
 		* <b>orr</b> rA, rB, rC
-			* Opcode:  0b0110
+			* Opcode:  0x8
 		* <b>xor</b> rA, rB, rC
-			* Opcode:  0b0111
+			* Opcode:  0x9
 		* <b>nor</b> rA, rB, rC
-			* Opcode:  0b1000
+			* Opcode:  0xa
 		* <b>lsl</b> rA, rB, rC
-			* Opcode:  0b1001
+			* Opcode:  0xb
 		* <b>lsr</b> rA, rB, rC
-			* Opcode:  0b1010
+			* Opcode:  0xc
 		* <b>asr</b> rA, rB, rC
-			* Opcode:  0b1011
-<br><br>
+			* Opcode:  0xd
+								<br><br>
 * Opcode Group:  0b0001
-	* Encoding:  ``0001 aaaa bbbb oooo  iiii iiii iiii iiii``
-		* ``a``:  rA
-		* ``b``:  rB
-		* ``o``:  opcode
-		* ``i``:  16-bit immediate
+	* Encoding:  `0001 aaaa bbbb oooo  iiii iiii iiii iiii`
+		* `a`:  rA
+		* `b`:  rB
+		* `o`:  opcode
+		* `i`:  16-bit immediate
 	* Instructions:
 		* <b>addi</b> rA, rB, imm16
 			* Opcode:  0x0
@@ -76,54 +80,122 @@
 			* Opcode:  0x2
 		* <b>sltsi</b> rA, rB, simm16
 			* Opcode:  0x3
-		* <b>muli</b> rA, rB, imm16
+		* <b>sgtui</b> rA, rB, imm16
 			* Opcode:  0x4
-		* <b>andi</b> rA, rB, imm16
+		* <b>sgtsi</b> rA, rB, simm16
 			* Opcode:  0x5
-		* <b>orri</b> rA, rB, imm16
+		* <b>muli</b> rA, rB, imm16
 			* Opcode:  0x6
-		* <b>xori</b> rA, rB, imm16
+		* <b>andi</b> rA, rB, imm16
 			* Opcode:  0x7
-		* <b>nori</b> rA, rB, imm16
+		* <b>orri</b> rA, rB, imm16
 			* Opcode:  0x8
-		* <b>lsli</b> rA, rB, imm16
+		* <b>xori</b> rA, rB, imm16
 			* Opcode:  0x9
-		* <b>lsri</b> rA, rB, imm16
+		* <b>nori</b> rA, rB, imm16
 			* Opcode:  0xa
-		* <b>asri</b> rA, rB, imm16
+		* <b>lsli</b> rA, rB, imm16
 			* Opcode:  0xb
-		* <b>addsi</b> rA, pc, simm16
+		* <b>lsri</b> rA, rB, imm16
 			* Opcode:  0xc
-		* <b>cpyhi</b> rA, imm16
+		* <b>asri</b> rA, rB, imm16
 			* Opcode:  0xd
-		* <b>bne</b> rA, rB, simm16
+		* <b>addsi</b> rA, pc, simm16
 			* Opcode:  0xe
-		* <b>beq</b> rA, rB, simm16
+		* <b>cpyhi</b> rA, imm16
 			* Opcode:  0xf
 <br><br>
 * Opcode Group:  0b0010
-	* Encoding:  ``0b0010 aaaa bbbb cccc  0000 0000 0000 oooo``
-		* ``a``:  rA
-		* ``b``:  rB
-		* ``c``:  rC
-		* ``o``:  opcode
+	* Encoding:  `0010 aaaa bbbb oooo  iiii iiii iiii iiii`
+		* `a`:  rA
+		* `b`:  rB
+		* `o`:  opcode
+		* `i`:  16-bit immediate
 	* Instructions:
-		* <b>jne</b> rA, rB, rC
-			* Opcode:  0b0000
-		* <b>jeq</b> rA, rB, rC
-			* Opcode:  0b0001
-		* <b>callne</b> rA, rB, rC
-			* Opcode:  0b0010
-		* <b>calleq</b> rA, rB, rC
-			* Opcode:  0b0011
+		* <b>bne</b> rA, rB, offset16
+			* Opcode:  0x0
+		* <b>beq</b> rA, rB, offset16
+			* Opcode:  0x1
+		* <b>bltu</b> rA, rB, offset16
+			* Opcode:  0x2
+		* <b>bgeu</b> rA, rB, offset16
+			* Opcode:  0x3
+		* <b>bleu</b> rA, rB, offset16
+			* Opcode:  0x4
+		* <b>bgtu</b> rA, rB, offset16
+			* Opcode:  0x5
+		* <b>blts</b> rA, rB, offset16
+			* Opcode:  0x6
+		* <b>bges</b> rA, rB, offset16
+			* Opcode:  0x7
+		* <b>bles</b> rA, rB, offset16
+			* Opcode:  0x8
+		* <b>bgts</b> rA, rB, offset16
+			* Opcode:  0x9
 <br><br>
 * Opcode Group:  0b0011
-	* Encoding:  ``0b0011 aaaa bbbb cccc  iiii iiii iiii oooo``
-		* ``a``:  rA
-		* ``b``:  rB
-		* ``c``:  rC
-		* ``i``:  sign-extended 12-bit immediate
-		* ``o``:  opcode
+	* Encoding:  `0011 aaaa bbbb cccc  0000 0000 0000 oooo`
+		* `a`:  rA
+		* `b`:  rB
+		* `c`:  rC
+		* `o`:  opcode
+	* Instructions:
+		* <b>jne</b> rA, rB, rC
+			* Opcode:  0x0
+		* <b>jeq</b> rA, rB, rC
+			* Opcode:  0x1
+		* <b>jltu</b> rA, rB, rC
+			* Opcode:  0x2
+		* <b>jgeu</b> rA, rB, rC
+			* Opcode:  0x3
+		* <b>jleu</b> rA, rB, rC
+			* Opcode:  0x4
+		* <b>jgtu</b> rA, rB, rC
+			* Opcode:  0x5
+		* <b>jlts</b> rA, rB, rC
+			* Opcode:  0x6
+		* <b>jges</b> rA, rB, rC
+			* Opcode:  0x7
+		* <b>jles</b> rA, rB, rC
+			* Opcode:  0x8
+		* <b>jgts</b> rA, rB, rC
+			* Opcode:  0x9
+<br><br>
+* Opcode Group:  0b0100
+	* Encoding:  `0100 aaaa bbbb cccc  0000 0000 0000 oooo`
+		* `a`:  rA
+		* `b`:  rB
+		* `c`:  rC
+		* `o`:  opcode
+	* Instructions:
+		* <b>cne</b> rA, rB, rC
+			* Opcode:  0x0
+		* <b>ceq</b> rA, rB, rC
+			* Opcode:  0x1
+		* <b>cltu</b> rA, rB, rC
+			* Opcode:  0x2
+		* <b>cgeu</b> rA, rB, rC
+			* Opcode:  0x3
+		* <b>cleu</b> rA, rB, rC
+			* Opcode:  0x4
+		* <b>cgtu</b> rA, rB, rC
+			* Opcode:  0x5
+		* <b>clts</b> rA, rB, rC
+			* Opcode:  0x6
+		* <b>cges</b> rA, rB, rC
+			* Opcode:  0x7
+		* <b>cles</b> rA, rB, rC
+			* Opcode:  0x8
+		* <b>cgts</b> rA, rB, rC
+			* Opcode:  0x9
+<br><br>
+* Opcode Group:  0b0101
+	* Encoding:  `0101 aaaa bbbb cccc  iiii iiii iiii oooo`
+		* `a`:  rA
+		* `b`:  rB
+		* `c`:  rC
+		* `i`:  sign-extended 12-bit immediate
+		* `o`:  opcode
 	* Instructions:
 		* <b>ldr</b> rA, [rB, rC]
 			* Opcode:  0b0000
@@ -184,7 +256,7 @@
 		* Encoded as <code>jeq zero, zero, rC</code>
 	* <b>call</b> rC
 		* Unconditional call to address in register
-		* Encoded as <code>calleq zero, zero, rC</code>
+		* Encoded as <code>ceq zero, zero, rC</code>
 	* <b>jmpa</b> imm32
 		* Jump absolute (to directly encoded address)
 		* Encoded as

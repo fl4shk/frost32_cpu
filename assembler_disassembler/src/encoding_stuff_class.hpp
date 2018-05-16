@@ -17,6 +17,8 @@ public:		// enums
 		TwoRegsOneSimm,
 		OneRegOnePcOneSimm,
 		OneRegOneImm,
+
+
 		Branch,
 
 		ThreeRegsLdst,
@@ -38,11 +40,19 @@ private:		// variables
 	MapType __iog1_two_regs_one_simm_map;
 	MapType __iog1_one_reg_one_pc_one_simm_map;
 	MapType __iog1_one_reg_one_imm_map;
-	MapType __iog1_branch_map;
 
-	MapType __iog2_three_regs_map;
-	MapType __iog3_three_regs_ldst_map;
-	MapType __iog3_two_regs_one_simm_ldst_map;
+	//MapType __iog1_branch_map;
+
+	//MapType __iog2_three_regs_map;
+	//MapType __iog3_three_regs_ldst_map;
+	//MapType __iog3_two_regs_one_simm_ldst_map;
+
+	MapType __iog2_branch_map;
+	MapType __iog3_jump_map;
+	MapType __iog4_call_map;
+
+	MapType __iog5_three_regs_ldst_map;
+	MapType __iog5_two_regs_one_simm_ldst_map;
 
 public:		// functions
 	EncodingStuff();
@@ -56,11 +66,13 @@ public:		// functions
 	gen_getter_by_con_ref(iog1_two_regs_one_simm_map);
 	gen_getter_by_con_ref(iog1_one_reg_one_pc_one_simm_map);
 	gen_getter_by_con_ref(iog1_one_reg_one_imm_map);
-	gen_getter_by_con_ref(iog1_branch_map);
 
-	gen_getter_by_con_ref(iog2_three_regs_map);
-	gen_getter_by_con_ref(iog3_three_regs_ldst_map);
-	gen_getter_by_con_ref(iog3_two_regs_one_simm_ldst_map);
+	gen_getter_by_con_ref(iog2_branch_map);
+	gen_getter_by_con_ref(iog3_jump_map);
+	gen_getter_by_con_ref(iog4_call_map);
+
+	gen_getter_by_con_ref(iog5_three_regs_ldst_map);
+	gen_getter_by_con_ref(iog5_two_regs_one_simm_ldst_map);
 
 	std::string* decode_reg_name(u32 reg_index) const;
 	void get_iog0_instr_from_opcode(u32 opcode, std::string*& instr_name,
@@ -70,6 +82,10 @@ public:		// functions
 	void get_iog2_instr_from_opcode(u32 opcode, std::string*& instr_name,
 		ArgsType& args_type) const;
 	void get_iog3_instr_from_opcode(u32 opcode, std::string*& instr_name,
+		ArgsType& args_type) const;
+	void get_iog4_instr_from_opcode(u32 opcode, std::string*& instr_name,
+		ArgsType& args_type) const;
+	void get_iog5_instr_from_opcode(u32 opcode, std::string*& instr_name,
 		ArgsType& args_type) const;
 };
 

@@ -47,29 +47,37 @@ NEWLINE()NEWLINE()
 		* MDCODE(o):  opcode
 	* Instructions:
 		* BOLD(add) rA, rB, rC
-			* OPCODE(0b0000)
+			* OPCODE(0x0)
 		* BOLD(sub) rA, rB, rC
-			* OPCODE(0b0001)
+			* OPCODE(0x1)
 		* BOLD(sltu) rA, rB, rC
-			* OPCODE(0b0010)
+			* OPCODE(0x2)
 		* BOLD(slts) rA, rB, rC
-			* OPCODE(0b0011)
+			* OPCODE(0x3)
+		* BOLD(sgtu) rA, rB, rC
+			* OPCODE(0x4)
+		* BOLD(sgts) rA, rB, rC
+			* OPCODE(0x5)
 		* BOLD(mul) rA, rB, rC
-			* OPCODE(0b0100)
+			* OPCODE(0x6)
 		* BOLD(and) rA, rB, rC
-			* OPCODE(0b0101)
+			* OPCODE(0x7)
 		* BOLD(orr) rA, rB, rC
-			* OPCODE(0b0110)
+			* OPCODE(0x8)
 		* BOLD(xor) rA, rB, rC
-			* OPCODE(0b0111)
+			* OPCODE(0x9)
 		* BOLD(nor) rA, rB, rC
-			* OPCODE(0b1000)
+			* OPCODE(0xa)
 		* BOLD(lsl) rA, rB, rC
-			* OPCODE(0b1001)
+			* OPCODE(0xb)
 		* BOLD(lsr) rA, rB, rC
-			* OPCODE(0b1010)
+			* OPCODE(0xc)
 		* BOLD(asr) rA, rB, rC
-			* OPCODE(0b1011)
+			* OPCODE(0xd)
+		dnl * BOLD(add) rA, pc, rB
+		dnl 	* OPCODE(0xe)
+		dnl * BOLD(cpyh) rA, rB
+		dnl 	* OPCODE(0xf)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0001)
 	* Encoding:  MDCODE(0001 aaaa bbbb oooo  iiii iiii iiii iiii)
@@ -86,49 +94,117 @@ NEWLINE()NEWLINE()
 			* OPCODE(0x2)
 		* BOLD(sltsi) rA, rB, simm16
 			* OPCODE(0x3)
-		* BOLD(muli) rA, rB, imm16
+		* BOLD(sgtui) rA, rB, imm16
 			* OPCODE(0x4)
-		* BOLD(andi) rA, rB, imm16
+		* BOLD(sgtsi) rA, rB, simm16
 			* OPCODE(0x5)
-		* BOLD(orri) rA, rB, imm16
+		* BOLD(muli) rA, rB, imm16
 			* OPCODE(0x6)
-		* BOLD(xori) rA, rB, imm16
+		* BOLD(andi) rA, rB, imm16
 			* OPCODE(0x7)
-		* BOLD(nori) rA, rB, imm16
+		* BOLD(orri) rA, rB, imm16
 			* OPCODE(0x8)
-		* BOLD(lsli) rA, rB, imm16
+		* BOLD(xori) rA, rB, imm16
 			* OPCODE(0x9)
-		* BOLD(lsri) rA, rB, imm16
+		* BOLD(nori) rA, rB, imm16
 			* OPCODE(0xa)
-		* BOLD(asri) rA, rB, imm16
+		* BOLD(lsli) rA, rB, imm16
 			* OPCODE(0xb)
-		* BOLD(addsi) rA, pc, simm16
+		* BOLD(lsri) rA, rB, imm16
 			* OPCODE(0xc)
-		* BOLD(cpyhi) rA, imm16
+		* BOLD(asri) rA, rB, imm16
 			* OPCODE(0xd)
-		* BOLD(bne) rA, rB, simm16
+		* BOLD(addsi) rA, pc, simm16
 			* OPCODE(0xe)
-		* BOLD(beq) rA, rB, simm16
+		* BOLD(cpyhi) rA, imm16
 			* OPCODE(0xf)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0010)
-	* Encoding:  MDCODE(0b0010 aaaa bbbb cccc  0000 0000 0000 oooo)
+	* Encoding:  MDCODE(0010 aaaa bbbb oooo  iiii iiii iiii iiii)
+		* MDCODE(a):  rA
+		* MDCODE(b):  rB
+		* MDCODE(o):  opcode
+		* MDCODE(i):  16-bit immediate
+	* Instructions:
+		* BOLD(bne) rA, rB, offset16
+			* OPCODE(0x0)
+		* BOLD(beq) rA, rB, offset16
+			* OPCODE(0x1)
+		* BOLD(bltu) rA, rB, offset16
+			* OPCODE(0x2)
+		* BOLD(bgeu) rA, rB, offset16
+			* OPCODE(0x3)
+		* BOLD(bleu) rA, rB, offset16
+			* OPCODE(0x4)
+		* BOLD(bgtu) rA, rB, offset16
+			* OPCODE(0x5)
+		* BOLD(blts) rA, rB, offset16
+			* OPCODE(0x6)
+		* BOLD(bges) rA, rB, offset16
+			* OPCODE(0x7)
+		* BOLD(bles) rA, rB, offset16
+			* OPCODE(0x8)
+		* BOLD(bgts) rA, rB, offset16
+			* OPCODE(0x9)
+NEWLINE()NEWLINE()
+* OPCODE_GROUP(0b0011)
+	* Encoding:  MDCODE(0011 aaaa bbbb cccc  0000 0000 0000 oooo)
 		* MDCODE(a):  rA
 		* MDCODE(b):  rB
 		* MDCODE(c):  rC
 		* MDCODE(o):  opcode
 	* Instructions:
 		* BOLD(jne) rA, rB, rC
-			* OPCODE(0b0000)
+			* OPCODE(0x0)
 		* BOLD(jeq) rA, rB, rC
-			* OPCODE(0b0001)
-		* BOLD(callne) rA, rB, rC
-			* OPCODE(0b0010)
-		* BOLD(calleq) rA, rB, rC
-			* OPCODE(0b0011)
+			* OPCODE(0x1)
+		* BOLD(jltu) rA, rB, rC
+			* OPCODE(0x2)
+		* BOLD(jgeu) rA, rB, rC
+			* OPCODE(0x3)
+		* BOLD(jleu) rA, rB, rC
+			* OPCODE(0x4)
+		* BOLD(jgtu) rA, rB, rC
+			* OPCODE(0x5)
+		* BOLD(jlts) rA, rB, rC
+			* OPCODE(0x6)
+		* BOLD(jges) rA, rB, rC
+			* OPCODE(0x7)
+		* BOLD(jles) rA, rB, rC
+			* OPCODE(0x8)
+		* BOLD(jgts) rA, rB, rC
+			* OPCODE(0x9)
 NEWLINE()NEWLINE()
-* OPCODE_GROUP(0b0011)
-	* Encoding:  MDCODE(0b0011 aaaa bbbb cccc  iiii iiii iiii oooo)
+* OPCODE_GROUP(0b0100)
+	* Encoding:  MDCODE(0100 aaaa bbbb cccc  0000 0000 0000 oooo)
+		* MDCODE(a):  rA
+		* MDCODE(b):  rB
+		* MDCODE(c):  rC
+		* MDCODE(o):  opcode
+	* Instructions:
+		* BOLD(cne) rA, rB, rC
+			* OPCODE(0x0)
+		* BOLD(ceq) rA, rB, rC
+			* OPCODE(0x1)
+		* BOLD(cltu) rA, rB, rC
+			* OPCODE(0x2)
+		* BOLD(cgeu) rA, rB, rC
+			* OPCODE(0x3)
+		* BOLD(cleu) rA, rB, rC
+			* OPCODE(0x4)
+		* BOLD(cgtu) rA, rB, rC
+			* OPCODE(0x5)
+		* BOLD(clts) rA, rB, rC
+			* OPCODE(0x6)
+		* BOLD(cges) rA, rB, rC
+			* OPCODE(0x7)
+		* BOLD(cles) rA, rB, rC
+			* OPCODE(0x8)
+		* BOLD(cgts) rA, rB, rC
+			* OPCODE(0x9)
+NEWLINE()NEWLINE()
+* OPCODE_GROUP(0b0101)
+	* Encoding:  MDCODE(0101 aaaa bbbb cccc  iiii iiii iiii oooo)
 		* MDCODE(a):  rA
 		* MDCODE(b):  rB
 		* MDCODE(c):  rC
@@ -194,7 +270,7 @@ NEWLINE()NEWLINE()
 		* Encoded as CODE(`jeq zero, zero, rC')
 	* BOLD(call) rC
 		* Unconditional call to address in register
-		* Encoded as CODE(`calleq zero, zero, rC')
+		* Encoded as CODE(`ceq zero, zero, rC')
 	* BOLD(jmpa) imm32
 		* Jump absolute (to directly encoded address)
 		* Encoded as

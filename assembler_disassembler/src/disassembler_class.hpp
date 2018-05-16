@@ -98,8 +98,16 @@ private:		// functions
 		opcode = get_bits_with_range(instruction, 19, 16);
 		immediate = get_bits_with_range(instruction, 15, 0);
 	}
-
 	inline void decode_instr_opcode_group_2(u32 instruction, 
+		u32& reg_a_index, u32& reg_b_index, u32& opcode, u32& immediate)
+		const
+	{
+		reg_a_index = get_bits_with_range(instruction, 27, 24);
+		reg_b_index = get_bits_with_range(instruction, 23, 20);
+		opcode = get_bits_with_range(instruction, 19, 16);
+		immediate = get_bits_with_range(instruction, 15, 0);
+	}
+	inline void decode_instr_opcode_group_3(u32 instruction, 
 		u32& reg_a_index, u32& reg_b_index, u32& reg_c_index, u32& opcode)
 		const
 	{
@@ -109,7 +117,17 @@ private:		// functions
 		opcode = get_bits_with_range(instruction, 3, 0);
 	}
 
-	inline void decode_instr_opcode_group_3(u32 instruction, 
+	inline void decode_instr_opcode_group_4(u32 instruction, 
+		u32& reg_a_index, u32& reg_b_index, u32& reg_c_index, u32& opcode)
+		const
+	{
+		reg_a_index = get_bits_with_range(instruction, 27, 24);
+		reg_b_index = get_bits_with_range(instruction, 23, 20);
+		reg_c_index = get_bits_with_range(instruction, 19, 16);
+		opcode = get_bits_with_range(instruction, 3, 0);
+	}
+
+	inline void decode_instr_opcode_group_5(u32 instruction, 
 		u32& reg_a_index, u32& reg_b_index, u32& reg_c_index, u32& opcode)
 		const
 	{
