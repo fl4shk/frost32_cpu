@@ -3,7 +3,6 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
-`define DEBUG_INSTR_DECODER
 
 module Frost32Cpu(input logic clk,
 	input PkgFrost32Cpu::PortIn_Frost32Cpu in,
@@ -94,6 +93,17 @@ module Frost32Cpu(input logic clk,
 
 
 
+	`ifdef DEBUG_REGISTER_FILE
+	logic [`MSB_POS__REG_FILE_DATA:0] 
+		__out_debug_reg_zero, __out_debug_reg_u0,
+		__out_debug_reg_u1, __out_debug_reg_u2, 
+		__out_debug_reg_u3, __out_debug_reg_u4,
+		__out_debug_reg_u5, __out_debug_reg_u6, 
+		__out_debug_reg_u7, __out_debug_reg_u8,
+		__out_debug_reg_u9, __out_debug_reg_u10, 
+		__out_debug_reg_temp, __out_debug_reg_lr,
+		__out_debug_reg_fp, __out_debug_reg_sp;
+	`endif
 
 
 	// Module instantiations
@@ -104,18 +114,10 @@ module Frost32Cpu(input logic clk,
 
 	PkgRegisterFile::PortIn_RegFile __in_reg_file;
 	PkgRegisterFile::PortOut_RegFile __out_reg_file;
-	logic [`MSB_POS__REG_FILE_DATA:0] 
-		__out_debug_reg_zero, 
-		__out_debug_reg_u0, __out_debug_reg_u1, 
-		__out_debug_reg_u2, __out_debug_reg_u3,
-		__out_debug_reg_u4, __out_debug_reg_u5, 
-		__out_debug_reg_u6, __out_debug_reg_u7,
-		__out_debug_reg_u8, __out_debug_reg_u9, 
-		__out_debug_reg_u10, 
-		__out_debug_reg_temp, __out_debug_reg_lr, 
-		__out_debug_reg_fp, __out_debug_reg_sp;
 	RegisterFile __inst_reg_file(.clk(clk), .in(__in_reg_file),
-		.out(__out_reg_file),
+		.out(__out_reg_file)
+		`ifdef DEBUG_REGISTER_FILE
+		,
 		.out_debug_zero(__out_debug_reg_zero), 
 		.out_debug_u0(__out_debug_reg_u0),
 		.out_debug_u1(__out_debug_reg_u1),
@@ -131,7 +133,34 @@ module Frost32Cpu(input logic clk,
 		.out_debug_temp(__out_debug_reg_temp),
 		.out_debug_lr(__out_debug_reg_lr),
 		.out_debug_fp(__out_debug_reg_fp),
-		.out_debug_sp(__out_debug_reg_sp));
+		.out_debug_sp(__out_debug_reg_sp)
+		`endif		// DEBUG_REGISTER_FILE
+		);
+
+	`ifdef DEBUG_REGISTER_FILE
+	always_comb
+	begin
+		out.debug_reg_zero = __out_debug_reg_zero;
+		out.debug_reg_u0 = __out_debug_reg_u0;
+		out.debug_reg_u1 = __out_debug_reg_u1;
+		out.debug_reg_u2 = __out_debug_reg_u2;
+
+		out.debug_reg_u3 = __out_debug_reg_u3;
+		out.debug_reg_u4 = __out_debug_reg_u4;
+		out.debug_reg_u5 = __out_debug_reg_u5;
+		out.debug_reg_u6 = __out_debug_reg_u6;
+
+		out.debug_reg_u7 = __out_debug_reg_u7;
+		out.debug_reg_u8 = __out_debug_reg_u8;
+		out.debug_reg_u9 = __out_debug_reg_u9;
+		out.debug_reg_u10 = __out_debug_reg_u10;
+
+		out.debug_reg_temp = __out_debug_reg_temp;
+		out.debug_reg_lr = __out_debug_reg_lr;
+		out.debug_reg_fp = __out_debug_reg_fp;
+		out.debug_reg_sp = __out_debug_reg_sp;
+	end
+	`endif
 
 	PkgAlu::PortIn_Alu __in_alu;
 	PkgAlu::PortOut_Alu __out_alu;
@@ -143,10 +172,12 @@ module Frost32Cpu(input logic clk,
 		.b(__stage_execute_input_data.rfile_rb_data),
 		.out(__out_compare_ctrl_flow));
 
+	`ifdef DEBUG
 	// Debug stuff
 	always @ (posedge clk)
 	begin
 		if (__locals.pc >= 32'h8000)
+		//if (__locals.pc >= 32'hc000)
 		//if (__locals.pc >= 32'h800000)
 		begin
 			$finish;
@@ -163,6 +194,7 @@ module Frost32Cpu(input logic clk,
 			__multi_stage_data_0.pc_val, 
 			__multi_stage_data_1.pc_val,
 			__multi_stage_data_2.pc_val);
+		`ifdef DEBUG_REGISTER_FILE
 		$display("Frost32Cpu regs (0 to 3):  %h %h %h %h",
 			__out_debug_reg_zero, __out_debug_reg_u0, 
 			__out_debug_reg_u1, __out_debug_reg_u2);
@@ -175,6 +207,7 @@ module Frost32Cpu(input logic clk,
 		$display("Frost32Cpu regs (12 to 15):  %h %h %h %h",
 			__out_debug_reg_temp, __out_debug_reg_lr, 
 			__out_debug_reg_fp, __out_debug_reg_sp);
+		`endif
 
 		`ifdef DEBUG_INSTR_DECODER
 		`include "src/debug_instr_decoder.header.sv"
@@ -182,6 +215,7 @@ module Frost32Cpu(input logic clk,
 
 		$display();
 	end
+	`endif		// DEBUG
 
 	// Assignments
 	assign __following_pc = __multi_stage_data_1.pc_val + 4;

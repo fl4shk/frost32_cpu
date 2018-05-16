@@ -52,7 +52,7 @@ data_for_modify_subroutine:
 	add u7, u0, u1
 }
 
-.org 0x8004
+.org 0x8000
 quit:
 {
 	add zero, zero, zero

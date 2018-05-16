@@ -1,0 +1,52 @@
+.org 0x0000
+main:
+{
+	// Assume top of available memory is here
+	cpyi sp, 0xffff
+
+
+	cpyi u1, inputs
+
+	; Use u0 as the pointer
+	cpyi u0, 0
+
+	cpya u1, 20
+	stri u1, [u0, 0]
+
+	cpya u1, -20
+	stri u1, [u0, 4]
+
+
+	; calla test_bles
+	addsi lr, pc, 8
+	bra test_bles
+
+
+	cpyi temp, infin
+	jmp temp
+}
+
+test_bles:
+{
+	cpyi u1, inputs
+	ldri u2, [u1, 0]
+	ldri u3, [u1, 4]
+
+
+	jmp lr
+}
+
+
+
+.org 0xc000
+infin:
+{
+	bra infin
+}
+
+.org 0xe000
+inputs:
+	.space 20
+
+outputs:
+	.space 20

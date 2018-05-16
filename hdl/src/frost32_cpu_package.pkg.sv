@@ -63,12 +63,21 @@ typedef enum logic [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0]
 
 typedef struct packed
 {
-	logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] data;
-	logic [`MSB_POS__FROST32_CPU_ADDR:0] addr;
-	logic data_inout_access_type;
-	logic [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0]
-		data_inout_access_size;
-	logic req_mem_access;
+	//logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] data;
+	//logic [`MSB_POS__FROST32_CPU_ADDR:0] addr;
+	//logic data_inout_access_type;
+	//logic [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0]
+	//	data_inout_access_size;
+	//logic req_mem_access;
+	`MAKE_LIST_OF_MEMBERS__FROST32_CPU_PORTOUT_MEM_ACCESS
+
+	`ifdef DEBUG_REGISTER_FILE
+	logic [`MSB_POS__REG_FILE_DATA:0] debug_reg_zero, debug_reg_u0,
+		debug_reg_u1, debug_reg_u2, debug_reg_u3, debug_reg_u4,
+		debug_reg_u5, debug_reg_u6, debug_reg_u7, debug_reg_u8,
+		debug_reg_u9, debug_reg_u10, debug_reg_temp, debug_reg_lr,
+		debug_reg_fp, debug_reg_sp;
+	`endif		// DEBUG_REGISTER_FILE
 } PortOut_Frost32Cpu;
 
 endpackage : PkgFrost32Cpu
