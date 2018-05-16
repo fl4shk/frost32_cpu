@@ -4,6 +4,20 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 	output PkgInstrDecoder::PortOut_InstrDecoder out);
 
 	import PkgInstrDecoder::*;
+	import PkgAlu::PortOut_Compare;
+
+
+
+	logic [`MSB_POS__INSTR_OPER:0] __in_compare_ctrl_flow_b;
+
+	// This works because of symmetry between the control flow instructions
+	// Bad instructions don't cause stalls
+	assign __in_compare_ctrl_flow_b = PkgInstrDecoder::Bad0_Iog0;
+	PkgAlu::PortOut_Compare __out_compare_ctrl_flow;
+
+	Compare #(.DATA_WIDTH(`WIDTH__INSTR_OPER)) __inst_compare_ctrl_flow
+		(.a(out.opcode), .b(__in_compare_ctrl_flow_b),
+		.out(__out_compare_ctrl_flow));
 
 	PkgInstrDecoder::Iog0Instr __iog0_instr;
 	assign __iog0_instr = in;
@@ -39,6 +53,7 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.imm_val = 0;
 				out.ldst_type = 0;
 				out.causes_stall = 0;
+				out.condition_type = 0;
 			end
 
 			// Group 1:  Immediates
@@ -53,6 +68,7 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.ldst_type = 0;
 
 				out.causes_stall = 0;
+				out.condition_type = 0;
 			end
 
 			// Group 2:  Branches
@@ -67,8 +83,8 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.ldst_type = 0;
 
 				// Bad instructions don't cause stalls
-				out.causes_stall
-					= (out.opcode <= PkgInstrDecoder::Bgts_TwoRegsOneSimm);
+				out.causes_stall = __out_compare_ctrl_flow.ltu;
+				out.condition_type = __iog2_instr.opcode;
 			end
 
 			// Group 3:  Jumps
@@ -83,8 +99,8 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.ldst_type = 0;
 
 				// Bad instructions don't cause stalls
-				out.causes_stall
-					= (out.opcode <= PkgInstrDecoder::Jgts_TwoRegsOneSimm);
+				out.causes_stall = __out_compare_ctrl_flow.ltu;
+				out.condition_type = __iog3_instr.opcode;
 			end
 
 			// Group 4:  Jumps
@@ -99,8 +115,8 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.ldst_type = 0;
 
 				// Bad instructions don't cause stalls
-				out.causes_stall
-					= (out.opcode <= PkgInstrDecoder::Cgts_TwoRegsOneSimm);
+				out.causes_stall = __out_compare_ctrl_flow.ltu;
+				out.condition_type = __iog4_instr.opcode;
 			end
 
 			// Group 5:  Loads and stores
@@ -122,11 +138,13 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 
 				// All load/store instructions cause a stall
 				out.causes_stall = 1;
+				out.condition_type = 0;
 			end
 
 			default:
 			begin
-				// Eek!  Invalid instruction!
+				// Eek!  Invalid instruction group!
+				// ...Treat it as a NOP ("add zero, zero, zero")
 				out = 0;
 			end
 		endcase

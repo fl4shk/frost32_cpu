@@ -24,6 +24,29 @@ typedef enum logic [`MSB_POS__INSTR_LDST_TYPE:0]
 	St8
 } LdstType;
 
+typedef enum logic [`MSB_POS__INSTR_CONDITION_TYPE:0]
+{
+	CtNe,
+	CtEq,
+	CtLtu,
+	CtGeu,
+
+	CtLeu,
+	CtGtu,
+	CtLts,
+	CtGes,
+
+	CtLes,
+	CtGts,
+	CtBad0,
+	CtBad1,
+
+	CtBad2,
+	CtBad3,
+	CtBad4,
+	CtBad5
+} CondType;
+
 
 typedef struct packed
 {
@@ -33,6 +56,7 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_IMM_VALUE:0] imm_val;
 	logic [`MSB_POS__INSTR_LDST_TYPE:0] ldst_type;
 	logic causes_stall;
+	logic [`MSB_POS__INSTR_CONDITION_TYPE:0] condition_type;
 } PortOut_InstrDecoder;
 
 typedef struct packed

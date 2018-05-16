@@ -33,5 +33,9 @@
 `define WIDTH__INSTR_LDST_TYPE 3
 `define MSB_POS__INSTR_LDST_TYPE `WIDTH_TO_MSB_POS(`WIDTH__INSTR_LDST_TYPE)
 
+`define WIDTH__INSTR_CONDITION_TYPE 4
+`define MSB_POS__INSTR_CONDITION_TYPE \
+	`WIDTH_TO_MSB_POS(`WIDTH__INSTR_CONDITION_TYPE)
+
 
 `endif		// src__slash__instr_decoder_defines_header_sv

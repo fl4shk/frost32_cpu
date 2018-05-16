@@ -7,7 +7,7 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 	parameter __WIDTH_INOUT = `WIDTH__ALU_INOUT;
 	parameter __MSB_POS_INOUT = `MSB_POS__ALU_INOUT;
 
-	// sltu and slts
+	// sltu, slts, sgtu, sgts
 	PkgAlu::PortOut_Compare  __out_compare;
 
 	Compare #(.DATA_WIDTH(__WIDTH_INOUT)) __inst_compare(.a(in.a),

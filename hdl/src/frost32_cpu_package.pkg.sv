@@ -16,6 +16,7 @@ typedef enum logic [`MSB_POS__FROST32_CPU_STATE:0]
 // Data used by more than one pipeline stage
 typedef struct packed
 {
+	// For debugging
 	logic [`MSB_POS__INSTRUCTION:0] raw_instruction;
 
 	// Decoded instruction stuff
@@ -26,12 +27,14 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_OPER:0] instr_opcode;
 	logic [`MSB_POS__INSTR_LDST_TYPE:0] instr_ldst_type;
 	logic instr_causes_stall;
+	logic [`MSB_POS__INSTR_CONDITION_TYPE:0] instr_condition_type;
 
 
 	// What the PC was for this instruction
 	logic [`MSB_POS__REG_FILE_DATA:0] pc_val;
 
 	logic nop;
+
 
 
 } MultiStageData;

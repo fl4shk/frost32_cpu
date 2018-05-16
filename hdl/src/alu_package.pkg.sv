@@ -14,11 +14,6 @@ typedef struct packed
 	logic [`MSB_POS__ALU_INOUT:0] data;
 } PortOut_Shift;
 
-//typedef struct packed
-//{
-//	logic n, v, c;
-//} PortOut_CompareFlags;
-
 typedef struct packed
 {
 	// less than unsigned, less than signed
