@@ -55,20 +55,45 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_IMM_VALUE:0] imm_val;
 } Iog1Instr;
 
+// Group 2:  Branches
 typedef struct packed
 {
 	// should be 0b0010
+	logic [`MSB_POS__INSTR_OP_GROUP:0] group;
+	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index;
+	logic [`MSB_POS__INSTR_OPER:0] opcode;
+	logic [`MSB_POS__INSTR_IMM_VALUE:0] imm_val;
+} Iog2Instr;
+
+// Group 3:  Jumps
+typedef struct packed
+{
+	// should be 4'b0011
 	logic [`MSB_POS__INSTR_OP_GROUP:0] group;
 	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index, rc_index;
 
 	// blank (should be filled with zeroes)
 	logic [`MSB_POS__INSTR_FILL:0] fill;
 	logic [`MSB_POS__INSTR_OPER:0] opcode;
-} Iog2Instr;
+} Iog3Instr;
 
+// Group 4:  Calls
 typedef struct packed
 {
-	// should be 0b0011
+	// should be 4'b0100
+	logic [`MSB_POS__INSTR_OP_GROUP:0] group;
+	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index, rc_index;
+
+	// blank (should be filled with zeroes)
+	logic [`MSB_POS__INSTR_FILL:0] fill;
+	logic [`MSB_POS__INSTR_OPER:0] opcode;
+} Iog4Instr;
+
+
+// Group 5:  Loads and stores
+typedef struct packed
+{
+	// should be 0b0101
 	logic [`MSB_POS__INSTR_OP_GROUP:0] group;
 	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index, rc_index;
 
@@ -76,7 +101,7 @@ typedef struct packed
 	//logic [`MSB_POS__INSTR_FILL:0] fill;
 	logic [`MSB_POS__INSTR_LDST_IMM_VAL_12:0] imm_val_12;
 	logic [`MSB_POS__INSTR_OPER:0] opcode;
-} Iog3Instr;
+} Iog5Instr;
 
 typedef enum logic [`MSB_POS__INSTR_OPER:0]
 {
@@ -85,20 +110,20 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 	Sltu_ThreeRegs,
 	Slts_ThreeRegs,
 
+	Sgtu_ThreeRegs,
+	Sgts_ThreeRegs,
 	Mul_ThreeRegs,
 	And_ThreeRegs,
+
 	Orr_ThreeRegs,
 	Xor_ThreeRegs,
-
 	Nor_ThreeRegs,
 	Lsl_ThreeRegs,
+
 	Lsr_ThreeRegs,
 	Asr_ThreeRegs,
-
 	Bad0_Iog0,
-	Bad1_Iog0,
-	Bad2_Iog0,
-	Bad3_Iog0
+	Bad1_Iog0
 } Iog0Oper;
 
 typedef enum logic [`MSB_POS__INSTR_OPER:0]
@@ -108,44 +133,90 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 	Sltui_TwoRegsOneImm,
 	Sltsi_TwoRegsOneSimm,
 
+	Sgtui_TwoRegsOneImm,
+	Sgtsi_TwoRegsOneSimm,
 	Muli_TwoRegsOneImm,
 	Andi_TwoRegsOneImm,
+
 	Orri_TwoRegsOneImm,
 	Xori_TwoRegsOneImm,
-
 	Nori_TwoRegsOneImm,
 	Lsli_TwoRegsOneImm,
+
 	Lsri_TwoRegsOneImm,
 	Asri_TwoRegsOneImm,
-
 	Addsi_OneRegOnePcOneSimm,
-	Cpyhi_OneRegOneImm,
-	Bne_TwoRegsOneSimm,
-	Beq_TwoRegsOneSimm
+	Cpyhi_OneRegOneImm
 } Iog1Oper;
 
 typedef enum logic [`MSB_POS__INSTR_OPER:0]
 {
-	Jne_ThreeRegs,
-	Jeq_ThreeRegs,
-	Callne_ThreeRegs,
-	Calleq_ThreeRegs,
+	Bne_TwoRegsOneSimm,
+	Beq_TwoRegsOneSimm,
+	Bltu_TwoRegsOneSimm,
+	Bgeu_TwoRegsOneSimm,
 
+	Bleu_TwoRegsOneSimm,
+	Bgtu_TwoRegsOneSimm,
+	Blts_TwoRegsOneSimm,
+	Bges_TwoRegsOneSimm,
+
+	Bles_TwoRegsOneSimm,
+	Bgts_TwoRegsOneSimm,
 	Bad0_Iog2,
 	Bad1_Iog2,
+
 	Bad2_Iog2,
 	Bad3_Iog2,
-
 	Bad4_Iog2,
-	Bad5_Iog2,
-	Bad6_Iog2,
-	Bad7_Iog2,
-
-	Bad8_Iog2,
-	Bad9_Iog2,
-	Bad10_Iog2,
-	Bad11_Iog2
+	Bad5_Iog2
 } Iog2Oper;
+
+typedef enum logic [`MSB_POS__INSTR_OPER:0]
+{
+	Jne_TwoRegsOneSimm,
+	Jeq_TwoRegsOneSimm,
+	Jltu_TwoRegsOneSimm,
+	Jgeu_TwoRegsOneSimm,
+
+	Jleu_TwoRegsOneSimm,
+	Jgtu_TwoRegsOneSimm,
+	Jlts_TwoRegsOneSimm,
+	Jges_TwoRegsOneSimm,
+
+	Jles_TwoRegsOneSimm,
+	Jgts_TwoRegsOneSimm,
+	Bad0_Iog3,
+	Bad1_Iog3,
+
+	Bad2_Iog3,
+	Bad3_Iog3,
+	Bad4_Iog3,
+	Bad5_Iog3
+} Iog3Oper;
+
+typedef enum logic [`MSB_POS__INSTR_OPER:0]
+{
+	Cne_TwoRegsOneSimm,
+	Ceq_TwoRegsOneSimm,
+	Cltu_TwoRegsOneSimm,
+	Cgeu_TwoRegsOneSimm,
+
+	Cleu_TwoRegsOneSimm,
+	Cgtu_TwoRegsOneSimm,
+	Clts_TwoRegsOneSimm,
+	Cges_TwoRegsOneSimm,
+
+	Cles_TwoRegsOneSimm,
+	Cgts_TwoRegsOneSimm,
+	Bad0_Iog4,
+	Bad1_Iog4,
+
+	Bad2_Iog4,
+	Bad3_Iog4,
+	Bad4_Iog4,
+	Bad5_Iog4
+} Iog4Oper;
 
 typedef enum logic [`MSB_POS__INSTR_OPER:0]
 {
@@ -168,7 +239,7 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 	Stri_TwoRegsOneSimm12Ldst,
 	Sthi_TwoRegsOneSimm12Ldst,
 	Stbi_TwoRegsOneSimm12Ldst
-} Iog3Oper;
+} Iog5Oper;
 
 
 endpackage : PkgInstrDecoder

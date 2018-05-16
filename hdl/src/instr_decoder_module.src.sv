@@ -17,12 +17,18 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 	PkgInstrDecoder::Iog3Instr __iog3_instr;
 	assign __iog3_instr = in;
 
+	PkgInstrDecoder::Iog4Instr __iog4_instr;
+	assign __iog4_instr = in;
+
+	PkgInstrDecoder::Iog5Instr __iog5_instr;
+	assign __iog5_instr = in;
+
 	always_comb
 	begin
 		// Just use __iog0_instr.group because the "group" field is in the
 		// same location for all instructions.
 		case (__iog0_instr.group)
-			// Group 0
+			// Group 0:  Three Registers
 			0:
 			begin
 				out.group = __iog0_instr.group;
@@ -35,7 +41,7 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.causes_stall = 0;
 			end
 
-			// Group 1
+			// Group 1:  Immediates
 			1:
 			begin
 				out.group = __iog1_instr.group;
@@ -46,13 +52,10 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.imm_val = __iog1_instr.imm_val;
 				out.ldst_type = 0;
 
-				// The only instructions from group 1 that can cause stalls
-				// are the conditional branches
-				out.causes_stall 
-					= (out.opcode >= PkgInstrDecoder::Bne_TwoRegsOneSimm);
+				out.causes_stall = 0;
 			end
 
-			// Group 2
+			// Group 2:  Branches
 			2:
 			begin
 				out.group = __iog2_instr.group;
@@ -60,15 +63,15 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rb_index = __iog2_instr.rb_index;
 				out.rc_index = __iog2_instr.rc_index;
 				out.opcode = __iog2_instr.opcode;
-				out.imm_val = 0;
+				out.imm_val = __iog2_instr.imm_val;
 				out.ldst_type = 0;
 
-				// Bad instructions don't dause stalls
+				// Bad instructions don't cause stalls
 				out.causes_stall
-					= (out.opcode <= PkgInstrDecoder::Calleq_ThreeRegs);
+					= (out.opcode <= PkgInstrDecoder::Bgts_TwoRegsOneSimm);
 			end
 
-			// Group 3
+			// Group 3:  Jumps
 			3:
 			begin
 				out.group = __iog3_instr.group;
@@ -76,11 +79,43 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.rb_index = __iog3_instr.rb_index;
 				out.rc_index = __iog3_instr.rc_index;
 				out.opcode = __iog3_instr.opcode;
+				out.imm_val = 0;
+				out.ldst_type = 0;
+
+				// Bad instructions don't cause stalls
+				out.causes_stall
+					= (out.opcode <= PkgInstrDecoder::Jgts_TwoRegsOneSimm);
+			end
+
+			// Group 4:  Jumps
+			4:
+			begin
+				out.group = __iog4_instr.group;
+				out.ra_index = __iog4_instr.ra_index;
+				out.rb_index = __iog4_instr.rb_index;
+				out.rc_index = __iog4_instr.rc_index;
+				out.opcode = __iog4_instr.opcode;
+				out.imm_val = 0;
+				out.ldst_type = 0;
+
+				// Bad instructions don't cause stalls
+				out.causes_stall
+					= (out.opcode <= PkgInstrDecoder::Cgts_TwoRegsOneSimm);
+			end
+
+			// Group 5:  Loads and stores
+			5:
+			begin
+				out.group = __iog5_instr.group;
+				out.ra_index = __iog5_instr.ra_index;
+				out.rb_index = __iog5_instr.rb_index;
+				out.rc_index = __iog5_instr.rc_index;
+				out.opcode = __iog5_instr.opcode;
 
 				// Sign extend the 12-bit immediate value... to 16-bit
-				out.imm_val = {{4{__iog3_instr.imm_val_12
+				out.imm_val = {{4{__iog5_instr.imm_val_12
 					[`MSB_POS__INSTR_LDST_IMM_VAL_12]}},
-					__iog3_instr.imm_val_12};
+					__iog5_instr.imm_val_12};
 
 				// Make use of the opcode ordering
 				out.ldst_type = out.opcode[`MSB_POS__INSTR_LDST_TYPE:0];
