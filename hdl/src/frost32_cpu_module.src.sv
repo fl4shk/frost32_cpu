@@ -3,6 +3,8 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
+`define DEBUG_INSTR_DECODER
+
 module Frost32Cpu(input logic clk,
 	input PkgFrost32Cpu::PortIn_Frost32Cpu in,
 	output PkgFrost32Cpu::PortOut_Frost32Cpu out);
@@ -173,6 +175,11 @@ module Frost32Cpu(input logic clk,
 		$display("Frost32Cpu regs (12 to 15):  %h %h %h %h",
 			__out_debug_reg_temp, __out_debug_reg_lr, 
 			__out_debug_reg_fp, __out_debug_reg_sp);
+
+		`ifdef DEBUG_INSTR_DECODER
+		`include "src/debug_instr_decoder.header.sv"
+		`endif		// DEBUG_INSTR_DECODER
+
 		$display();
 	end
 
@@ -225,7 +232,6 @@ module Frost32Cpu(input logic clk,
 		&& (__stage_execute_output_data.prev_written_reg_index != 0)) 
 		? __stage_write_back_input_data.n_reg_data
 		: __out_reg_file.read_data_rc;
-
 
 
 	// Tasks and functions
