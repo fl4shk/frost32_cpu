@@ -1,11 +1,3 @@
-define(`WAIT', 
-`	; Wait for a sufficient amount of time (test value forwarding)'
-`	add zero, zero, zero'
-`	add zero, zero, zero'
-`	add zero, zero, zero'
-`	add zero, zero, zero')dnl
-dnl
-dnl
 .org 0x0000
 main:
 {
@@ -30,7 +22,6 @@ test_call:
 	;cpya u4, 0x80ab9000
 	;;cpyhi u4, 0x9000
 
-	;WAIT()
 
 	;;bra quit
 	;jmpa quit
@@ -39,5 +30,5 @@ test_call:
 .org 0x8000
 quit:
 {
-	WAIT()
+	add zero, zero, zero
 }

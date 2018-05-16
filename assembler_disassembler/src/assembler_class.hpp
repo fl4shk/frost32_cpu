@@ -18,6 +18,9 @@
 
 class Assembler : public AssemblerGrammarVisitor
 {
+public:		// typedefs
+	typedef antlr4::ParserRuleContext ParserRuleContext;
+
 private:		// variables
 	SymbolTable __sym_tbl;
 
@@ -45,8 +48,7 @@ public:		// functions
 	int run();
 
 private:		// functions
-	inline void err(antlr4::ParserRuleContext* ctx, 
-		const std::string& msg)
+	inline void err(ParserRuleContext* ctx, const std::string& msg)
 	{
 		if (ctx == nullptr)
 		{
@@ -69,6 +71,27 @@ private:		// functions
 		//printerr("Error in file \"", *__file_name, "\":  ", msg, "\n");
 		printerr("Error:  ", msg, "\n");
 		exit(1);
+	}
+	inline void warn(ParserRuleContext* ctx, const std::string& msg)
+	{
+		if (ctx == nullptr)
+		{
+			printerr("Error:  ", msg, "\n");
+		}
+		else
+		{
+			auto tok = ctx->getStart();
+			const size_t line = tok->getLine();
+			const size_t pos_in_line = tok->getCharPositionInLine();
+			//printerr("Error in file \"", *__file_name, "\", on line ",
+			//	line, ", position ", pos_in_line, ":  ", msg, "\n");
+			printerr("Warning on line ", line, ", position ", pos_in_line, 
+				":  ", msg, "\n");
+		}
+	}
+	inline void warn(const std::string& msg)
+	{
+		printerr("Warning:  ", msg, "\n");
 	}
 	//inline void print_words_if_allowed(const std::string some_words)
 	//{
@@ -363,30 +386,115 @@ private:		// functions
 	gen_getter_and_setter_by_val(pc);
 	gen_getter_by_ref(sym_tbl);
 
-	void __encode_alu_op_three_regs(const std::string& instr_name,
-		u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
-	void __encode_alu_op_two_regs_one_imm(const std::string& instr_name,
-		u32 reg_a_index, u32 reg_b_index, s64 immediate);
-	void __encode_inv(u32 reg_a_index, u32 reg_b_index);
-	void __encode_invi(u32 reg_a_index, s64 immediate);
-	void __encode_cpy_ra_rb(u32 reg_a_index, u32 reg_b_index);
-	void __encode_cpy_ra_pc(u32 reg_a_index);
-	void __encode_cpyi(u32 reg_a_index, s64 immediate);
-	void __encode_cpya(u32 reg_a_index, s64 immediate);
+	void __encode_alu_op_three_regs(ParserRuleContext* ctx,
+		const std::string& instr_name, u32 reg_a_index, u32 reg_b_index, 
+		u32 reg_c_index);
+	void __encode_alu_op_two_regs_one_imm(ParserRuleContext* ctx,
+		const std::string& instr_name, u32 reg_a_index, u32 reg_b_index, 
+		s64 immediate);
+	void __encode_inv(ParserRuleContext* ctx, u32 reg_a_index, u32 
+		reg_b_index);
+	void __encode_invi(ParserRuleContext* ctx, u32 reg_a_index, 
+		s64 immediate);
+	void __encode_cpy_ra_rb(ParserRuleContext* ctx, u32 reg_a_index, 
+		u32 reg_b_index);
+	void __encode_cpy_ra_pc(ParserRuleContext* ctx, u32 reg_a_index);
+	void __encode_cpyi(ParserRuleContext* ctx, u32 reg_a_index, 
+		s64 immediate);
+	void __encode_cpya(ParserRuleContext* ctx, u32 reg_a_index, 
+		s64 immediate);
 
 
-	void __encode_relative_branch(const std::string& instr_name, 
+	void __encode_relative_branch(ParserRuleContext* ctx,
+		const std::string& instr_name, 
 		u32 reg_a_index, u32 reg_b_index, s64 raw_immediate);
-	void __encode_jump(const std::string& instr_name, u32 reg_a_index, 
+	void __encode_jump(ParserRuleContext* ctx,
+		const std::string& instr_name, u32 reg_a_index, 
 		u32 reg_b_index, u32 reg_c_index);
-	void __encode_call(const std::string& instr_name, u32 reg_a_index, 
+	void __encode_call(ParserRuleContext* ctx,
+		const std::string& instr_name, u32 reg_a_index, 
 		u32 reg_b_index, u32 reg_c_index);
-	void __encode_ldst_three_regs(const std::string& instr_name,
+	void __encode_ldst_three_regs(ParserRuleContext* ctx,
+		const std::string& instr_name,
 		u32 reg_a_index, u32 reg_b_index, u32 reg_c_index);
-	void __encode_ldst_two_regs_one_simm(const std::string& instr_name,
+	void __encode_ldst_two_regs_one_simm(ParserRuleContext* ctx,
+		const std::string& instr_name,
 		u32 reg_a_index, u32 reg_b_index, s64 immediate);
 
 	u32 __get_reg_temp_index() const;
+
+	inline void __warn_if_imm16_out_of_range(ParserRuleContext* ctx, 
+		s64 immediate)
+	{
+		if (__pass)
+		{
+			const u16 imm16 = static_cast<u16>(immediate);
+			const u64 imm64 = static_cast<u64>(immediate);
+
+			//if (immediate != static_cast<s64>(imm64))
+			if (imm64 != imm16)
+			{
+				warn(ctx, sconcat("immediate value 0x", std::hex,
+					immediate, std::dec, 
+					" out of range for for 16-bit unsigned "
+					"immediate."));
+			}
+		}
+	}
+
+	inline void __warn_if_simm16_out_of_range(ParserRuleContext* ctx, 
+		s64 immediate, bool is_for_branch=false)
+	{
+		if (__pass)
+		{
+			s16 simm16 = static_cast<s16>(immediate);
+			//s16 simm16;
+			//const s64 simm64 = static_cast<s64>(simm16);
+
+			if (immediate != simm16)
+			{
+				if (!is_for_branch)
+				{
+					warn(ctx, sconcat("immediate value 0x", std::hex, 
+						immediate, std::dec, 
+						" out of range for for 16-bit signed ",
+						"immediate."));
+				}
+				else // if (is_for_branch)
+				{
+					warn(ctx, sconcat("branch offset 0x", std::hex,
+						immediate, std::dec, " out of range ",
+						"because it doesn't fit in a 16-bit signed ",
+						"immediate."));
+				}
+			}
+		}
+	}
+
+	inline void __warn_if_simm12_out_of_range(ParserRuleContext* ctx, 
+		s64 immediate)
+	{
+		if (__pass)
+		{
+			struct
+			{
+				u8 fill : 4;
+				s16 simm12 : 12;
+			} temp;
+
+			//const s16 simm16 = static_cast<s16>(immediate);
+			temp.simm12 = static_cast<s16>(immediate);
+
+			//const s64 simm64 = static_cast<s64>(temp.simm12);
+
+			if (immediate != temp.simm12)
+			{
+				warn(ctx, sconcat("immediate value 0x", std::hex, immediate,
+					std::dec, " out of range for for 12-bit signed ",
+					"immediate."));
+			}
+		}
+	}
 
 };
 

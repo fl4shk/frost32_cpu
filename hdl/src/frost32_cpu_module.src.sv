@@ -635,6 +635,7 @@ module Frost32Cpu(input logic clk,
 		//	__multi_stage_data_1.instr_group,
 		//	__multi_stage_data_1.instr_opcode);
 
+		// For multi-cycles instructions other than control flow
 		__stage_execute_output_data.next_pc <= __following_pc;
 
 		__multi_stage_data_2 <= __multi_stage_data_1;

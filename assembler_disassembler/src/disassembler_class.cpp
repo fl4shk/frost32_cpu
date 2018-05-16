@@ -176,7 +176,8 @@ antlrcpp::Any Disassembler::visitLine
 					break;
 				case EncodingStuff::ArgsType::TwoRegsOneSimmLdst:
 					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
-						"[", *reg_b_name, ", ", "0x", immediate, std::dec);
+						"[", *reg_b_name, ", ", "0x", immediate, "]", 
+						std::dec);
 					break;
 				case EncodingStuff::ArgsType::Unknown:
 					show_unknown_instruction_as_dot_db();

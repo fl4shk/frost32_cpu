@@ -1,0 +1,54 @@
+.org 0x0000
+main:
+{
+	bra quit
+	// Assume top of available memory is here
+	cpya sp, 0xffff
+
+	cpya u0, 9
+	cpya u1, 9
+
+	; Try some self-modifying code
+	addsi lr, pc, 8
+	bra change_test_leu
+
+	; Branch to subroutine
+	addsi lr, pc, 8
+	;bra 0x90000
+
+done:
+	bra quit
+
+}
+
+.org 0x4000
+test_leu:
+{
+	add u7, u0, u1
+	jmp lr
+}
+
+change_test_leu:
+{
+	subi sp, 12
+	stri u0, [sp, 4]
+	stri u1, [sp, 8]
+	stri u2, [sp, 12]
+
+
+	ldri u0, [sp, 4]
+	ldri u1, [sp, 8]
+	ldri u2, [sp, 12]
+	addi sp, 12
+	jmp lr
+}
+
+.org 0x8004
+quit:
+{
+	add zero, zero, zero
+}
+
+.org 0xc000
+data_0:
+	.space 20

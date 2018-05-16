@@ -442,7 +442,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneImm
 
 	//encode_instr_opcode_group_1(reg_encodings.at(0), reg_encodings.at(1),
 	//	opcode, immediate);
-	__encode_alu_op_two_regs_one_imm(*pop_str(), reg_encodings.at(0),
+	__encode_alu_op_two_regs_one_imm(ctx, *pop_str(), reg_encodings.at(0),
 		reg_encodings.at(1), immediate);
 
 	return nullptr;
@@ -467,7 +467,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp1TwoRegsOneSimm
 
 	//encode_instr_opcode_group_1(reg_encodings.at(0), reg_encodings.at(1),
 	//	opcode, immediate);
-	__encode_alu_op_two_regs_one_imm(*pop_str(), reg_encodings.at(0),
+	__encode_alu_op_two_regs_one_imm(ctx, *pop_str(), reg_encodings.at(0),
 		reg_encodings.at(1), immediate);
 
 	return nullptr;
@@ -549,7 +549,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp2Branch
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
 	const auto raw_immediate = pop_num();
 
-	__encode_relative_branch(*pop_str(), reg_encodings.at(0),
+	__encode_relative_branch(ctx, *pop_str(), reg_encodings.at(0),
 		reg_encodings.at(1), raw_immediate);
 
 	return nullptr;
@@ -574,8 +574,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp3Jump
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
-	__encode_jump(*pop_str(), reg_encodings.at(0), reg_encodings.at(1),
-		reg_encodings.at(2));
+	__encode_jump(ctx, *pop_str(), reg_encodings.at(0), 
+		reg_encodings.at(1), reg_encodings.at(2));
 
 	return nullptr;
 }
@@ -599,8 +599,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp4Call
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
-	__encode_call(*pop_str(), reg_encodings.at(0), reg_encodings.at(1),
-		reg_encodings.at(2));
+	__encode_call(ctx, *pop_str(), reg_encodings.at(0),
+		reg_encodings.at(1), reg_encodings.at(2));
 
 	return nullptr;
 }
@@ -630,7 +630,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp5ThreeRegsLdst
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
 
-	__encode_ldst_three_regs(*pop_str(), reg_encodings.at(0),
+	__encode_ldst_three_regs(ctx, *pop_str(), reg_encodings.at(0),
 		reg_encodings.at(1), reg_encodings.at(2));
 
 	return nullptr;
@@ -656,7 +656,7 @@ antlrcpp::Any Assembler::visitInstrOpGrp5TwoRegsOneSimm12Ldst
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
 	const auto immediate = pop_num();
 
-	__encode_ldst_two_regs_one_simm(*pop_str(), reg_encodings.at(0),
+	__encode_ldst_two_regs_one_simm(ctx, *pop_str(), reg_encodings.at(0),
 		reg_encodings.at(1), immediate);
 
 	return nullptr;
@@ -672,7 +672,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpInv
 	if (ctx->TokPseudoInstrNameInv())
 	{
 		auto&& reg_encodings = get_reg_encodings(ctx);
-		__encode_inv(reg_encodings.at(0), reg_encodings.at(1));
+		__encode_inv(ctx, reg_encodings.at(0), reg_encodings.at(1));
 	}
 	else
 	{
@@ -700,7 +700,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpInvi
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		__encode_invi(get_one_reg_encoding(ctx->TokReg()->toString()),
+		__encode_invi(ctx, get_one_reg_encoding(ctx->TokReg()->toString()),
 			immediate);
 	}
 	else
@@ -724,7 +724,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
 
 		//encode_instr_opcode_group_0(reg_encodings.at(0),
 		//	reg_encodings.at(1), 0x0, opcode);
-		__encode_cpy_ra_rb(reg_encodings.at(0), reg_encodings.at(1));
+		__encode_cpy_ra_rb(ctx, reg_encodings.at(0), reg_encodings.at(1));
 	}
 	// cpy rA, pc
 	// Encoded as "addsi rA, pc, 0"
@@ -735,7 +735,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpGrpCpy
 
 		//encode_instr_opcode_group_1(reg_encodings.at(0), 0x0, opcode,
 		//	0x0000);
-		__encode_cpy_ra_pc(reg_encodings.at(0));
+		__encode_cpy_ra_pc(ctx, reg_encodings.at(0));
 	}
 	else
 	{
@@ -762,8 +762,8 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCpyi
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		__encode_cpyi(get_one_reg_encoding(ctx->TokReg()->toString()), 
-			immediate);
+		__encode_cpyi(ctx, get_one_reg_encoding
+			(ctx->TokReg()->toString()), immediate);
 	}
 	else
 	{
@@ -787,8 +787,8 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCpya
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		__encode_cpya(get_one_reg_encoding(ctx->TokReg()->toString()), 
-			immediate);
+		__encode_cpya(ctx, get_one_reg_encoding
+			(ctx->TokReg()->toString()), immediate);
 	}
 	else
 	{
@@ -818,7 +818,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpBra
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto raw_immediate = pop_num();
 
-		__encode_relative_branch(std::string("beq"), 0x0, 0x0,
+		__encode_relative_branch(ctx, std::string("beq"), 0x0, 0x0,
 			raw_immediate);
 	}
 	else
@@ -842,7 +842,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmp
 		//encode_instr_opcode_group_2(0x0, 0x0,
 		//	get_one_reg_encoding(ctx->TokReg()->toString()), opcode);
 
-		__encode_jump("jeq", 0x0, 0x0,
+		__encode_jump(ctx, "jeq", 0x0, 0x0,
 			get_one_reg_encoding(ctx->TokReg()->toString()));
 	}
 	else
@@ -866,7 +866,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCall
 		//encode_instr_opcode_group_2(0x0, 0x0,
 		//	get_one_reg_encoding(ctx->TokReg()->toString()), opcode);
 
-		__encode_call("ceq", 0x0, 0x0,
+		__encode_call(ctx, "ceq", 0x0, 0x0,
 			get_one_reg_encoding(ctx->TokReg()->toString()));
 	}
 	else
@@ -890,8 +890,8 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmpa
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		__encode_cpya(__get_reg_temp_index(), immediate);
-		__encode_jump("jeq", 0x0, 0x0, __get_reg_temp_index());
+		__encode_cpya(ctx, __get_reg_temp_index(), immediate);
+		__encode_jump(ctx, "jeq", 0x0, 0x0, __get_reg_temp_index());
 	}
 	else
 	{
@@ -914,8 +914,8 @@ antlrcpp::Any Assembler::visitPseudoInstrOpCalla
 		ANY_JUST_ACCEPT_BASIC(ctx->expr());
 		const auto immediate = pop_num();
 
-		__encode_cpya(__get_reg_temp_index(), immediate);
-		__encode_call("ceq", 0x0, 0x0, __get_reg_temp_index());
+		__encode_cpya(ctx, __get_reg_temp_index(), immediate);
+		__encode_call(ctx, "ceq", 0x0, 0x0, __get_reg_temp_index());
 	}
 	else
 	{
@@ -931,7 +931,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmpaCallaConditional
 	const auto immediate = pop_num();
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
-	__encode_cpya(__get_reg_temp_index(), immediate);
+	__encode_cpya(ctx, __get_reg_temp_index(), immediate);
 
 	// jmpane rA, rB, imm32
 	// Encoded as 
@@ -941,7 +941,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmpaCallaConditional
 	// "
 	if (ctx->TokPseudoInstrNameJmpane())
 	{
-		__encode_jump("jne", reg_encodings.at(0), reg_encodings.at(1),
+		__encode_jump(ctx, "jne", reg_encodings.at(0), reg_encodings.at(1),
 			__get_reg_temp_index());
 	}
 
@@ -953,7 +953,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmpaCallaConditional
 	// "
 	else if (ctx->TokPseudoInstrNameJmpaeq())
 	{
-		__encode_jump("jeq", reg_encodings.at(0), reg_encodings.at(1),
+		__encode_jump(ctx, "jeq", reg_encodings.at(0), reg_encodings.at(1),
 			__get_reg_temp_index());
 	}
 
@@ -965,7 +965,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmpaCallaConditional
 	// "
 	else if (ctx->TokPseudoInstrNameCallane())
 	{
-		__encode_call("cne", reg_encodings.at(0), reg_encodings.at(1),
+		__encode_call(ctx, "cne", reg_encodings.at(0), reg_encodings.at(1),
 			__get_reg_temp_index());
 	}
 
@@ -977,7 +977,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpJmpaCallaConditional
 	// "
 	else if (ctx->TokPseudoInstrNameCallaeq())
 	{
-		__encode_call("ceq", reg_encodings.at(0), reg_encodings.at(1),
+		__encode_call(ctx, "ceq", reg_encodings.at(0), reg_encodings.at(1),
 			__get_reg_temp_index());
 	}
 
@@ -995,7 +995,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpIncDec
 	// Encoded as "addi rA, rA, 1"
 	if (ctx->TokPseudoInstrNameInc())
 	{
-		__encode_alu_op_two_regs_one_imm("addi",
+		__encode_alu_op_two_regs_one_imm(ctx, "addi",
 			get_one_reg_encoding(ctx->TokReg()->toString()),
 			get_one_reg_encoding(ctx->TokReg()->toString()), 1);
 	}
@@ -1003,7 +1003,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpIncDec
 	// Encoded as "subi rA, rA, 1"
 	else if (ctx->TokPseudoInstrNameDec())
 	{
-		__encode_alu_op_two_regs_one_imm("subi",
+		__encode_alu_op_two_regs_one_imm(ctx, "subi",
 			get_one_reg_encoding(ctx->TokReg()->toString()),
 			get_one_reg_encoding(ctx->TokReg()->toString()), 1);
 	}
@@ -1038,7 +1038,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpAluOpTwoReg
 	}
 
 	auto&& reg_encodings = get_reg_encodings(ctx);
-	__encode_alu_op_three_regs(*pop_str(), reg_encodings.at(0),
+	__encode_alu_op_three_regs(ctx, *pop_str(), reg_encodings.at(0),
 		reg_encodings.at(0), reg_encodings.at(1));
 
 	return nullptr;
@@ -1069,10 +1069,9 @@ antlrcpp::Any Assembler::visitPseudoInstrOpAluOpOneRegOneImm
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
 	const auto immediate = pop_num();
 
-	__encode_alu_op_two_regs_one_imm(*pop_str(), 
+	__encode_alu_op_two_regs_one_imm(ctx, *pop_str(), 
 		get_one_reg_encoding(ctx->TokReg()->toString()),
 		get_one_reg_encoding(ctx->TokReg()->toString()), immediate);
-		
 
 	return nullptr;
 }
@@ -1090,7 +1089,7 @@ antlrcpp::Any Assembler::visitPseudoInstrOpAluOpOneRegOneSimm
 	ANY_JUST_ACCEPT_BASIC(ctx->expr());
 	const auto immediate = pop_num();
 
-	__encode_alu_op_two_regs_one_imm(*pop_str(), 
+	__encode_alu_op_two_regs_one_imm(ctx, *pop_str(), 
 		get_one_reg_encoding(ctx->TokReg()->toString()),
 		get_one_reg_encoding(ctx->TokReg()->toString()), immediate);
 		
@@ -1411,10 +1410,17 @@ antlrcpp::Any Assembler::visitExprMulDivModEtc
 			pop_str();
 			push_num(0);
 		}
-		else
+		else // if (__pass)
 		{
-			auto sym = sym_tbl().find_or_insert(__curr_scope_node, 
-				pop_str());
+			auto name = pop_str();
+			auto sym = sym_tbl().find_or_insert(__curr_scope_node, name);
+
+			// Only allow known symbols to be used.
+			if (!sym->found_as_label())
+			{
+				err(ctx, sconcat("Error:  Unknown symbol called \"",
+					*name, "\"."));
+			}
 			push_num(sym->addr());
 		}
 	}
@@ -1674,7 +1680,9 @@ antlrcpp::Any Assembler::visitCurrPc
 	return nullptr;
 }
 
-void Assembler::__encode_alu_op_three_regs(const std::string& instr_name,
+void Assembler::__encode_alu_op_three_regs
+	(Assembler::ParserRuleContext* ctx,
+	const std::string& instr_name,
 	u32 reg_a_index, u32 reg_b_index, u32 reg_c_index)
 {
 	const auto opcode = __encoding_stuff.iog0_three_regs_map()
@@ -1684,13 +1692,17 @@ void Assembler::__encode_alu_op_three_regs(const std::string& instr_name,
 		opcode);
 }
 void Assembler::__encode_alu_op_two_regs_one_imm
-	(const std::string& instr_name, u32 reg_a_index, u32 reg_b_index, 
+	(Assembler::ParserRuleContext* ctx,
+	const std::string& instr_name, u32 reg_a_index, u32 reg_b_index, 
 	s64 immediate)
 {
 	if ((instr_name != "sltsi") && (instr_name != "sgtsi"))
 	{
 		const auto opcode = __encoding_stuff.iog1_two_regs_one_imm_map()
 			.at(cstm_strdup(instr_name));
+
+		__warn_if_imm16_out_of_range(ctx, immediate);
+
 		encode_instr_opcode_group_1(reg_a_index, reg_b_index, opcode,
 			immediate);
 	}
@@ -1698,11 +1710,15 @@ void Assembler::__encode_alu_op_two_regs_one_imm
 	{
 		const auto opcode = __encoding_stuff.iog1_two_regs_one_simm_map()
 			.at(cstm_strdup(instr_name));
+
+		__warn_if_simm16_out_of_range(ctx, immediate);
+
 		encode_instr_opcode_group_1(reg_a_index, reg_b_index, opcode,
 			immediate);
 	}
 }
-void Assembler::__encode_inv(u32 reg_a_index, u32 reg_b_index)
+void Assembler::__encode_inv(Assembler::ParserRuleContext* ctx, 
+	u32 reg_a_index, u32 reg_b_index)
 {
 	// inv rA, rB
 	// Encoded as "nor rA, rB, zero"
@@ -1716,9 +1732,10 @@ void Assembler::__encode_inv(u32 reg_a_index, u32 reg_b_index)
 	////	reg_encodings.at(1), 0x0, opcode);
 	//encode_instr_opcode_group_0(reg_a_index, reg_b_index, 0x0, opcode);
 
-	__encode_alu_op_three_regs("nor", reg_a_index, reg_b_index, 0x0);
+	__encode_alu_op_three_regs(ctx, "nor", reg_a_index, reg_b_index, 0x0);
 }
-void Assembler::__encode_invi(u32 reg_a_index, s64 immediate)
+void Assembler::__encode_invi(Assembler::ParserRuleContext* ctx, 
+	u32 reg_a_index, s64 immediate)
 {
 	// invi rA, imm16
 	// Encoded as "nori rA, zero, imm16"
@@ -1726,9 +1743,11 @@ void Assembler::__encode_invi(u32 reg_a_index, s64 immediate)
 	//	.iog1_two_regs_one_imm_map().at(cstm_strdup("nori"));
 	//encode_instr_opcode_group_1(reg_a_index, 0x0, opcode, immediate);
 
-	__encode_alu_op_two_regs_one_imm("nori", reg_a_index, 0x0, immediate);
+	__encode_alu_op_two_regs_one_imm(ctx, "nori", reg_a_index, 0x0, 
+		immediate);
 }
-void Assembler::__encode_cpy_ra_rb(u32 reg_a_index, u32 reg_b_index)
+void Assembler::__encode_cpy_ra_rb(Assembler::ParserRuleContext* ctx, 
+	u32 reg_a_index, u32 reg_b_index)
 {
 	const auto opcode = __encoding_stuff.iog0_three_regs_map()
 		.at(cstm_strdup("add"));
@@ -1737,25 +1756,38 @@ void Assembler::__encode_cpy_ra_rb(u32 reg_a_index, u32 reg_b_index)
 	//	reg_encodings.at(1), 0x0, opcode);
 	encode_instr_opcode_group_0(reg_a_index, reg_b_index, 0x0, opcode);
 }
-void Assembler::__encode_cpy_ra_pc(u32 reg_a_index)
+void Assembler::__encode_cpy_ra_pc(Assembler::ParserRuleContext* ctx, 
+	u32 reg_a_index)
 {
 	const auto opcode = __encoding_stuff
 		.iog1_one_reg_one_pc_one_simm_map().at(cstm_strdup("addsi"));
 
 	encode_instr_opcode_group_1(reg_a_index, 0x0, opcode, 0x0000);
 }
-void Assembler::__encode_cpyi(u32 reg_a_index, s64 immediate)
+void Assembler::__encode_cpyi(Assembler::ParserRuleContext* ctx, 
+	u32 reg_a_index, s64 immediate)
 {
-	// addi rA, zero, (immediate & 0xffff)
-	const auto first_opcode = __encoding_stuff
-		.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
-	encode_instr_opcode_group_1(reg_a_index, 0x0, first_opcode,
+	//// addi rA, zero, (immediate & 0xffff)
+	//const auto first_opcode = __encoding_stuff
+	//	.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
+
+	////__warn_if_imm16_out_of_range
+	//encode_instr_opcode_group_1(reg_a_index, 0x0, first_opcode,
+	//	immediate);
+	__encode_alu_op_two_regs_one_imm(ctx, "addi", reg_a_index, 0x0,
 		immediate);
 }
-void Assembler::__encode_cpya(u32 reg_a_index, s64 immediate)
+void Assembler::__encode_cpya(Assembler::ParserRuleContext* ctx, 
+	u32 reg_a_index, s64 immediate)
 {
 	// addi rA, zero, (imm32 & 0xffff)
-	__encode_cpyi(reg_a_index, immediate);
+	//__encode_cpyi(ctx, reg_a_index, immediate);
+
+	const auto first_opcode = __encoding_stuff
+		.iog1_two_regs_one_imm_map().at(cstm_strdup("addi"));
+
+	encode_instr_opcode_group_1(reg_a_index, 0x0, first_opcode,
+		immediate);
 
 	// cpyhi rA, (imm32 >> 16)
 	const auto second_opcode = __encoding_stuff
@@ -1763,7 +1795,8 @@ void Assembler::__encode_cpya(u32 reg_a_index, s64 immediate)
 	encode_instr_opcode_group_1(reg_a_index, 0x0, second_opcode,
 		(immediate >> 16));
 }
-void Assembler::__encode_relative_branch(const std::string& instr_name, 
+void Assembler::__encode_relative_branch
+	(Assembler::ParserRuleContext* ctx, const std::string& instr_name, 
 	u32 reg_a_index, u32 reg_b_index, s64 raw_immediate)
 {
 	const auto opcode = __encoding_stuff.iog2_branch_map()
@@ -1771,10 +1804,13 @@ void Assembler::__encode_relative_branch(const std::string& instr_name,
 
 	const auto immediate = raw_immediate - __pc.curr - sizeof(s32);
 
+	__warn_if_simm16_out_of_range(ctx, immediate, true);
+
 	encode_instr_opcode_group_2(reg_a_index, reg_b_index, opcode, 
 		immediate);
 }
-void Assembler::__encode_jump(const std::string& instr_name, 
+void Assembler::__encode_jump(Assembler::ParserRuleContext* ctx,
+	const std::string& instr_name, 
 	u32 reg_a_index, u32 reg_b_index, u32 reg_c_index)
 {
 	const auto opcode = __encoding_stuff.iog3_jump_map()
@@ -1783,7 +1819,8 @@ void Assembler::__encode_jump(const std::string& instr_name,
 	encode_instr_opcode_group_3(reg_a_index, reg_b_index, reg_c_index,
 		opcode);
 }
-void Assembler::__encode_call(const std::string& instr_name, 
+void Assembler::__encode_call(Assembler::ParserRuleContext* ctx,
+	const std::string& instr_name, 
 	u32 reg_a_index, u32 reg_b_index, u32 reg_c_index)
 {
 	const auto opcode = __encoding_stuff.iog4_call_map()
@@ -1793,7 +1830,8 @@ void Assembler::__encode_call(const std::string& instr_name,
 		opcode);
 }
 
-void Assembler::__encode_ldst_three_regs(const std::string& instr_name,
+void Assembler::__encode_ldst_three_regs(Assembler::ParserRuleContext* ctx,
+	const std::string& instr_name,
 	u32 reg_a_index, u32 reg_b_index, u32 reg_c_index)
 {
 	const auto opcode = __encoding_stuff.iog5_three_regs_ldst_map()
@@ -1803,11 +1841,14 @@ void Assembler::__encode_ldst_three_regs(const std::string& instr_name,
 		reg_c_index, opcode);
 }
 void Assembler::__encode_ldst_two_regs_one_simm
-	(const std::string& instr_name, u32 reg_a_index, u32 reg_b_index, 
+	(Assembler::ParserRuleContext* ctx,
+	const std::string& instr_name, u32 reg_a_index, u32 reg_b_index, 
 	s64 immediate)
 {
 	const auto opcode = __encoding_stuff.iog5_two_regs_one_simm_ldst_map()
 		.at(cstm_strdup(instr_name));
+
+	__warn_if_simm12_out_of_range(ctx, immediate);
 
 	encode_instr_opcode_group_5_with_simm(reg_a_index, reg_b_index, opcode,
 		immediate);
