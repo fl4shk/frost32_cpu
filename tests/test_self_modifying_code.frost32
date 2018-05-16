@@ -9,11 +9,11 @@ main:
 
 	; Try some self-modifying code
 	addsi lr, pc, 8
-	bra change_test_leu
+	bra modify_subroutine
 
 	; Branch to subroutine
 	addsi lr, pc, 8
-	bra test_leu
+	bra to_modify
 
 
 done:
@@ -22,25 +22,34 @@ done:
 }
 
 .org 0x4000
-test_leu:
+to_modify:
 {
-	add u7, u0, u1
+	;add u7, u0, u1
+	add zero, zero, zero
 	jmp lr
 }
 
-change_test_leu:
+modify_subroutine:
 {
-	subi sp, 12
+	subi sp, 8
 	stri u0, [sp, 4]
 	stri u1, [sp, 8]
-	stri u2, [sp, 12]
 
+	cpyi u0, data_for_modify_subroutine
+	ldr u0, [u0, zero]
+
+	cpyi u1, to_modify
+	str u0, [u1, zero]
 
 	ldri u0, [sp, 4]
 	ldri u1, [sp, 8]
-	ldri u2, [sp, 12]
-	addi sp, 12
+	addi sp, 8
 	jmp lr
+}
+
+data_for_modify_subroutine:
+{
+	add u7, u0, u1
 }
 
 .org 0x8004
