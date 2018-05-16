@@ -77,7 +77,8 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.group = __iog2_instr.group;
 				out.ra_index = __iog2_instr.ra_index;
 				out.rb_index = __iog2_instr.rb_index;
-				out.rc_index = __iog2_instr.rc_index;
+				//out.rc_index = __iog2_instr.rc_index;
+				out.rc_index = 0;
 				out.opcode = __iog2_instr.opcode;
 				out.imm_val = __iog2_instr.imm_val;
 				out.ldst_type = 0;

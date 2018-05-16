@@ -64,6 +64,8 @@ module Frost32Cpu(input logic clk,
 
 		logic [`MSB_POS__ALU_INOUT:0] n_reg_data;
 
+		logic do_write_lr;
+
 	} __stage_write_back_input_data;
 
 	struct packed
@@ -301,7 +303,7 @@ module Frost32Cpu(input logic clk,
 		//__multi_stage_data_1.nop <= 1'b1;
 	endtask
 
-	task handle_ctrl_flow;
+	task handle_ctrl_flow_in_decode_stage;
 		input condition;
 
 		if (condition)
@@ -316,6 +318,23 @@ module Frost32Cpu(input logic clk,
 			__locals.pc <= __following_pc;
 			prep_mem_read(__following_pc, 
 				PkgFrost32Cpu::Dias32);
+		end
+	endtask
+
+	task handle_call_in_execute_stage;
+		input condition;
+
+		if (condition)
+		begin
+			// We want to store the value of __following_pc in "lr".
+			__stage_write_back_input_data.n_reg_data <= __following_pc;
+			__stage_write_back_input_data.do_write_lr <= 1;
+		end
+
+		else
+		begin
+			// We want to leave "lr" alone.
+			__stage_write_back_input_data.do_write_lr <= 0;
 		end
 	endtask
 
@@ -394,7 +413,8 @@ module Frost32Cpu(input logic clk,
 					case (__multi_stage_data_1.instr_condition_type)
 						PkgInstrDecoder::CtNe:
 						begin
-							handle_ctrl_flow(__stage_execute_input_data
+							handle_ctrl_flow_in_decode_stage
+								(__stage_execute_input_data
 								.rfile_ra_data
 								!= __stage_execute_input_data
 								.rfile_rb_data);
@@ -402,7 +422,8 @@ module Frost32Cpu(input logic clk,
 
 						PkgInstrDecoder::CtEq:
 						begin
-							handle_ctrl_flow(__stage_execute_input_data
+							handle_ctrl_flow_in_decode_stage
+								(__stage_execute_input_data
 								.rfile_ra_data
 								== __stage_execute_input_data
 								.rfile_rb_data);
@@ -410,38 +431,46 @@ module Frost32Cpu(input logic clk,
 
 						PkgInstrDecoder::CtLtu:
 						begin
-							handle_ctrl_flow(__out_compare_ctrl_flow.ltu);
+							handle_ctrl_flow_in_decode_stage
+								(__out_compare_ctrl_flow.ltu);
 						end
 						PkgInstrDecoder::CtGeu:
 						begin
-							handle_ctrl_flow(!__out_compare_ctrl_flow.ltu);
+							handle_ctrl_flow_in_decode_stage
+								(!__out_compare_ctrl_flow.ltu);
 						end
 
 						PkgInstrDecoder::CtLeu:
 						begin
-							handle_ctrl_flow(!__out_compare_ctrl_flow.gtu);
+							handle_ctrl_flow_in_decode_stage
+								(!__out_compare_ctrl_flow.gtu);
 						end
 						PkgInstrDecoder::CtGtu:
 						begin
-							handle_ctrl_flow(__out_compare_ctrl_flow.gtu);
+							handle_ctrl_flow_in_decode_stage
+								(__out_compare_ctrl_flow.gtu);
 						end
 
 						PkgInstrDecoder::CtLts:
 						begin
-							handle_ctrl_flow(__out_compare_ctrl_flow.lts);
+							handle_ctrl_flow_in_decode_stage
+								(__out_compare_ctrl_flow.lts);
 						end
 						PkgInstrDecoder::CtGes:
 						begin
-							handle_ctrl_flow(!__out_compare_ctrl_flow.lts);
+							handle_ctrl_flow_in_decode_stage
+								(!__out_compare_ctrl_flow.lts);
 						end
 
 						PkgInstrDecoder::CtLes:
 						begin
-							handle_ctrl_flow(!__out_compare_ctrl_flow.gts);
+							handle_ctrl_flow_in_decode_stage
+								(!__out_compare_ctrl_flow.gts);
 						end
 						PkgInstrDecoder::CtGts:
 						begin
-							handle_ctrl_flow(__out_compare_ctrl_flow.gts);
+							handle_ctrl_flow_in_decode_stage
+								(__out_compare_ctrl_flow.gts);
 						end
 
 						default:
@@ -598,466 +627,423 @@ module Frost32Cpu(input logic clk,
 	// "always_comb" block after the write back stage's "always" block)
 	always @ (posedge clk)
 	begin
-	////if (!__multi_stage_data_1.nop)
-	////begin
-	//	//$display("Execute stage (part 1):  %h %h\t\t%h %h",
-	//	//	__multi_stage_data_1.pc_val,
-	//	//	__multi_stage_data_1.raw_instruction,
-	//	//	__multi_stage_data_1.instr_group,
-	//	//	__multi_stage_data_1.instr_opcode);
+	//if (!__multi_stage_data_1.nop)
+	//begin
+		//$display("Execute stage (part 1):  %h %h\t\t%h %h",
+		//	__multi_stage_data_1.pc_val,
+		//	__multi_stage_data_1.raw_instruction,
+		//	__multi_stage_data_1.instr_group,
+		//	__multi_stage_data_1.instr_opcode);
 
-	//	__multi_stage_data_2 <= __multi_stage_data_1;
+		__stage_execute_output_data.next_pc <= __following_pc;
 
-	//	//$display("Execute stage:  %h %h %h",
-	//	//	__stage_execute_input_data.rfile_ra_data,
-	//	//	__stage_execute_input_data.rfile_rb_data,
-	//	//	__stage_execute_input_data.rfile_rc_data);
+		__multi_stage_data_2 <= __multi_stage_data_1;
 
-	//	__stage_write_back_input_data.rfile_ra_data 
-	//		<= __stage_execute_input_data.rfile_ra_data;
-	//	__stage_write_back_input_data.rfile_rb_data 
-	//		<= __stage_execute_input_data.rfile_rb_data;
-	//	__stage_write_back_input_data.rfile_rc_data 
-	//		<= __stage_execute_input_data.rfile_rc_data;
+		//$display("Execute stage:  %h %h %h",
+		//	__stage_execute_input_data.rfile_ra_data,
+		//	__stage_execute_input_data.rfile_rb_data,
+		//	__stage_execute_input_data.rfile_rc_data);
 
-	//	//__stage_write_back_input_data.alu_out <= __out_alu.data;
+		__stage_write_back_input_data.rfile_ra_data 
+			<= __stage_execute_input_data.rfile_ra_data;
+		__stage_write_back_input_data.rfile_rb_data 
+			<= __stage_execute_input_data.rfile_rb_data;
+		__stage_write_back_input_data.rfile_rc_data 
+			<= __stage_execute_input_data.rfile_rc_data;
 
-
-	//	case (__multi_stage_data_1.instr_group)
-	//		4'd0:
-	//		begin
-	//			// For operand forwarding
-	//			__stage_execute_output_data.prev_written_reg_index
-	//				<= __multi_stage_data_1.instr_ra_index;
-
-	//			if (__multi_stage_data_1.instr_opcode 
-	//				!= PkgInstrDecoder::Mul_ThreeRegs)
-	//			begin
-	//				__stage_write_back_input_data.n_reg_data 
-	//					<= __out_alu.data;
-
-	//				//$display("0:  Changing next_pc to %h", __following_pc);
-
-	//				// The reason this is commented out is so that bubbles
-	//				// in the form of "add zero, zero, zero" can be used.
-	//				// Don't uncomment this!  Also, this assumes that no
-	//				// control flow is performed by group 0 instructions,
-	//				// which is true as of writing this comment.
-	//				//__stage_execute_output_data.next_pc <= __following_pc;
-	//			end
-
-	//			else
-	//			begin
-	//				__stage_write_back_input_data.n_reg_data
-	//					<= ({(__locals.mul_partial_result_x1_y0
-	//					+ __locals.mul_partial_result_x0_y1),
-	//					16'h0000})
-	//					+ __locals.mul_partial_result_x0_y0;
-	//			end
-	//		end
-
-	//		4'd1:
-	//		begin
-	//			if (__multi_stage_data_1.instr_opcode
-	//				<= PkgInstrDecoder::Addsi_OneRegOnePcOneSimm)
-	//			begin
-	//				// For operand forwarding
-	//				__stage_execute_output_data.prev_written_reg_index
-	//					<= __multi_stage_data_1.instr_ra_index;
-
-	//				__stage_execute_output_data.next_pc <= __following_pc;
-
-	//				if (__multi_stage_data_1.instr_opcode
-	//					!= PkgInstrDecoder::Muli_TwoRegsOneImm)
-	//				begin
-	//					__stage_write_back_input_data.n_reg_data 
-	//						<= __out_alu.data;
-	//				end
-
-	//				else
-	//				begin
-	//					__stage_write_back_input_data.n_reg_data
-	//						<= ({(__locals.mul_partial_result_x1_y0
-	//						+ __locals.mul_partial_result_x0_y1),
-	//						16'h0000})
-	//						+ __locals.mul_partial_result_x0_y0;
-	//				end
-	//			end
-
-	//			else if (__multi_stage_data_1.instr_opcode
-	//				== PkgInstrDecoder::Cpyhi_OneRegOneImm)
-	//			begin
-	//				// cpyhi only changes the high 15 bits of rA
-	//				__stage_write_back_input_data.n_reg_data
-	//					<= {__multi_stage_data_1.instr_imm_val,
-	//					__stage_execute_input_data.rfile_ra_data[15:0]};
-
-	//				// For operand forwarding
-	//				__stage_execute_output_data.prev_written_reg_index
-	//					<= __multi_stage_data_1.instr_ra_index;
-
-	//				__stage_execute_output_data.next_pc <= __following_pc;
-	//			end
-
-	//			else if (__multi_stage_data_1.instr_opcode
-	//				== PkgInstrDecoder::Bne_TwoRegsOneSimm)
-	//			begin
-	//				// Prevent operand forwarding
-	//				__stage_execute_output_data.prev_written_reg_index
-	//					<= 0;
-
-	//				////$display("Execute stage:  bne:  ");
-	//				//if (__stage_execute_input_data.rfile_ra_data
-	//				//	!= __stage_execute_input_data.rfile_rb_data)
-	//				//begin
-	//				//	// Destination address computed by the ALU
-	//				//	//$display("1:  Changing next_pc to %h", 
-	//				//	//	__out_alu.data);
-	//				//	__stage_execute_output_data.next_pc 
-	//				//		<= __out_alu.data;
-	//				//end
-
-	//				//else
-	//				//begin
-	//				//	//$display("1:  Changing next_pc to %h", 
-	//				//	//	__following_pc);
-	//				//	__stage_execute_output_data.next_pc
-	//				//		<= __following_pc;
-	//				//end
-	//			end
-
-	//			else if (__multi_stage_data_1.instr_opcode
-	//				== PkgInstrDecoder::Beq_TwoRegsOneSimm)
-	//			begin
-	//				// Prevent operand forwarding
-	//				__stage_execute_output_data.prev_written_reg_index
-	//					<= 0;
-
-	//				////$display("Execute stage:  beq:  ");
-	//				//if (__stage_execute_input_data.rfile_ra_data
-	//				//	== __stage_execute_input_data.rfile_rb_data)
-	//				//begin
-	//				//	//$display("1:  Changing next_pc to %h", 
-	//				//	//	__out_alu.data);
-	//				//	// Destination address computed by the ALU
-	//				//	__stage_execute_output_data.next_pc 
-	//				//		<= __out_alu.data;
-	//				//end
-
-	//				//else
-	//				//begin
-	//				//	//$display("1:  Changing next_pc to %h", 
-	//				//	//	__following_pc);
-	//				//	__stage_execute_output_data.next_pc
-	//				//		<= __following_pc;
-	//				//end
-	//			end
-	//		end
-
-	//		4'd2:
-	//		begin
-	//			////$display("2:  Changing next_pc to %h", __following_pc);
-	//			//__stage_execute_output_data.next_pc <= __following_pc;
-
-	//			//// Temporarily prevent operand forwarding
-	//			//__stage_execute_output_data.prev_written_reg_index <= 0;
-
-	//			case (__multi_stage_data_1.instr_opcode)
-	//				PkgInstrDecoder::Jne_ThreeRegs:
-	//				begin
-	//					// Prevent operand forwarding
-	//					__stage_execute_output_data.prev_written_reg_index
-	//						<= 0;
-
-	//					//if (__stage_execute_input_data.rfile_ra_data
-	//					//	!= __stage_execute_input_data.rfile_rb_data)
-	//					//begin
-	//					//	__stage_execute_output_data.next_pc
-	//					//		<= __stage_execute_input_data
-	//					//		.rfile_rc_data;
-	//					////$display("Execute stage Jeq_ThreeRegs taken:  %h",
-	//					////	__stage_execute_input_data.rfile_rc_data);
-	//					//end
-
-	//					//else
-	//					//begin
-	//					//	__stage_execute_output_data.next_pc
-	//					//		<= __following_pc;
-	//					////$display("Execute stage Jne_ThreeRegs skip:  %h",
-	//					////	__following_pc);
-	//					//end
-	//				end
-
-	//				PkgInstrDecoder::Jeq_ThreeRegs:
-	//				begin
-	//					// Prevent operand forwarding
-	//					__stage_execute_output_data.prev_written_reg_index
-	//						<= 0;
+		//__stage_write_back_input_data.alu_out <= __out_alu.data;
 
 
-	//					//if (__stage_execute_input_data.rfile_ra_data
-	//					//	== __stage_execute_input_data.rfile_rb_data)
-	//					//begin
-	//					//	__stage_execute_output_data.next_pc
-	//					//		<= __stage_execute_input_data
-	//					//		.rfile_rc_data;
-	//					////$display("Execute stage Jeq_ThreeRegs taken:  %h",
-	//					////	__stage_execute_input_data.rfile_rc_data);
-	//					//end
+		case (__multi_stage_data_1.instr_group)
+			// Group 0:  Three register ALU operations
+			4'd0:
+			begin
+				// For operand forwarding
+				__stage_execute_output_data.prev_written_reg_index
+					<= __multi_stage_data_1.instr_ra_index;
 
-	//					//else
-	//					//begin
-	//					//	__stage_execute_output_data.next_pc
-	//					//		<= __following_pc;
-	//					////$display("Execute stage Jeq_ThreeRegs skip:  %h",
-	//					////	__following_pc);
-	//					//end
-	//				end
+				if (__multi_stage_data_1.instr_opcode 
+					!= PkgInstrDecoder::Mul_ThreeRegs)
+				begin
+					__stage_write_back_input_data.n_reg_data 
+						<= __out_alu.data;
 
-	//				PkgInstrDecoder::Callne_ThreeRegs:
-	//				begin
-	//					// Prevent operand forwarding
-	//					__stage_execute_output_data
-	//						.prev_written_reg_index <= 0;
-	//					if (__stage_execute_input_data.rfile_ra_data
-	//						!= __stage_execute_input_data.rfile_rb_data)
-	//					begin
-	//						__stage_execute_output_data.next_pc
-	//							<= __stage_execute_input_data
-	//							.rfile_rc_data;
+					////$display("0:  Changing next_pc to %h", __following_pc);
 
-	//						//// Operand forwarding for the "lr" register.
-	//						//__stage_execute_output_data
-	//						//	.prev_written_reg_index <= __REG_LR_INDEX;
+					//// The reason this is commented out is so that bubbles
+					//// in the form of "add zero, zero, zero" can be used.
+					//// Don't uncomment this!  Also, this assumes that no
+					//// control flow is performed by group 0 instructions,
+					//// which is true as of writing this comment.
+					////__stage_execute_output_data.next_pc <= __following_pc;
+				end
 
-	//						// We want to return to the value of
-	//						// __following_pc.
-	//						__stage_write_back_input_data.n_reg_data 
-	//							<= __following_pc;
-	//						//$display("Callne_ThreeRegs return addr:  %h",
-	//						//	__following_pc);
+				else
+				begin
+					// Multiplication
+					__stage_write_back_input_data.n_reg_data
+						<= ({(__locals.mul_partial_result_x1_y0
+						+ __locals.mul_partial_result_x0_y1),
+						16'h0000})
+						+ __locals.mul_partial_result_x0_y0;
+				end
+			end
 
-	//					//$display("Execute stage Callne_ThreeRegs taken:  %h",
-	//					//	__stage_execute_input_data.rfile_rc_data);
-	//					end
+			4'd1:
+			begin
+				if (__multi_stage_data_1.instr_opcode
+					!= PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				begin
+					// For operand forwarding
+					__stage_execute_output_data.prev_written_reg_index
+						<= __multi_stage_data_1.instr_ra_index;
 
-	//					else
-	//					begin
-	//						__stage_execute_output_data.next_pc
-	//							<= __following_pc;
-	//					//$display("Execute stage Callne_ThreeRegs skip:  %h",
-	//					//	__following_pc);
-	//					end
-	//				end
 
-	//				PkgInstrDecoder::Calleq_ThreeRegs:
-	//				begin
-	//					// Prevent operand forwarding
-	//					__stage_execute_output_data
-	//						.prev_written_reg_index <= 0;
-	//					if (__stage_execute_input_data.rfile_ra_data
-	//						== __stage_execute_input_data.rfile_rb_data)
-	//					begin
-	//						__stage_execute_output_data.next_pc
-	//							<= __stage_execute_input_data
-	//							.rfile_rc_data;
+					if (__multi_stage_data_1.instr_opcode
+						!= PkgInstrDecoder::Muli_TwoRegsOneImm)
+					begin
+						__stage_write_back_input_data.n_reg_data 
+							<= __out_alu.data;
+					end
 
-	//						//// Operand forwarding for the "lr" register.
-	//						//__stage_execute_output_data
-	//						//	.prev_written_reg_index <= __REG_LR_INDEX;
+					else
+					begin
+						__stage_write_back_input_data.n_reg_data
+							<= ({(__locals.mul_partial_result_x1_y0
+							+ __locals.mul_partial_result_x0_y1),
+							16'h0000})
+							+ __locals.mul_partial_result_x0_y0;
+					end
+				end
 
-	//						// We want to return to the value of
-	//						// __following_pc.
-	//						__stage_write_back_input_data.n_reg_data 
-	//							<= __following_pc;
-	//					//$display("Execute stage Calleq_ThreeRegs taken:  %h",
-	//					//	__stage_execute_input_data.rfile_rc_data);
-	//					end
+				else // if (__multi_stage_data_1.instr_opcode
+					// == PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				begin
+					// cpyhi only changes the high 15 bits of rA
+					__stage_write_back_input_data.n_reg_data
+						<= {__multi_stage_data_1.instr_imm_val,
+						__stage_execute_input_data.rfile_ra_data[15:0]};
 
-	//					else
-	//					begin
-	//						__stage_execute_output_data.next_pc
-	//							<= __following_pc;
-	//					//$display("Execute stage Calleq_ThreeRegs skip:  %h",
-	//					//	__following_pc);
-	//					end
-	//				end
+					// For operand forwarding
+					__stage_execute_output_data.prev_written_reg_index
+						<= __multi_stage_data_1.instr_ra_index;
 
-	//				default:
-	//				begin
-	//					__stage_execute_output_data.next_pc 
-	//						<= __following_pc;
+				end
 
-	//					// Prevent operand forwarding
-	//					__stage_execute_output_data.prev_written_reg_index 
-	//						<= 0;
-	//				end
-	//			endcase
+				//else if (__multi_stage_data_1.instr_opcode
+				//	== PkgInstrDecoder::Bne_TwoRegsOneSimm)
+				//begin
+				//	// Prevent operand forwarding
+				//	__stage_execute_output_data.prev_written_reg_index
+				//		<= 0;
+				//end
 
-	//		end
+				//else if (__multi_stage_data_1.instr_opcode
+				//	== PkgInstrDecoder::Beq_TwoRegsOneSimm)
+				//begin
+				//	// Prevent operand forwarding
+				//	__stage_execute_output_data.prev_written_reg_index
+				//		<= 0;
+				//end
+			end
 
-	//		4'd3:
-	//		begin
-	//			//$display("3:  Changing next_pc to %h", __following_pc);
-	//			__stage_execute_output_data.next_pc <= __following_pc;
+			// Group 2:  Branches
+			4'd2:
+			begin
+				// Prevent operand forwarding
+				__stage_execute_output_data.prev_written_reg_index
+					<= 0;
+			end
+			// Group 3:  Jumps 
+			4'd3:
+			begin
+				// Prevent operand forwarding
+				__stage_execute_output_data.prev_written_reg_index
+					<= 0;
+			end
 
-	//			// Prevent operand forwarding (none needed for loads since
-	//			// they stall until the new value has **really** been
-	//			// written, and of course stores don't need operand
-	//			// forwarding either)
-	//			__stage_execute_output_data.prev_written_reg_index <= 0;
-	//		end
-	//	endcase
-	////end
+			// Group 4:  Calls
+			4'd4:
+			begin
+				// Prevent operand forwarding
+				__stage_execute_output_data.prev_written_reg_index <= 0;
+
+				case (__multi_stage_data_1.instr_condition_type)
+					PkgInstrDecoder::CtNe:
+					begin
+						handle_call_in_execute_stage
+							(__stage_execute_input_data
+							.rfile_ra_data
+							!= __stage_execute_input_data
+							.rfile_rb_data);
+					end
+
+					PkgInstrDecoder::CtEq:
+					begin
+						handle_call_in_execute_stage
+							(__stage_execute_input_data
+							.rfile_ra_data
+							== __stage_execute_input_data
+							.rfile_rb_data);
+					end
+
+					PkgInstrDecoder::CtLtu:
+					begin
+						handle_call_in_execute_stage
+							(__out_compare_ctrl_flow.ltu);
+					end
+					PkgInstrDecoder::CtGeu:
+					begin
+						handle_call_in_execute_stage
+							(!__out_compare_ctrl_flow.ltu);
+					end
+
+					PkgInstrDecoder::CtLeu:
+					begin
+						handle_call_in_execute_stage
+							(!__out_compare_ctrl_flow.gtu);
+					end
+					PkgInstrDecoder::CtGtu:
+					begin
+						handle_call_in_execute_stage
+							(__out_compare_ctrl_flow.gtu);
+					end
+
+					PkgInstrDecoder::CtLts:
+					begin
+						handle_call_in_execute_stage
+							(__out_compare_ctrl_flow.lts);
+					end
+					PkgInstrDecoder::CtGes:
+					begin
+						handle_call_in_execute_stage
+							(!__out_compare_ctrl_flow.lts);
+					end
+
+					PkgInstrDecoder::CtLes:
+					begin
+						handle_call_in_execute_stage
+							(!__out_compare_ctrl_flow.gts);
+					end
+					PkgInstrDecoder::CtGts:
+					begin
+						handle_call_in_execute_stage
+							(__out_compare_ctrl_flow.gts);
+					end
+
+					default:
+					begin
+						// Eek!
+					end
+				endcase
+
+
+			end
+
+
+			// Group 5:  Loads and stores
+			4'd5:
+			begin
+				////$display("5:  Changing next_pc to %h", __following_pc);
+				//__stage_execute_output_data.next_pc <= __following_pc;
+
+				// Prevent operand forwarding (none needed for loads since
+				// they stall until the new value has **really** been
+				// written, and of course stores don't need operand
+				// forwarding either)
+				__stage_execute_output_data.prev_written_reg_index <= 0;
+			end
+		endcase
+	//end
 	end
 
 	// Stage 2:  Write Back
 	always @ (posedge clk)
 	begin
-	////if (!__multi_stage_data_2.nop)
-	////begin
-	//	case (__multi_stage_data_2.instr_group)
-	//		4'd0:
-	//		begin
-	//			if (__multi_stage_data_2.instr_opcode
-	//				< PkgInstrDecoder::Bad0_Iog0)
-	//			begin
-	//				prep_ra_write
-	//					(__stage_write_back_input_data.n_reg_data);
-	//			end
+	//if (!__multi_stage_data_2.nop)
+	//begin
+		case (__multi_stage_data_2.instr_group)
+			// Group 0:  Three register ALU operations
+			4'd0:
+			begin
+				//if (__multi_stage_data_2.instr_opcode
+				//	< PkgInstrDecoder::Bad0_Iog0)
+				if ((__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad0_Iog0)
+					&& (__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad1_Iog0))
+				begin
+					prep_ra_write
+						(__stage_write_back_input_data.n_reg_data);
+				end
 
-	//			else
-	//			begin
-	//				// Treat this instruction as a NOP (no write-back)
-	//			end
-	//		end
+				else
+				begin
+					// Treat this instruction as a NOP (no write-back)
+				end
+			end
 
-	//		4'd1:
-	//		begin
-	//			if (__multi_stage_data_2.instr_opcode
-	//				<= PkgInstrDecoder::Cpyhi_OneRegOneImm)
-	//			begin
-	//				prep_ra_write
-	//					(__stage_write_back_input_data.n_reg_data);
-	//			end
-	//		end
+			// Group 1 Instructions:  Immediates
+			// All group 1 opcodes are valid instructions, and they all
+			// require a write back.
+			4'd1:
+			begin
+				prep_ra_write(__stage_write_back_input_data.n_reg_data);
+			end
 
-	//		4'd2:
-	//		begin
-	//			case (__multi_stage_data_2.instr_opcode)
-	//				PkgInstrDecoder::Callne_ThreeRegs:
-	//				begin
-	//					// Make sure to write back to lr!
-	//					//$display("Write back callne:  %h",
-	//					//	__stage_write_back_input_data.n_reg_data);
-	//					prep_reg_write(__REG_LR_INDEX,
-	//						__stage_write_back_input_data.n_reg_data);
-	//				end
-	//				PkgInstrDecoder::Calleq_ThreeRegs:
-	//				begin
-	//					// Make sure to write back to lr!
-	//					//$display("Write back calleq:  %h",
-	//					//	__stage_write_back_input_data.n_reg_data);
-	//					prep_reg_write(__REG_LR_INDEX,
-	//						__stage_write_back_input_data.n_reg_data);
-	//				end
+			// Group 2:  Branches
+			// We don't need to do any actual write back for this group.
+			4'd2:
+			begin
+				//case (__multi_stage_data_2.instr_opcode)
+				//	PkgInstrDecoder::Callne_ThreeRegs:
+				//	begin
+				//		// Make sure to write back to lr!
+				//		//$display("Write back callne:  %h",
+				//		//	__stage_write_back_input_data.n_reg_data);
+				//		prep_reg_write(__REG_LR_INDEX,
+				//			__stage_write_back_input_data.n_reg_data);
+				//	end
+				//	PkgInstrDecoder::Calleq_ThreeRegs:
+				//	begin
+				//		// Make sure to write back to lr!
+				//		//$display("Write back calleq:  %h",
+				//		//	__stage_write_back_input_data.n_reg_data);
+				//		prep_reg_write(__REG_LR_INDEX,
+				//			__stage_write_back_input_data.n_reg_data);
+				//	end
 
-	//				default:
-	//				begin
-	//					// Don't need to write back anything for other
-	//					// instructions
-	//				end
-	//			endcase
-	//		end
+				//	default:
+				//	begin
+				//		// Don't need to write back anything for other
+				//		// instructions
+				//	end
+				//endcase
+			end
 
-	//		4'd3:
-	//		begin
-	//			case (__multi_stage_data_2.instr_opcode)
-	//				PkgInstrDecoder::Ldr_ThreeRegsLdst:
-	//				begin
-	//					prep_ra_write(in.data);
-	//				end
+			// Group 3:  Jumps
+			// We don't need to do any actual write back for this group.
+			4'd3:
+			begin
+				
+			end
 
-	//				PkgInstrDecoder::Ldh_ThreeRegsLdst:
-	//				begin
-	//					// Zero extend
-	//					prep_ra_write({16'h0000, in.data[15:0]});
-	//				end
+			// Group 4:  Calls
+			// We need to write back lr for these instructions
+			4'd4:
+			begin
+				if ((__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad0_Iog4)
+					&& (__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad1_Iog4)
+					&& (__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad2_Iog4)
+					&& (__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad3_Iog4)
+					&& (__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad4_Iog4)
+					&& (__multi_stage_data_2.instr_opcode
+					!= PkgInstrDecoder::Bad5_Iog4))
+				begin
+					if (__stage_write_back_input_data.do_write_lr)
+					begin
+						// Make sure to write back to lr!
+						prep_reg_write(__REG_LR_INDEX,
+							__stage_write_back_input_data.n_reg_data);
+					end
+				end
+			end
 
-	//				PkgInstrDecoder::Ldsh_ThreeRegsLdst:
-	//				begin
-	//					// Sign extend
-	//					//prep_ra_write(in.data[15]
-	//					//	? {16'hffff, in.data[15:0]}
-	//					//	: {16'h0000, in.data[15:0]});
-	//					prep_ra_write({{16{in.data[15]}}, 
-	//						in.data[15:0]});
-	//				end
 
-	//				PkgInstrDecoder::Ldb_ThreeRegsLdst:
-	//				begin
-	//					// Zero extend
-	//					prep_ra_write({24'h000000, in.data[7:0]});
-	//				end
+			// Group 5:  Loads and Stores
+			4'd5:
+			begin
+				case (__multi_stage_data_2.instr_opcode)
+					PkgInstrDecoder::Ldr_ThreeRegsLdst:
+					begin
+						prep_ra_write(in.data);
+					end
 
-	//				PkgInstrDecoder::Ldsb_ThreeRegsLdst:
-	//				begin
-	//					// Sign extend
-	//					//prep_ra_write(in.data[7]
-	//					//	? {24'hffffff, in.data[7:0]}
-	//					//	: {24'h000000, in.data[7:0]});
-	//					prep_ra_write({{24{in.data[7]}}, in.data[7:0]});
-	//				end
+					PkgInstrDecoder::Ldh_ThreeRegsLdst:
+					begin
+						// Zero extend
+						prep_ra_write({16'h0000, in.data[15:0]});
+					end
 
-	//				PkgInstrDecoder::Ldri_TwoRegsOneSimm12Ldst:
-	//				begin
-	//					prep_ra_write(in.data);
-	//				end
+					PkgInstrDecoder::Ldsh_ThreeRegsLdst:
+					begin
+						// Sign extend
+						//prep_ra_write(in.data[15]
+						//	? {16'hffff, in.data[15:0]}
+						//	: {16'h0000, in.data[15:0]});
+						prep_ra_write({{16{in.data[15]}}, 
+							in.data[15:0]});
+					end
 
-	//				PkgInstrDecoder::Ldhi_TwoRegsOneSimm12Ldst:
-	//				begin
-	//					// Zero extend
-	//					prep_ra_write({16'h0000, in.data[15:0]});
-	//				end
+					PkgInstrDecoder::Ldb_ThreeRegsLdst:
+					begin
+						// Zero extend
+						prep_ra_write({24'h000000, in.data[7:0]});
+					end
 
-	//				PkgInstrDecoder::Ldshi_TwoRegsOneSimm12Ldst:
-	//				begin
-	//					// Sign extend
-	//					//prep_ra_write(in.data[15]
-	//					//	? {16'hffff, in.data[15:0]}
-	//					//	: {16'h0000, in.data[15:0]});
-	//					prep_ra_write({{16{in.data[15]}}, 
-	//						in.data[15:0]});
-	//				end
+					PkgInstrDecoder::Ldsb_ThreeRegsLdst:
+					begin
+						// Sign extend
+						//prep_ra_write(in.data[7]
+						//	? {24'hffffff, in.data[7:0]}
+						//	: {24'h000000, in.data[7:0]});
+						prep_ra_write({{24{in.data[7]}}, in.data[7:0]});
+					end
 
-	//				PkgInstrDecoder::Ldbi_TwoRegsOneSimm12Ldst:
-	//				begin
-	//					// Zero extend
-	//					prep_ra_write({24'h000000, in.data[7:0]});
-	//				end
+					PkgInstrDecoder::Ldri_TwoRegsOneSimm12Ldst:
+					begin
+						prep_ra_write(in.data);
+					end
 
-	//				PkgInstrDecoder::Ldsbi_TwoRegsOneSimm12Ldst:
-	//				begin
-	//					// Sign extend
-	//					//prep_ra_write(in.data[7]
-	//					//	? {24'hffffff, in.data[7:0]}
-	//					//	: {24'h000000, in.data[7:0]});
-	//					prep_ra_write({{24{in.data[7]}}, in.data[7:0]});
-	//				end
+					PkgInstrDecoder::Ldhi_TwoRegsOneSimm12Ldst:
+					begin
+						// Zero extend
+						prep_ra_write({16'h0000, in.data[15:0]});
+					end
 
-	//				default:
-	//				begin
-	//					
-	//				end
-	//			endcase
-	//		end
+					PkgInstrDecoder::Ldshi_TwoRegsOneSimm12Ldst:
+					begin
+						// Sign extend
+						//prep_ra_write(in.data[15]
+						//	? {16'hffff, in.data[15:0]}
+						//	: {16'h0000, in.data[15:0]});
+						prep_ra_write({{16{in.data[15]}}, 
+							in.data[15:0]});
+					end
 
-	//		default:
-	//		begin
-	//			// Eek!
-	//		end
-	//	endcase
-	////end
+					PkgInstrDecoder::Ldbi_TwoRegsOneSimm12Ldst:
+					begin
+						// Zero extend
+						prep_ra_write({24'h000000, in.data[7:0]});
+					end
+
+					PkgInstrDecoder::Ldsbi_TwoRegsOneSimm12Ldst:
+					begin
+						// Sign extend
+						//prep_ra_write(in.data[7]
+						//	? {24'hffffff, in.data[7:0]}
+						//	: {24'h000000, in.data[7:0]});
+						prep_ra_write({{24{in.data[7]}}, in.data[7:0]});
+					end
+
+					default:
+					begin
+						
+					end
+				endcase
+			end
+
+			default:
+			begin
+				// Eek!
+			end
+		endcase
+	//end
 	end
 
 	// ALU input stuff
@@ -1095,16 +1081,13 @@ module Frost32Cpu(input logic clk,
 
 				// We just always perform the temporary multiplications
 				__locals.mul_partial_result_x0_y0
-					= __stage_execute_input_data
-					.rfile_rb_data[15:0]
+					= __stage_execute_input_data.rfile_rb_data[15:0]
 					* __multi_stage_data_1.instr_imm_val;
 				__locals.mul_partial_result_x0_y1 
-					= __stage_execute_input_data
-					.rfile_rb_data[15:0]
+					= __stage_execute_input_data.rfile_rb_data[15:0]
 					* 16'h0000;
 				__locals.mul_partial_result_x1_y0
-					= __stage_execute_input_data
-					.rfile_rb_data[31:16]
+					= __stage_execute_input_data.rfile_rb_data[31:16]
 					* __multi_stage_data_1.instr_imm_val;
 
 				case (__multi_stage_data_1.instr_opcode)
@@ -1199,7 +1182,7 @@ module Frost32Cpu(input logic clk,
 				// ALU, no matter the type of control flow (branch, jump,
 				// or call)
 				// 
-				// (See the task handle_ctrl_flow())
+				// (See the task handle_ctrl_flow_in_decode())
 				__in_alu.a = __stage_execute_input_data.rfile_rc_data;
 				__in_alu.b = 0;
 				__in_alu.oper = PkgAlu::Add;
@@ -1218,7 +1201,7 @@ module Frost32Cpu(input logic clk,
 				// ALU, no matter the type of control flow (branch, jump,
 				// or call)
 				// 
-				// (See the task handle_ctrl_flow())
+				// (See the task handle_ctrl_flow_in_decode())
 				__in_alu.a = __stage_execute_input_data.rfile_rc_data;
 				__in_alu.b = 0;
 				__in_alu.oper = PkgAlu::Add;

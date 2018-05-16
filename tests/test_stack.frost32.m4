@@ -10,14 +10,14 @@ dnl
 main:
 {
 	// Assume top of available memory is here
-	cpya sp, 0xffff
+	cpya sp, 0xffff			; 0x0
 
-	subi sp, 20
-	cpyi u0, 9
+	subi sp, 20				; 0x4
+	cpyi u0, 9				; 0x8
 
-	stri u0, [sp, 0]
-	inc u0
-	stri u0, [sp, 4]
+	stri u0, [sp, 0]		; 0xc
+	inc u0					; 0x10
+	stri u0, [sp, 4]		; 0x14
 	inc u0
 	stri u0, [sp, 8]
 
