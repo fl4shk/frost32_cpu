@@ -35,6 +35,10 @@ module Compare #(parameter DATA_WIDTH=32)
 		out.lts = (__temp[__DATA_MSB_POS] 
 			^ ((a[__DATA_MSB_POS] ^ b[__DATA_MSB_POS]) 
 			& (a[__DATA_MSB_POS] ^ __temp[__DATA_MSB_POS])));
+
+		// (greater than or equal) and (not equal to zero)
+		out.gtu = ((!out.ltu) && (!__temp));
+		out.gts = ((!out.lts) && (!__temp));
 	end
 endmodule
 

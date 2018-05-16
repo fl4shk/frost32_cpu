@@ -23,6 +23,9 @@ typedef struct packed
 {
 	// less than unsigned, less than signed
 	logic ltu, lts;
+
+	// greater than unsigned, greater than signed
+	logic gtu, gts;
 } PortOut_Compare;
 
 typedef enum logic [`MSB_POS__ALU_OPER:0]
@@ -31,18 +34,21 @@ typedef enum logic [`MSB_POS__ALU_OPER:0]
 	Sub,
 	Sltu,
 	Slts,
+
+	Sgtu,
+	Sgts,
 	AndN,
 	And,
+
 	Or,
 	Xor,
 	Nor,
 	Lsl,
+
 	Lsr,
 	Asr,
 	OrN,
-	Nand,
-	InvA,
-	Xnor
+	Nand
 } AluOper;
 
 typedef struct packed

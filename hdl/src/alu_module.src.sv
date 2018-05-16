@@ -37,49 +37,53 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 			begin
 				out.data = in.a + in.b;
 			end
-
 			PkgAlu::Sub:
 			begin
 				out.data = in.a - in.b;
 			end
-
 			PkgAlu::Sltu:
 			begin
 				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.ltu};
 			end
-
 			PkgAlu::Slts:
 			begin
 				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.lts};
 			end
 
 
+			PkgAlu::Sgtu:
+			begin
+				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.gtu};
+			end
+			PkgAlu::Sgts:
+			begin
+				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.gts};
+			end
+
+			// The processor probably doesn't actually use this operation
 			PkgAlu::AndN:
 			begin
 				out.data = in.a & (~in.b);
 			end
-
 			PkgAlu::And:
 			begin
 				out.data = in.a & in.b;
 			end
 
+
+
 			PkgAlu::Or:
 			begin
 				out.data = in.a | in.b;
 			end
-
 			PkgAlu::Xor:
 			begin
 				out.data = in.a ^ in.b;
 			end
-
-
 			PkgAlu::Nor:
 			begin
 				out.data = ~(in.a | in.b);
 			end
-
 			PkgAlu::Lsl:
 			begin
 				if (in.b[__MSB_POS_INOUT : 5])
@@ -92,6 +96,10 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 					out.data = __out_lsl32.data;
 				end
 			end
+
+
+
+
 			PkgAlu::Lsr:
 			begin
 				if (in.b[__MSB_POS_INOUT : 5])
@@ -125,22 +133,16 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 				end
 			end
 
-
+			// The processor probably doesn't actually use this operation
 			PkgAlu::OrN:
 			begin
 				out.data = in.a | (~in.b);
 			end
+
+			// The processor probably doesn't actually use this operation
 			PkgAlu::Nand:
 			begin
 				out.data = ~(in.a & in.b);
-			end
-			PkgAlu::InvA:
-			begin
-				out.data = ~in.a;
-			end
-			PkgAlu::Xnor:
-			begin
-				out.data = ~(in.a ^ in.b);
 			end
 		endcase
 	end

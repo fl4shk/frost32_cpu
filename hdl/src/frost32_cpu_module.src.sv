@@ -1008,8 +1008,7 @@ module Frost32Cpu(input logic clk,
 	////end
 	end
 
-	//// ALU input stuff (ONLY relevant to the execute stage, and almost
-	//// uses execute stage data exclusively)
+	//// ALU input stuff
 	//always_comb
 	//begin
 	//	//case (__multi_stage_data_1.instr_group)
