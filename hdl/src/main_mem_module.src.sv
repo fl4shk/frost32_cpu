@@ -1,103 +1,79 @@
 `include "src/misc_defines.header.sv"
 
-`define WIDTH__INTERNAL_MAIN_MEM_ADDR 16
-`define MSB_POS__INTERNAL_MAIN_MEM_ADDR \
-	`WIDTH_TO_MSB_POS(`WIDTH__INTERNAL_MAIN_MEM_ADDR)
+`define WIDTH__TRUE_DUAL_PORT_RAM_DATA_INOUT 8
+`define MSB_POS__TRUE_DUAL_PORT_RAM_DATA_INOUT \
+	`WIDTH_TO_MSB_POS(`WIDTH__TRUE_DUAL_PORT_RAM_DATA_INOUT)
+
+`define WIDTH__TRUE_DUAL_PORT_RAM_ADDR 16
+`define MSB_POS__TRUE_DUAL_PORT_RAM_ADDR \
+	`WIDTH_TO_MSB_POS(`WIDTH__TRUE_DUAL_PORT_RAM_ADDR)
 
 
+// Synthesizeable block RAM (64 kiB), with two 8-bit read ports and two
+// 8-bit write ports.
+module TrueDualPortRam(input logic clk,
+	input logic [`MSB_POS__TRUE_DUAL_PORT_RAM_DATA_INOUT:0] 
+		in_data_a, in_data_b,
+	input logic [`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] in_addr_a, in_addr_b,
+	input logic in_we_a, in_we_b,
 
-module __InternalMainMem(input logic clk,
-	input bit [7:0] in_8_data,
-	input bit [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] in_8_addr,
-	input bit in_8_we,
-	input bit [15:0] in_16_data,
-	input bit [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] in_16_addr,
-	input bit in_16_we,
-	input bit [31:0] in_32_data,
-	input bit [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] in_32_addr,
-	input bit in_32_we,
-
-	output bit [7:0] out_8_data,
-	output bit [15:0] out_16_data,
-	output bit [31:0] out_32_data);
+	output logic [`MSB_POS__TRUE_DUAL_PORT_RAM_DATA_INOUT:0] 
+		out_data_a, out_data_b);
 
 	parameter __ARR_SIZE__MAIN_MEM = 1 << 16;
 	parameter __LAST_INDEX__MAIN_MEM 
 		= `ARR_SIZE_TO_LAST_INDEX(__ARR_SIZE__MAIN_MEM);
 
-	bit [7:0] __main_mem[0 : __LAST_INDEX__MAIN_MEM];
+	bit [`MSB_POS__TRUE_DUAL_PORT_RAM_DATA_INOUT:0] 
+		__mem[0 : __LAST_INDEX__MAIN_MEM];
 
 
-	parameter __MOD_THING = 32'hffff;
+	//parameter __MOD_THING = 32'hffff;
 
-	wire [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] __addr_16_1
-		= ((in_16_addr + `WIDTH__INTERNAL_MAIN_MEM_ADDR'd1) & __MOD_THING);
-
-	wire [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] __addr_32_1
-		= ((in_32_addr + `WIDTH__INTERNAL_MAIN_MEM_ADDR'd1) & __MOD_THING);
-	wire [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] __addr_32_2
-		= ((in_32_addr + `WIDTH__INTERNAL_MAIN_MEM_ADDR'd2) & __MOD_THING);
-	wire [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] __addr_32_3
-		= ((in_32_addr + `WIDTH__INTERNAL_MAIN_MEM_ADDR'd3) & __MOD_THING);
 
 
 	initial
 	begin
-		$readmemh("main_mem.txt.ignore", __main_mem);
+		$readmemh("main_mem.txt.ignore", __mem);
 
 		////$dumpfile("test.vcd");
 		////$dumpvars(0, TestBench);
+
+		out_data_a = 0;
+		out_data_b = 0;
 	end
+
+	//always @ (posedge clk)
+	//begin
+	//	$display("TrueDualPortRam (port a):  %h %h", 
+	//		in_addr_a, __mem[in_addr_a]);
+	//	$display("TrueDualPortRam (port b):  %h %h", 
+	//		in_addr_b, __mem[in_addr_b]);
+	//end
 
 	always_ff @ (posedge clk)
 	begin
-		if (in_8_we)
+		if (in_we_a)
 		begin
-			__main_mem[in_8_addr] <= in_8_data;
+			__mem[in_addr_a] <= in_data_a;
 		end
 
 		//else
 		begin
-			out_8_data <= __main_mem[in_8_addr];
+			out_data_a <= __mem[in_addr_a];
 		end
 	end
 
 	always_ff @ (posedge clk)
 	begin
-		if (in_16_we)
+		if (in_we_b)
 		begin
-			{__main_mem[in_16_addr], __main_mem[__addr_16_1]}
-				<= in_16_data;
+			__mem[in_addr_b] <= in_data_b;
 		end
 
 		//else
 		begin
-			out_16_data
-				<= {__main_mem[in_16_addr], __main_mem[__addr_16_1]};
-		end
-	end
-
-	always_ff @ (posedge clk)
-	begin
-		if (in_32_we)
-		begin
-			//$display("__InternalMainMem write:  %h, %h",
-			//	in_32_addr, in_32_data);
-			{__main_mem[in_32_addr], __main_mem[__addr_32_1],
-				__main_mem[__addr_32_2], __main_mem[__addr_32_3]}
-				<= in_32_data;
-		end
-
-		//else
-		begin
-			out_32_data
-				<= {__main_mem[in_32_addr], __main_mem[__addr_32_1],
-				__main_mem[__addr_32_2], __main_mem[__addr_32_3]};
-
-			//$display("__InternalMainMem read:  %h, %h",
-			//	in_32_addr,
-			//	{__main_mem[in_32_addr], __main_mem[__addr_32_1],
-			//	__main_mem[__addr_32_2], __main_mem[__addr_32_3]});
+			out_data_b <= __mem[in_addr_b];
 		end
 	end
 
@@ -114,117 +90,191 @@ module MainMem(input logic clk,
 	import PkgFrost32Cpu::*;
 	import PkgMainMem::*;
 
-	//parameter __WIDTH_COUNTER = 3;
-	//parameter __MSB_POS_COUNTER = `WIDTH_TO_MSB_POS(__WIDTH_COUNTER);
+	parameter __WIDTH_COUNTER = 3;
+	//parameter __WIDTH_COUNTER = 1;
+	parameter __MSB_POS_COUNTER = `WIDTH_TO_MSB_POS(__WIDTH_COUNTER);
+
+	//parameter __ARR_SIZE__NUM_ADDRESSES = 4;
+	//parameter __LAST_INDEX__NUM_ADDRESSES 
+	//	= `ARR_SIZE_TO_LAST_INDEX(__ARR_SIZE__NUM_ADDRESSES);
+
 	parameter __MOD_THING = 32'hffff;
 	//parameter __MOD_THING = 32'hff_ffff;
 
-	bit [7:0] __in_8_data;
-	bit [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] __in_8_addr;
-	bit __in_8_we;
-	bit [15:0] __in_16_data;
-	bit [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] __in_16_addr;
-	bit __in_16_we;
-	bit [31:0] __in_32_data;
-	bit [`MSB_POS__INTERNAL_MAIN_MEM_ADDR:0] __in_32_addr;
-	bit __in_32_we;
+	logic [`MSB_POS__TRUE_DUAL_PORT_RAM_DATA_INOUT:0] 
+		__in_true_dual_port_ram_data_a, __in_true_dual_port_ram_data_b;
+	logic [`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0]
+		__in_true_dual_port_ram_addr_a, __in_true_dual_port_ram_addr_b;
+	logic __in_true_dual_port_ram_we_a, __in_true_dual_port_ram_we_b;
+	logic [`MSB_POS__TRUE_DUAL_PORT_RAM_DATA_INOUT:0] 
+		__out_true_dual_port_ram_data_a, __out_true_dual_port_ram_data_b;
 
-	bit [7:0] __out_8_data;
-	bit [15:0] __out_16_data;
-	bit [31:0] __out_32_data;
+	TrueDualPortRam __inst_true_dual_port_ram(.clk(clk),
+		.in_data_a(__in_true_dual_port_ram_data_a),
+		.in_data_b(__in_true_dual_port_ram_data_b),
+		.in_addr_a(__in_true_dual_port_ram_addr_a),
+		.in_addr_b(__in_true_dual_port_ram_addr_b),
+		.in_we_a(__in_true_dual_port_ram_we_a),
+		.in_we_b(__in_true_dual_port_ram_we_b),
+		.out_data_a(__out_true_dual_port_ram_data_a),
+		.out_data_b(__out_true_dual_port_ram_data_b));
 
-	__InternalMainMem __inst_internal_main_mem
-		(.clk(clk),
-		.in_8_data(__in_8_data),
-		.in_8_addr(__in_8_addr),
-		.in_8_we(__in_8_we),
-		.in_16_data(__in_16_data),
-		.in_16_addr(__in_16_addr),
-		.in_16_we(__in_16_we),
-		.in_32_data(__in_32_data),
-		.in_32_addr(__in_32_addr),
-		.in_32_we(__in_32_we),
+	logic [__MSB_POS_COUNTER:0] __counter;
+	logic __wait_for_mem;
 
-		.out_8_data(__out_8_data),
-		.out_16_data(__out_16_data),
-		.out_32_data(__out_32_data));
+	//logic [`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
+	//	__addresses[0 : __LAST_INDEX__NUM_ADDRESSES];
 
-	assign __in_8_data = in.data[7:0];
-	assign __in_16_data = in.data[15:0];
-	assign __in_32_data = in.data;
-	assign __in_8_addr = in.addr[15:0];
-	assign __in_16_addr = in.addr[15:0];
-	assign __in_32_addr = in.addr;
-
+	//assign out.wait_for_mem = (in.req_mem_access || __wait_for_mem);
 	always_comb
-	//always_ff @ (posedge clk)
 	begin
-		if (in.req_mem_access)
-		begin
-			if (in.data_inout_access_type == PkgFrost32Cpu::DiatRead)
-			begin
-				__in_32_we = 0;
-				__in_16_we = 0;
-				__in_8_we = 0;
-
-				if (in.data_inout_access_size == PkgFrost32Cpu::Dias32)
-				begin
-					out.data = __out_32_data;
-				end
-
-				else if (in.data_inout_access_size 
-					== PkgFrost32Cpu::Dias16)
-				begin
-					out.data = __out_16_data;
-				end
-
-				else //if (in.data_inout_access_size 
-					// == PkgFrost32Cpu::Dias8)
-				begin
-					out.data = __out_8_data;
-				end
-			end
-
-			else // if (in.data_inout_access_type 
-				// == PkgFrost32Cpu::DiatWrite)
-			begin
-				out.data = 0;
-
-				if (in.data_inout_access_size == PkgFrost32Cpu::Dias32)
-				begin
-					__in_32_we = 1;
-					__in_16_we = 0;
-					__in_8_we = 0;
-				end
-
-				else if (in.data_inout_access_size 
-					== PkgFrost32Cpu::Dias16)
-				begin
-					__in_32_we = 0;
-					__in_16_we = 1;
-					__in_8_we = 0;
-				end
-
-				else
-				begin
-					__in_32_we = 0;
-					__in_16_we = 0;
-					__in_8_we = 1;
-				end
-			end
-		end
-
-		else // if (!in.req_mem_access)
-		begin
-			__in_32_we = 0;
-			__in_16_we = 0;
-			__in_8_we = 0;
-
-			out.data = 0;
-		end
-
-		out.stall = 0;
+		out.wait_for_mem = (in.req_mem_access || __wait_for_mem);
 	end
+
+	initial
+	begin
+		__counter = 0;
+
+
+		__in_true_dual_port_ram_data_a = 0;
+		__in_true_dual_port_ram_data_b = 0;
+		__in_true_dual_port_ram_addr_a = 0;
+		__in_true_dual_port_ram_addr_b = 0;
+		__in_true_dual_port_ram_we_a = 0;
+		__in_true_dual_port_ram_we_b = 0;
+		//out.wait_for_mem = 0;
+		__wait_for_mem = 0;
+		out.data = 0;
+	end
+
+
+	//always_ff @ (posedge clk)
+	always @ (posedge clk)
+	begin
+		//$display("__counter:  %h", __counter);
+		if (__counter == 0)
+		begin
+			if (in.req_mem_access)
+			begin
+				//$display("in.req_mem_access == 1");
+				__wait_for_mem <= 1;
+
+				// Temporarily assume 32-bit memory access
+				__counter <= 4;
+
+				if (in.data_inout_access_type
+					== PkgFrost32Cpu::DiatRead)
+				begin
+					__in_true_dual_port_ram_we_a <= 0;
+					__in_true_dual_port_ram_we_b <= 0;
+
+				end
+
+				else // if (in.data_inout_access_type 
+					// == PkgFrost32Cpu::DiatWrite)
+				begin
+					__in_true_dual_port_ram_we_a <= 1;
+					__in_true_dual_port_ram_we_b <= 1;
+				end
+			end
+
+			else
+			begin
+				__in_true_dual_port_ram_we_a <= 0;
+				__in_true_dual_port_ram_we_b <= 0;
+			end
+
+		end
+
+		else // if (__counter != 0)
+		begin
+			__counter <= __counter - 1;
+			if (__counter == 4)
+			begin
+				// Two cycle delay
+				__in_true_dual_port_ram_data_a <= in.data[31:24];
+				__in_true_dual_port_ram_data_b <= in.data[23:16];
+				__in_true_dual_port_ram_addr_a 
+					= (in.addr[15:0] & __MOD_THING);
+				__in_true_dual_port_ram_addr_b 
+					= ((in.addr[15:0] + 16'h1) & __MOD_THING);
+				//$display("__counter == 4:  %h %h",
+				//	__in_true_dual_port_ram_addr_a,
+				//	__in_true_dual_port_ram_addr_b);
+				out.data <= 0;
+			end
+
+			else if (__counter == 3)
+			begin
+				__in_true_dual_port_ram_data_a <= in.data[15:8];
+				__in_true_dual_port_ram_data_b <= in.data[7:0];
+				__in_true_dual_port_ram_addr_a 
+					= ((in.addr[15:0] + 16'h2) & __MOD_THING);
+				__in_true_dual_port_ram_addr_b 
+					= ((in.addr[15:0] + 16'h3) & __MOD_THING);
+				//get_out_data_high();
+				//$display("__counter == 3:  %h %h",
+				//	__in_true_dual_port_ram_addr_a,
+				//	__in_true_dual_port_ram_addr_b);
+			end
+
+			else if (__counter == 2)
+			begin
+				// Just disable writes now
+				__in_true_dual_port_ram_we_a <= 0;
+				__in_true_dual_port_ram_we_b <= 0;
+
+				out.data[31] <= __out_true_dual_port_ram_data_a[7];
+				out.data[30] <= __out_true_dual_port_ram_data_a[6];
+				out.data[29] <= __out_true_dual_port_ram_data_a[5];
+				out.data[28] <= __out_true_dual_port_ram_data_a[4];
+				out.data[27] <= __out_true_dual_port_ram_data_a[3];
+				out.data[26] <= __out_true_dual_port_ram_data_a[2];
+				out.data[25] <= __out_true_dual_port_ram_data_a[1];
+				out.data[24] <= __out_true_dual_port_ram_data_a[0];
+				out.data[23] <= __out_true_dual_port_ram_data_b[7];
+				out.data[22] <= __out_true_dual_port_ram_data_b[6];
+				out.data[21] <= __out_true_dual_port_ram_data_b[5];
+				out.data[20] <= __out_true_dual_port_ram_data_b[4];
+				out.data[19] <= __out_true_dual_port_ram_data_b[3];
+				out.data[18] <= __out_true_dual_port_ram_data_b[2];
+				out.data[17] <= __out_true_dual_port_ram_data_b[1];
+				out.data[16] <= __out_true_dual_port_ram_data_b[0];
+			end
+
+			else // if (__counter == 1)
+			begin
+				__in_true_dual_port_ram_data_a <= 0;
+				__in_true_dual_port_ram_data_b <= 0;
+				__in_true_dual_port_ram_addr_a <= 0;
+				__in_true_dual_port_ram_addr_b <= 0;
+				//get_out_data_low();
+				out.data[15] <= __out_true_dual_port_ram_data_a[7];
+				out.data[14] <= __out_true_dual_port_ram_data_a[6];
+				out.data[13] <= __out_true_dual_port_ram_data_a[5];
+				out.data[12] <= __out_true_dual_port_ram_data_a[4];
+				out.data[11] <= __out_true_dual_port_ram_data_a[3];
+				out.data[10] <= __out_true_dual_port_ram_data_a[2];
+				out.data[9] <= __out_true_dual_port_ram_data_a[1];
+				out.data[8] <= __out_true_dual_port_ram_data_a[0];
+				out.data[7] <= __out_true_dual_port_ram_data_b[7];
+				out.data[6] <= __out_true_dual_port_ram_data_b[6];
+				out.data[5] <= __out_true_dual_port_ram_data_b[5];
+				out.data[4] <= __out_true_dual_port_ram_data_b[4];
+				out.data[3] <= __out_true_dual_port_ram_data_b[3];
+				out.data[2] <= __out_true_dual_port_ram_data_b[2];
+				out.data[1] <= __out_true_dual_port_ram_data_b[1];
+				out.data[0] <= __out_true_dual_port_ram_data_b[0];
+				__wait_for_mem <= 0;
+			end
+		end
+	end
+
+	//always_comb
+	////always @ (*)
+	////always @ (__counter)
+	//begin
+	//end
 
 
 endmodule

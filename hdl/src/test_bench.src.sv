@@ -27,7 +27,7 @@ module TestBench;
 
 
 	assign __in_frost32_cpu.data = __out_main_mem.data;
-	assign __in_frost32_cpu.stall = __out_main_mem.stall;
+	//assign __in_frost32_cpu.wait_for_mem = __out_main_mem.wait_for_mem;
 
 	assign __in_main_mem.data = __out_frost32_cpu.data;
 	assign __in_main_mem.addr = __out_frost32_cpu.addr;
@@ -37,12 +37,31 @@ module TestBench;
 		= __out_frost32_cpu.data_inout_access_size;
 	assign __in_main_mem.req_mem_access = __out_frost32_cpu.req_mem_access;
 
-	//initial
+	// I'm not sure this will work
+	//assign __in_frost32_cpu.wait_for_mem 
+	//	= __out_frost32_cpu.req_mem_access || __out_main_mem.wait_for_mem;
+	assign __in_frost32_cpu.wait_for_mem = __out_main_mem.wait_for_mem;
+
+	//always @ (posedge __clk)
 	//begin
-	//	//#500
-	//	#50
-	//	$finish;
+	//	//$display("TestBench:  %h\t\t%h %h\t\t%h %h",
+	//	//	__in_frost32_cpu.wait_for_mem,
+	//	//	__out_frost32_cpu.data, __out_frost32_cpu.addr,
+	//	//	__out_frost32_cpu.data_inout_access_type,
+	//	//	__out_frost32_cpu.data_inout_access_size);
+	//	$display("TestBench:  %h", __in_frost32_cpu.wait_for_mem);
 	//end
+
+	initial
+	begin
+		$dumpfile("test.vcd");
+		$dumpvars(0, TestBench);
+
+		////#500
+		////#50
+		//#100
+		//$finish;
+	end
 
 	//always @ (posedge __half_clk)
 	//begin

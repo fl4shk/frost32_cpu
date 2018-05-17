@@ -127,7 +127,7 @@
 				end
 				PkgInstrDecoder::Subi_TwoRegsOneImm:
 				begin
-					$display("subi r%d, r%d, r%x",
+					$display("subi r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);

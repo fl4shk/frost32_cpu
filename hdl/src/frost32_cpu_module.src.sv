@@ -175,7 +175,7 @@ module Frost32Cpu(input logic clk,
 	// Debug stuff
 	always @ (posedge clk)
 	begin
-	if (!in.stall)
+	if (!in.wait_for_mem)
 	begin
 		if (__locals.pc >= 32'h8000)
 		//if (__locals.pc >= 32'hc000)
@@ -189,12 +189,12 @@ module Frost32Cpu(input logic clk,
 	`ifdef DEBUG
 	always @ (posedge clk)
 	begin
-	if (!in.stall)
-	begin
-		__locals.cycles_counter <= __locals.cycles_counter + 1;
+		//__locals.cycles_counter <= __locals.cycles_counter + 1;
 
-		$display("Frost32Cpu __locals.cycles_counter:  %h", 
-			__locals.cycles_counter);
+		//$display("Frost32Cpu __locals.cycles_counter:  %h", 
+		//	__locals.cycles_counter);
+	if (!in.wait_for_mem)
+	begin
 		$display("Frost32Cpu pc's:  %h %h %h", 
 			__multi_stage_data_0.pc_val, 
 			__multi_stage_data_1.pc_val,
@@ -217,9 +217,10 @@ module Frost32Cpu(input logic clk,
 		`ifdef DEBUG_INSTR_DECODER
 		`include "src/debug_instr_decoder.header.sv"
 		`endif		// DEBUG_INSTR_DECODER
-
 		$display();
 	end
+
+		//$display();
 	end
 	`endif		// DEBUG
 
@@ -418,7 +419,7 @@ module Frost32Cpu(input logic clk,
 	// Stage 0:  Instruction Decode
 	always @ (posedge clk)
 	begin
-	//if (!in.stall)
+	if (!in.wait_for_mem)
 	begin
 		//$display("Decode:  next_pc:  %h",
 		//	__stage_execute_output_data.next_pc);
@@ -668,16 +669,16 @@ module Frost32Cpu(input logic clk,
 		end
 	end
 
-	//else // if (in.stall)
-	//begin
-	//	stop_mem_access();
-	//end
+	else // if (in.wait_for_mem)
+	begin
+		stop_mem_access();
+	end
 	end
 
 	// Stage 1:  Execute 
 	always @ (posedge clk)
 	begin
-	//if (!in.stall)
+	if (!in.wait_for_mem)
 	begin
 	//if (!__multi_stage_data_1.nop)
 	//begin
@@ -914,7 +915,7 @@ module Frost32Cpu(input logic clk,
 	// Stage 2:  Write Back
 	always @ (posedge clk)
 	begin
-	//if (!in.stall)
+	if (!in.wait_for_mem)
 	begin
 	//if (!__multi_stage_data_2.nop)
 	//begin
@@ -1106,7 +1107,7 @@ module Frost32Cpu(input logic clk,
 	// ALU input stuff
 	always_comb
 	begin
-	//if (!in.stall)
+	if (!in.wait_for_mem)
 	begin
 		case (__multi_stage_data_1.instr_group)
 			// Group 0:  Three-register ALU operations
@@ -1310,13 +1311,13 @@ module Frost32Cpu(input logic clk,
 		//__in_alu.a = __stage_execute_input_data.rfile_rb_data
 	end
 
-	//else // if (in.stall)
-	//begin
-	//	__locals.mul_partial_result_x0_y0 = 0;
-	//	__locals.mul_partial_result_x0_y1 = 0;
-	//	__locals.mul_partial_result_x1_y0 = 0;
-	//	__in_alu = 0;
-	//end
+	else // if (in.wait_for_mem)
+	begin
+		__locals.mul_partial_result_x0_y0 = 0;
+		__locals.mul_partial_result_x0_y1 = 0;
+		__locals.mul_partial_result_x1_y0 = 0;
+		__in_alu = 0;
+	end
 	end
 
 endmodule

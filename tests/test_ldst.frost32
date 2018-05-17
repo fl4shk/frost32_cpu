@@ -20,10 +20,10 @@ main:
 	addi sp, 12
 
 
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
 
 	jmpa quit
 }
