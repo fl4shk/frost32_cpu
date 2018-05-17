@@ -38,19 +38,16 @@ main:
 	jmpa quit
 }
 
-.org 0x8000
+.org 0x4000
+quit:
+{
+	quit
+}
+
+.org 0x6000
 data_0:
 	.space 20
 
 data_1:
 	.space 20
 
-.org 0xc000
-quit:
-{
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-}

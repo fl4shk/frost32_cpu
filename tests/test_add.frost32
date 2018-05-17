@@ -22,12 +22,8 @@ test_subroutine:
 	jmp lr
 }
 
-.org 0x8000
+.org 0x4000
 quit:
 {
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
+	bra quit
 }

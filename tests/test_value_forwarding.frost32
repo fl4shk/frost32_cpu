@@ -84,21 +84,15 @@ done:
 }
 
 
+.org 0x4000
 quit:
 {
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
 	bra quit
 }
 
 
-.org 0x7000
-
-; put variables in memory starting at address 0x8000 
-.org 0x8000
+; put variables in memory starting at address 0x6000 
+.org 0x6000
 data_0:
 	.space 0x90
 

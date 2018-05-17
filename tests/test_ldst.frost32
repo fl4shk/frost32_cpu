@@ -1,7 +1,7 @@
 .org 0x0000
 main:
 {
-	cpyi sp, 0xffff
+	cpyi sp, 0x7fff
 
 	subi sp, 12
 
@@ -28,9 +28,8 @@ main:
 	jmpa quit
 }
 
-
-.org 0xc000
+.org 0x4000
 quit:
 {
-	add zero, zero, zero
+	bra quit
 }

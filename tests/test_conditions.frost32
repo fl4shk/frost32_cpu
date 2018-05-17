@@ -2,35 +2,35 @@
 main:
 {
 	// Assume top of available memory is here
-	cpyi sp, 0xffff
+	cpyi sp, 0x7fff
 
 
-	cpyi u1, inputs
+	cpya u0, 5
+	cpya u1, -5
 
-	; Use u0 as the pointer
-	cpyi u0, 0
-
-	cpya u1, 20
-	stri u1, [u0, 0]
-
-	cpya u1, -20
-	stri u1, [u0, 4]
-
-
-	; calla test_bles
+	; Branch to subroutine
 	addsi lr, pc, 8
 	bra test_bles
 
 
-	cpyi temp, infin
-	jmp temp
+	bra quit
 }
 
 test_bles:
 {
-	cpyi u1, inputs
-	ldri u2, [u1, 0]
-	ldri u3, [u1, 4]
+	bles u0, u1, les
+
+gts:
+	cpyi u0, 0
+	
+	bra done
+
+les:
+	cpyi u0, 1
+
+
+done:
+	
 
 
 	jmp lr
@@ -38,15 +38,8 @@ test_bles:
 
 
 
-.org 0xc000
-infin:
+.org 0x4000
+quit:
 {
-	bra infin
+	bra quit
 }
-
-.org 0xe000
-inputs:
-	.space 20
-
-outputs:
-	.space 20

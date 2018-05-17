@@ -27,3 +27,4 @@ a.out
 *.pdf
 *.html
 hdl/v_outputs
+*.stp

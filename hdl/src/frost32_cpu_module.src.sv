@@ -177,7 +177,8 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
-		if (__locals.pc >= 32'h8000)
+		if (__locals.pc >= 32'h4000)
+		//if (__locals.pc >= 32'h8000)
 		//if (__locals.pc >= 32'hc000)
 		//if (__locals.pc >= 32'h800000)
 		begin
@@ -511,6 +512,11 @@ module Frost32Cpu(input logic clk,
 
 						PkgInstrDecoder::CtLes:
 						begin
+							$display("Decode stage les:  %h %h\t\t%h %h",
+								__out_compare_ctrl_flow.ltu,
+								__out_compare_ctrl_flow.lts,
+								__out_compare_ctrl_flow.gtu,
+								__out_compare_ctrl_flow.gts);
 							handle_ctrl_flow_in_decode_stage
 								(!__out_compare_ctrl_flow.gts);
 						end
