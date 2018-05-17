@@ -37,6 +37,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 	PkgInstrDecoder::Iog5Instr __iog5_instr;
 	assign __iog5_instr = in;
 
+	PkgInstrDecoder::Iog6Instr __iog6_instr;
+	assign __iog6_instr = in;
+
 	always_comb
 	begin
 		// Just use __iog0_instr.group because the "group" field is in the
@@ -54,7 +57,6 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.ldst_type = 0;
 				out.causes_stall = 0;
 				out.condition_type = 0;
-
 			end
 
 			// Group 1:  Immediates
@@ -143,6 +145,27 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 
 				// All load/store instructions cause a stall
 				out.causes_stall = 1;
+				out.condition_type = 0;
+			end
+
+			6:
+			begin
+				out.group = __iog5_instr.group;
+				out.ra_index = __iog5_instr.ra_index;
+				out.rb_index = __iog5_instr.rb_index;
+				out.rc_index = __iog5_instr.rc_index;
+				out.opcode = __iog5_instr.opcode;
+				out.group = __iog6_instr.group;
+
+				out.imm_val = 0;
+				out.ldst_type = 0;
+
+				// Instructions that stall (prevent interrupts)
+				out.causes_stall 
+					= ((out.opcode == PkgInstrDecoder::Cpy_OneIretaOneReg)
+					|| (out.opcode 
+					== PkgInstrDecoder::Cpy_OneIdstaOneReg));
+
 				out.condition_type = 0;
 			end
 

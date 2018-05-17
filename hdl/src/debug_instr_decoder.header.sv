@@ -663,4 +663,86 @@
 				end
 			endcase
 		end
+
+		6:
+		begin
+			case (__out_instr_decoder.opcode)
+				PkgInstrDecoder::Ei_NoArgs:
+				begin
+					$display("ei");
+				end
+				PkgInstrDecoder::Di_NoArgs:
+				begin
+					$display("di");
+				end
+				PkgInstrDecoder::Cpy_OneIretaOneReg:
+				begin
+					$display("cpy ireta, r%d",
+						__out_instr_decoder.ra_index);
+				end
+				PkgInstrDecoder::Cpy_OneRegOneIreta:
+				begin
+					$display("cpy r%d, ireta",
+						__out_instr_decoder.ra_index);
+				end
+
+				PkgInstrDecoder::Cpy_OneIdstaOneReg:
+				begin
+					$display("cpy idsta, r%d",
+						__out_instr_decoder.ra_index);
+				end
+				PkgInstrDecoder::Cpy_OneRegOneIdsta:
+				begin
+					$display("cpy r%d, idsta",
+						__out_instr_decoder.ra_index);
+				end
+				PkgInstrDecoder::Reti_NoArgs:
+				begin
+					$display("reti");
+				end
+				PkgInstrDecoder::Bad0_Iog6:
+				begin
+					$display("bad0_iog6");
+				end
+
+				PkgInstrDecoder::Bad1_Iog6:
+				begin
+					$display("bad1_iog6");
+				end
+				PkgInstrDecoder::Bad2_Iog6:
+				begin
+					$display("bad2_iog6");
+				end
+				PkgInstrDecoder::Bad3_Iog6:
+				begin
+					$display("bad3_iog6");
+				end
+				PkgInstrDecoder::Bad4_Iog6:
+				begin
+					$display("bad4_iog6");
+				end
+
+				PkgInstrDecoder::Bad5_Iog6:
+				begin
+					$display("bad5_iog6");
+				end
+				PkgInstrDecoder::Bad6_Iog6:
+				begin
+					$display("bad6_iog6");
+				end
+				PkgInstrDecoder::Bad7_Iog6:
+				begin
+					$display("bad7_iog6");
+				end
+				PkgInstrDecoder::Bad8_Iog6:
+				begin
+					$display("bad8_iog6");
+				end
+			endcase
+		end
+
+		default:
+		begin
+			$display("unknown");
+		end
 	endcase

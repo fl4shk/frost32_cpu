@@ -9,6 +9,12 @@ module TestBench;
 	MainClockGenerator __inst_main_clk_gen(.clk(__clk));
 	HalfClockGenerator __inst_half_clk_gen(.clk(__half_clk));
 
+	struct packed
+	{
+		logic interrupt;
+		logic can_interrupt;
+	} __locals;
+
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;
 	PkgFrost32Cpu::PortOut_Frost32Cpu __out_frost32_cpu;
 
@@ -42,6 +48,8 @@ module TestBench;
 	//	= __out_frost32_cpu.req_mem_access || __out_main_mem.wait_for_mem;
 	assign __in_frost32_cpu.wait_for_mem = __out_main_mem.wait_for_mem;
 
+	assign __in_frost32_cpu.interrupt = __locals.interrupt;
+
 	//always @ (posedge __clk)
 	//begin
 	//	//$display("TestBench:  %h\t\t%h %h\t\t%h %h",
@@ -52,16 +60,42 @@ module TestBench;
 	//	$display("TestBench:  %h", __in_frost32_cpu.wait_for_mem);
 	//end
 
+
 	initial
 	begin
 		$dumpfile("test.vcd");
 		$dumpvars(0, TestBench);
 
+		__locals = 0;
+
 		////#500
 		////#50
 		//#100
 		//$finish;
+
+		#100
+		__locals.interrupt = 1;
+
+		//__locals.interrupt = 0;
 	end
+
+	//always @ (posedge __clk)
+	//begin
+	//	//if (__locals.can_interrupt && !__in_frost32_cpu.wait_for_mem)
+	//	//begin
+	//	//	if (!__locals.interrupt)
+	//	//	begin
+	//	//		
+	//	//	end
+	//	//end
+	//end
+
+	//initial
+	//begin
+	//	#500
+	//	$display("test bench finish");
+	//	$finish;
+	//end
 
 	//always @ (posedge __half_clk)
 	//begin

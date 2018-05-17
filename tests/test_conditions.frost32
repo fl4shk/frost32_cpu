@@ -21,12 +21,13 @@ test_bles:
 	bles u0, u1, les
 
 gts:
-	cpyi u0, 0
+	cpya u0, 0xaaaa9001
 	
 	bra done
 
 les:
-	cpyi u0, 1
+	;cpyi u0, 1
+	cpya u0, 0xbbbb2018
 
 
 done:

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: Frost32 Assembly
-" Maintainer: Andrew Clark (FL4SHK)
-" Latest Revision: 16 May 2018
+" Maintainer: FL4SHK
+" Latest Revision: 8 May 2018
 
 if exists("b:current_syntax")
 	finish
@@ -24,9 +24,10 @@ syn keyword frost32_iog2_instr	bne beq bltu bgeu bleu bgtu blts bges bles bgts
 syn keyword frost32_iog3_instr	jne jeq jltu jgeu jleu jgtu jlts jges jles jgts
 syn keyword frost32_iog4_instr	cne ceq cltu cgeu cleu cgtu clts cges cles cgts
 syn keyword frost32_iog5_instr	ldr ldh ldsh ldb ldsb str sth stb ldri ldhi ldshi ldbi ldsbi stri sthi stbi
-syn keyword frost32_pseudo_instr	inv invi cpy cpyi cpya bra jmp call jmpa calla jmpane jmpaeq callane callaeq inc dec
+syn keyword frost32_iog6_instr	ei di cpy reti
+syn keyword frost32_pseudo_instr	inv invi cpyi cpya bra jmp call jmpa calla jmpane jmpaeq callane callaeq inc dec
 
-syn keyword frost32_reg		zero u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 temp lr fp sp pc
+syn keyword frost32_reg		zero u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 temp lr fp sp pc ireta idsta
 
 syn match frost32_directive	"\.org" 
 syn match frost32_directive	"\.space"
@@ -52,6 +53,7 @@ hi def link frost32_iog2_instr		Identifier
 hi def link frost32_iog3_instr		Identifier
 hi def link frost32_iog4_instr		Identifier
 hi def link frost32_iog5_instr		Identifier
+hi def link frost32_iog6_instr		Identifier
 hi def link frost32_pseudo_instr		Identifier
 hi def link frost32_comment		Comment
 hi def link frost32_directive		Special

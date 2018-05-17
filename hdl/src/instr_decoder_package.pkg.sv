@@ -127,6 +127,19 @@ typedef struct packed
 	logic [`MSB_POS__INSTR_OPER:0] opcode;
 } Iog5Instr;
 
+
+// Group 6:  Interrupts stuff
+typedef struct packed
+{
+	// should be 4'b0110
+	logic [`MSB_POS__INSTR_OP_GROUP:0] group;
+	logic [`MSB_POS__INSTR_REG_INDEX:0] ra_index, rb_index, rc_index;
+
+	// blank (should be filled with zeroes)
+	logic [`MSB_POS__INSTR_FILL:0] fill;
+	logic [`MSB_POS__INSTR_OPER:0] opcode;
+} Iog6Instr;
+
 typedef enum logic [`MSB_POS__INSTR_OPER:0]
 {
 	Add_ThreeRegs,
@@ -264,6 +277,29 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 	Sthi_TwoRegsOneSimm12Ldst,
 	Stbi_TwoRegsOneSimm12Ldst
 } Iog5Oper;
+
+typedef enum logic [`MSB_POS__INSTR_OPER:0]
+{
+	Ei_NoArgs,
+	Di_NoArgs,
+	Cpy_OneIretaOneReg,
+	Cpy_OneRegOneIreta,
+
+	Cpy_OneIdstaOneReg,
+	Cpy_OneRegOneIdsta,
+	Reti_NoArgs,
+	Bad0_Iog6,
+
+	Bad1_Iog6,
+	Bad2_Iog6,
+	Bad3_Iog6,
+	Bad4_Iog6,
+
+	Bad5_Iog6,
+	Bad6_Iog6,
+	Bad7_Iog6,
+	Bad8_Iog6
+} Iog6Oper;
 
 
 endpackage : PkgInstrDecoder

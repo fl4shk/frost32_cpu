@@ -13,4 +13,7 @@
 `define DEBUG_REGISTER_FILE
 `endif		// ICARUS
 
+// Temporary
+`define DEBUG_REGISTER_FILE
+
 `endif		// src__slash__misc_defines_header_sv

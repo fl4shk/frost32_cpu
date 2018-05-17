@@ -1,0 +1,68 @@
+.org 0x0000
+main:
+{
+	; Assume top of available memory is here.
+	cpyi sp, 0x7fff						; 0x0
+
+	; Set the interrupt handler
+	cpyi u0, interrupt_handler						; 0x4
+	cpy idsta, u0						; 0x8
+
+	cpyi u7, 20						; 0xc
+	cpyi u8, 0x9000						; 0x10
+
+	ei									; 0x18
+
+	;cpyi u1, trigger_an_interrupt
+	;str zero, [u1, zero]
+
+
+	;cpyi
+
+wait_for_interrupt:
+	;bne u7, u8, wait_for_interrupt
+	bltu u7, u8, wait_for_interrupt
+
+	cpyi u6, 9
+	cpyi u8, 0x9685
+
+	bra quit
+}
+
+
+
+interrupt_handler:
+{
+	;subi sp, 8
+
+	;stri u0, [sp, 4]
+	;stri u1, [sp, 8]
+
+	;cpyi u7, 0x9000
+	cpy u7, u8
+
+	;ldri u0, [sp, 4]
+	;ldri u1, [sp, 8]
+
+	;addi sp, 8
+	;reti
+	cpy lr, ireta
+	jmp lr
+}
+
+
+
+.org 0x4000
+quit:
+{
+	bra quit
+}
+
+;.org 0x6000
+;data:
+;	.space 20
+
+
+;.org 0x9000
+;; Write to this address to trigger the interrupt
+;trigger_an_interrupt:

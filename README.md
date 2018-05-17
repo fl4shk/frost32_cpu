@@ -5,8 +5,8 @@ There's a three-stage pipeline:
     Instruction Decode -> Execute -> Write Back
 
 ## Instructions that take more than one cycle
-Branches, Jumps, and Calls (which by the way are **all** conditional) all
-take two cycles.
+Branches, Jumps, and Calls (which by the way are **all** conditional,
+except for `reti`) all take two cycles.
 
 Multiplications are single-cycle, but only produce 32-bit results.
 
