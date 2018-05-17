@@ -37,7 +37,10 @@ NEWLINE()
 NEWLINE()
 	MDCODE(sp) (recommended for use as the stack pointer)
 * Special Purpose Registers (32-bit)
-	* MDCODE(pc) (program counter)
+	* MDCODE(pc) (program counter), MDCODE(ireta) (interrupt return address)
+	MDCODE(idsta) (interrupt destination address)
+* Special Purpose Registers (1-bit)
+	* MDCODE(ie) (interrupt enable)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0000)
 	* Encoding:  MDCODE(0000 aaaa bbbb cccc  0000 0000 0000 oooo)
@@ -244,6 +247,32 @@ NEWLINE()NEWLINE()
 		* BOLD(stbi) rA, [rB, simm12]
 			* OPCODE(0b1111)
 NEWLINE()NEWLINE()
+* OPCODE_GROUP(0b0110)
+NEWLINE()NEWLINE()
+	* Encoding:  MDCODE(0110 aaaa bbbb cccc  0000 0000 0000 oooo)
+		* MDCODE(a):  rA
+		* MDCODE(b):  rB
+		* MDCODE(c):  rC
+		* MDCODE(o);  opcode
+	* Instructions:
+		* BOLD(ei)
+			* Note:  Enable interrupts
+			* OPCODE(0x0)
+		* BOLD(di)
+			* Note:  Disable interrupts
+			* OPCODE(0x1)
+		* BOLD(cpy) ireta, rA
+			* OPCODE(0x2)
+		* BOLD(cpy) rA, ireta
+			* OPCODE(0x3)
+		* BOLD(cpy) idsta, rA
+			* OPCODE(0x4)
+		* BOLD(cpy) rA, idsta
+			* OPCODE(0x5)
+		* BOLD(reti)
+			* Note:  Enable interrupts and change the program counter to the
+			value contained in MDCODE(ireta)
+			* OPCODE(0x6)
 * Pseudo Instructions:
 	* BOLD(inv) rA, rB
 		* Encoded as CODE(`nor rA, rB, zero')

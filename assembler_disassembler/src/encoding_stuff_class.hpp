@@ -24,6 +24,12 @@ public:		// enums
 		ThreeRegsLdst,
 		TwoRegsOneSimmLdst,
 
+		NoArgs,
+		OneIretaOneReg,
+		OneRegOneIreta,
+		OneIdstaOneReg,
+		OneRegOneIdsta,
+
 		Unknown,
 	};
 
@@ -54,6 +60,12 @@ private:		// variables
 	MapType __iog5_three_regs_ldst_map;
 	MapType __iog5_two_regs_one_simm_ldst_map;
 
+	MapType __iog6_no_args_map;
+	MapType __iog6_one_ireta_one_reg_map;
+	MapType __iog6_one_reg_one_ireta_map;
+	MapType __iog6_one_idsta_one_reg_map;
+	MapType __iog6_one_reg_one_idsta_map;
+
 public:		// functions
 	EncodingStuff();
 
@@ -74,6 +86,12 @@ public:		// functions
 	gen_getter_by_con_ref(iog5_three_regs_ldst_map);
 	gen_getter_by_con_ref(iog5_two_regs_one_simm_ldst_map);
 
+	gen_getter_by_con_ref(iog6_no_args_map);
+	gen_getter_by_con_ref(iog6_one_ireta_one_reg_map);
+	gen_getter_by_con_ref(iog6_one_reg_one_ireta_map);
+	gen_getter_by_con_ref(iog6_one_idsta_one_reg_map);
+	gen_getter_by_con_ref(iog6_one_reg_one_idsta_map);
+
 	std::string* decode_reg_name(u32 reg_index) const;
 	void get_iog0_instr_from_opcode(u32 opcode, std::string*& instr_name,
 		ArgsType& args_type) const;
@@ -86,6 +104,8 @@ public:		// functions
 	void get_iog4_instr_from_opcode(u32 opcode, std::string*& instr_name,
 		ArgsType& args_type) const;
 	void get_iog5_instr_from_opcode(u32 opcode, std::string*& instr_name,
+		ArgsType& args_type) const;
+	void get_iog6_instr_from_opcode(u32 opcode, std::string*& instr_name,
 		ArgsType& args_type) const;
 };
 

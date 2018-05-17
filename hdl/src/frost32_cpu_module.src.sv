@@ -75,14 +75,30 @@ module Frost32Cpu(input logic clk,
 		// stage)
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] pc;
 
+		// Interrupt return address (where to return to when an interrupt
+		// happens (set to the program counter of the instruction in the
+		// decode stage when )
+		logic [`MSB_POS__FROST32_CPU_ADDR:0] ireta;
+
+		// Interrupt destination address (the program counter gets set to
+		// this when an interrutp happens)
+		logic [`MSB_POS__FROST32_CPU_ADDR:0] idsta;
+
+		// Interrupt enable
+		logic ie;
+
 		// Split up 32-bit by 32-bit multiplications into three 16-bit by
 		// 16-bit multiplications (which I believe can be synthesized into
 		// combinational logic) and some adds.
 		logic [`MSB_POS__ALU_INOUT:0] mul_partial_result_x0_y0,
 			mul_partial_result_x1_y0, mul_partial_result_x0_y1;
 
+
+
+		`ifdef DEBUG
 		// Debugging thing
 		logic [31:0] cycles_counter;
+		`endif		// DEBUG
 
 	} __locals;
 
@@ -173,6 +189,7 @@ module Frost32Cpu(input logic clk,
 		.out(__out_compare_ctrl_flow));
 
 	// Debug stuff
+	`ifdef ICARUS
 	always @ (posedge clk)
 	begin
 	if (!in.wait_for_mem)
@@ -186,6 +203,7 @@ module Frost32Cpu(input logic clk,
 		end
 	end
 	end
+	`endif
 
 	`ifdef DEBUG
 	always @ (posedge clk)
@@ -399,8 +417,9 @@ module Frost32Cpu(input logic clk,
 		__stage_write_back_input_data = 0;
 		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
 
-		__locals.pc = 0;
-		__locals.cycles_counter = 0;
+		//__locals.pc = 0;
+		//__locals.cycles_counter = 0;
+		__locals = 0;
 
 		// Prepare a read from memory
 		out.data = 0;

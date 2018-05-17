@@ -128,8 +128,26 @@ private:		// functions
 	}
 
 	inline void decode_instr_opcode_group_5(u32 instruction, 
+		u32& reg_a_index, u32& reg_b_index, u32& reg_c_index, s32& simm12, 
+		u32& opcode) const
+	{
+		struct
+		{
+			u32 fill : 4;
+			s16 simm12 : 12;
+		} temp;
+
+		reg_a_index = get_bits_with_range(instruction, 27, 24);
+		reg_b_index = get_bits_with_range(instruction, 23, 20);
+		reg_c_index = get_bits_with_range(instruction, 19, 16);
+		temp.simm12 =  get_bits_with_range(static_cast<s32>(instruction), 
+			15, 4);
+		simm12 = temp.simm12;
+		opcode = get_bits_with_range(instruction, 3, 0);
+	}
+
+	inline void decode_instr_opcode_group_6(u32 instruction,
 		u32& reg_a_index, u32& reg_b_index, u32& reg_c_index, u32& opcode)
-		const
 	{
 		reg_a_index = get_bits_with_range(instruction, 27, 24);
 		reg_b_index = get_bits_with_range(instruction, 23, 20);

@@ -316,6 +316,12 @@ antlrcpp::Any Assembler::visitInstruction
 	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp5ThreeRegsLdst())
 	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp5TwoRegsOneSimm12Ldst())
 
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp6NoArgs())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp6OneIretaOneReg())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp6OneRegOneIreta())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp6OneIdstaOneReg())
+	else ANY_ACCEPT_IF_BASIC(ctx->instrOpGrp6OneRegOneIdsta())
+
 	else
 	{
 		err(ctx, "visitInstruction():  Eek!");
@@ -662,6 +668,99 @@ antlrcpp::Any Assembler::visitInstrOpGrp5TwoRegsOneSimm12Ldst
 	return nullptr;
 }
 
+antlrcpp::Any Assembler::visitInstrOpGrp6NoArgs
+	(AssemblerGrammarParser::InstrOpGrp6NoArgsContext *ctx)
+{
+	ANY_PUSH_TOK_IF(ctx->TokInstrNameEi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameDi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameReti())
+	else
+	{
+		err(ctx, "visitInstrOpGrp6NoArgs():  Eek!");
+	}
+
+	const auto opcode = __encoding_stuff.iog6_no_args_map().at(pop_str());
+
+	encode_instr_opcode_group_6(0x0, 0x0, 0x0, opcode);
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp6OneIretaOneReg
+	(AssemblerGrammarParser::InstrOpGrp6OneIretaOneRegContext *ctx)
+{
+	if (ctx->TokInstrNameCpy())
+	{
+		const auto opcode = __encoding_stuff.iog6_one_ireta_one_reg_map()
+			.at(cstm_strdup("cpy"));
+
+		encode_instr_opcode_group_6(get_one_reg_encoding
+			(ctx->TokReg()->toString()),
+			0x0, 0x0, opcode);
+	}
+	else
+	{
+		err(ctx, "visitInstrOpGrp6OneIretaOneReg():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp6OneRegOneIreta
+	(AssemblerGrammarParser::InstrOpGrp6OneRegOneIretaContext *ctx)
+{
+	if (ctx->TokInstrNameCpy())
+	{
+		const auto opcode = __encoding_stuff.iog6_one_reg_one_ireta_map()
+			.at(cstm_strdup("cpy"));
+
+		encode_instr_opcode_group_6(get_one_reg_encoding
+			(ctx->TokReg()->toString()),
+			0x0, 0x0, opcode);
+	}
+	else
+	{
+		err(ctx, "visitInstrOpGrp6OneRegOneIreta():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp6OneIdstaOneReg
+	(AssemblerGrammarParser::InstrOpGrp6OneIdstaOneRegContext *ctx)
+{
+	if (ctx->TokInstrNameCpy())
+	{
+		const auto opcode = __encoding_stuff.iog6_one_idsta_one_reg_map()
+			.at(cstm_strdup("cpy"));
+
+		encode_instr_opcode_group_6(get_one_reg_encoding
+			(ctx->TokReg()->toString()),
+			0x0, 0x0, opcode);
+	}
+	else
+	{
+		err(ctx, "visitInstrOpGrp6OneIdstaOneReg():  Eek!");
+	}
+
+	return nullptr;
+}
+antlrcpp::Any Assembler::visitInstrOpGrp6OneRegOneIdsta
+	(AssemblerGrammarParser::InstrOpGrp6OneRegOneIdstaContext *ctx)
+{
+	if (ctx->TokInstrNameCpy())
+	{
+		const auto opcode = __encoding_stuff.iog6_one_reg_one_idsta_map()
+			.at(cstm_strdup("cpy"));
+
+		encode_instr_opcode_group_6(get_one_reg_encoding
+			(ctx->TokReg()->toString()),
+			0x0, 0x0, opcode);
+	}
+	else
+	{
+		err(ctx, "visitInstrOpGrp6OneRegOneIdsta():  Eek!");
+	}
+
+	return nullptr;
+}
 
 // pseudoInstruction:
 antlrcpp::Any Assembler::visitPseudoInstrOpInv
@@ -1482,6 +1581,8 @@ antlrcpp::Any Assembler::visitIdentName
 	else ANY_ACCEPT_IF_BASIC(ctx->pseudoInstrName())
 	else ANY_PUSH_TOK_IF(ctx->TokReg())
 	else ANY_PUSH_TOK_IF(ctx->TokPcReg())
+	else ANY_PUSH_TOK_IF(ctx->TokIretaReg())
+	else ANY_PUSH_TOK_IF(ctx->TokIdstaReg())
 	else
 	{
 		err(ctx, "visitIdentName():  Eek!");
@@ -1575,6 +1676,11 @@ antlrcpp::Any Assembler::visitInstrName
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameStri())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSthi())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameStbi())
+
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameEi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameDi())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameCpy())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameReti())
 	else
 	{
 		err(ctx, "visitInstrName():  Eek!");
@@ -1587,7 +1693,6 @@ antlrcpp::Any Assembler::visitPseudoInstrName
 {
 	ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameInv())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameInvi())
-	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpy())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpyi())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameCpya())
 	else ANY_PUSH_TOK_IF(ctx->TokPseudoInstrNameBra())

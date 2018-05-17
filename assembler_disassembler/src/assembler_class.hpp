@@ -200,6 +200,19 @@ private:		// functions
 
 		gen_32(to_gen);
 	}
+	inline void encode_instr_opcode_group_6(u32 reg_a_index, 
+		u32 reg_b_index, u32 reg_c_index, u32 opcode)
+	{
+		u64 to_gen = 0;
+
+		clear_and_set_bits_with_range(to_gen, 0b0110, 31, 28);
+		clear_and_set_bits_with_range(to_gen, reg_a_index, 27, 24);
+		clear_and_set_bits_with_range(to_gen, reg_b_index, 23, 20);
+		clear_and_set_bits_with_range(to_gen, reg_c_index, 19, 16);
+		clear_and_set_bits_with_range(to_gen, opcode, 3, 0);
+
+		gen_32(to_gen);
+	}
 
 	// Generate data
 	void gen_words(u16 data);
@@ -251,6 +264,17 @@ private:		// visitor functions
 	antlrcpp::Any visitInstrOpGrp5TwoRegsOneSimm12Ldst
 		(AssemblerGrammarParser::InstrOpGrp5TwoRegsOneSimm12LdstContext
 		*ctx);
+
+	antlrcpp::Any visitInstrOpGrp6NoArgs
+		(AssemblerGrammarParser::InstrOpGrp6NoArgsContext *ctx);
+	antlrcpp::Any visitInstrOpGrp6OneIretaOneReg
+		(AssemblerGrammarParser::InstrOpGrp6OneIretaOneRegContext *ctx);
+	antlrcpp::Any visitInstrOpGrp6OneRegOneIreta
+		(AssemblerGrammarParser::InstrOpGrp6OneRegOneIretaContext *ctx);
+	antlrcpp::Any visitInstrOpGrp6OneIdstaOneReg
+		(AssemblerGrammarParser::InstrOpGrp6OneIdstaOneRegContext *ctx);
+	antlrcpp::Any visitInstrOpGrp6OneRegOneIdsta
+		(AssemblerGrammarParser::InstrOpGrp6OneRegOneIdstaContext *ctx);
 
 	// pseudoInstruction:
 	antlrcpp::Any visitPseudoInstrOpInv

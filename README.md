@@ -8,6 +8,8 @@ There's a three-stage pipeline:
 Branches, Jumps, and Calls (which by the way are **all** conditional) all
 take two cycles.
 
+Multiplications are single-cycle, but only produce 32-bit results.
+
 Conditions are resolved in the instruction decode stage, and the
 instruction decode stage **also** handles all memory access.
 

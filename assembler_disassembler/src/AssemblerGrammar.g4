@@ -38,6 +38,12 @@ instruction:
 
 	| instrOpGrp5ThreeRegsLdst
 	| instrOpGrp5TwoRegsOneSimm12Ldst
+
+	| instrOpGrp6NoArgs
+	| instrOpGrp6OneIretaOneReg
+	| instrOpGrp6OneRegOneIreta
+	| instrOpGrp6OneIdstaOneReg
+	| instrOpGrp6OneRegOneIdsta
 	;
 
 instrOpGrp0ThreeRegs:
@@ -141,6 +147,26 @@ instrOpGrp5TwoRegsOneSimm12Ldst:
 	TokReg TokComma TokLBracket TokReg TokComma expr TokRBracket
 	;
 
+instrOpGrp6NoArgs:
+	(TokInstrNameEi | TokInstrNameDi | TokInstrNameReti)
+	;
+instrOpGrp6OneIretaOneReg:
+	TokInstrNameCpy
+	TokIretaReg TokComma TokReg
+	;
+instrOpGrp6OneRegOneIreta:
+	TokInstrNameCpy
+	TokReg TokComma TokIretaReg
+	;
+instrOpGrp6OneIdstaOneReg:
+	TokInstrNameCpy
+	TokIdstaReg TokComma TokReg
+	;
+instrOpGrp6OneRegOneIdsta:
+	TokInstrNameCpy
+	TokReg TokComma TokIdstaReg
+	;
+
 pseudoInstruction:
 	pseudoInstrOpInv
 	| pseudoInstrOpInvi
@@ -169,7 +195,7 @@ pseudoInstrOpInvi:
 	;
 
 pseudoInstrOpGrpCpy:
-	TokPseudoInstrNameCpy
+	TokInstrNameCpy
 	TokReg TokComma (TokReg | TokPcReg)
 	;
 pseudoInstrOpCpyi:
@@ -327,7 +353,8 @@ exprLogNot: TokExclamPoint expr ;
 // TokRegPc are all valid identifiers, but they will **NOT** be caught by
 // the TokIdent token in the lexer.  Thus, these things must be special
 // cased to allow them to be used as identifiers.
-identName: TokIdent | instrName | pseudoInstrName | TokReg | TokPcReg ;
+identName: TokIdent | instrName | pseudoInstrName | TokReg 
+	| TokPcReg | TokIretaReg | TokIdstaReg ;
 
 instrName:
 	TokInstrNameAdd
@@ -413,12 +440,16 @@ instrName:
 	| TokInstrNameStri
 	| TokInstrNameSthi
 	| TokInstrNameStbi
+
+	| TokInstrNameEi
+	| TokInstrNameDi
+	| TokInstrNameCpy
+	| TokInstrNameReti
 	;
 
 pseudoInstrName:
 	TokPseudoInstrNameInv
 	| TokPseudoInstrNameInvi
-	| TokPseudoInstrNameCpy
 	| TokPseudoInstrNameCpyi
 	| TokPseudoInstrNameCpya
 	| TokPseudoInstrNameBra
@@ -543,9 +574,13 @@ TokInstrNameStri: 'stri' ;
 TokInstrNameSthi: 'sthi' ;
 TokInstrNameStbi: 'stbi' ;
 
+TokInstrNameEi: 'ei' ;
+TokInstrNameDi: 'di' ;
+TokInstrNameCpy: 'cpy' ;
+TokInstrNameReti: 'reti' ;
+
 TokPseudoInstrNameInv: 'inv' ;
 TokPseudoInstrNameInvi: 'invi' ;
-TokPseudoInstrNameCpy: 'cpy' ;
 TokPseudoInstrNameCpyi: 'cpyi' ;
 TokPseudoInstrNameCpya: 'cpya' ;
 TokPseudoInstrNameBra: 'bra' ;
@@ -589,6 +624,8 @@ TokReg:
 	;
 
 TokPcReg: 'pc' ;
+TokIretaReg: 'ireta' ;
+TokIdstaReg: 'idsta' ;
 
 
 TokIdent: [A-Za-z_] (([A-Za-z_] | [0-9])*) ;

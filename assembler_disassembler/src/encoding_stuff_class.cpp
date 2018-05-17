@@ -128,6 +128,15 @@ EncodingStuff::EncodingStuff()
 	__iog5_two_regs_one_simm_ldst_map[cstm_strdup("stri")] = temp++;
 	__iog5_two_regs_one_simm_ldst_map[cstm_strdup("sthi")] = temp++;
 	__iog5_two_regs_one_simm_ldst_map[cstm_strdup("stbi")] = temp++;
+
+	temp = 0;
+	__iog6_no_args_map[cstm_strdup("ei")] = temp++;
+	__iog6_no_args_map[cstm_strdup("di")] = temp++;
+	__iog6_one_ireta_one_reg_map[cstm_strdup("cpy")] = temp++;
+	__iog6_one_reg_one_ireta_map[cstm_strdup("cpy")] = temp++;
+	__iog6_one_idsta_one_reg_map[cstm_strdup("cpy")] = temp++;
+	__iog6_one_reg_one_idsta_map[cstm_strdup("cpy")] = temp++;
+	__iog6_no_args_map[cstm_strdup("reti")] = temp++;
 }
 
 
@@ -201,6 +210,19 @@ void EncodingStuff::get_iog5_instr_from_opcode(u32 opcode,
 		ArgsType::ThreeRegsLdst);
 	DECODE_ITERATION(iog5_two_regs_one_simm_ldst_map,
 		ArgsType::TwoRegsOneSimmLdst);
+
+	instr_name = cstm_strdup("unknown_instruction");
+	args_type = ArgsType::Unknown;
+}
+
+void EncodingStuff::get_iog6_instr_from_opcode(u32 opcode, 
+	std::string*& instr_name, ArgsType& args_type) const
+{
+	DECODE_ITERATION(iog6_no_args_map, ArgsType::NoArgs);
+	DECODE_ITERATION(iog6_one_ireta_one_reg_map, ArgsType::OneIretaOneReg);
+	DECODE_ITERATION(iog6_one_reg_one_ireta_map, ArgsType::OneRegOneIreta);
+	DECODE_ITERATION(iog6_one_idsta_one_reg_map, ArgsType::OneIdstaOneReg);
+	DECODE_ITERATION(iog6_one_reg_one_idsta_map, ArgsType::OneRegOneIdsta);
 
 	instr_name = cstm_strdup("unknown_instruction");
 	args_type = ArgsType::Unknown;

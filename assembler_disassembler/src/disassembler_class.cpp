@@ -74,6 +74,7 @@ antlrcpp::Any Disassembler::visitLine
 			const u32 iog = decode_iog(instruction);
 			u32 reg_a_index = 0, reg_b_index = 0, reg_c_index = 0, 
 				opcode= 0, immediate = 0;
+			s32 simm12 = 0;
 			std::string * reg_a_name = nullptr, * reg_b_name = nullptr, 
 				* reg_c_name = nullptr;
 			std::string* instr_name = nullptr;
@@ -114,8 +115,14 @@ antlrcpp::Any Disassembler::visitLine
 					break;
 				case 0x5:
 					decode_instr_opcode_group_5(instruction, reg_a_index,
-						reg_b_index, reg_c_index, opcode);
+						reg_b_index, reg_c_index, simm12, opcode);
 					__encoding_stuff.get_iog5_instr_from_opcode(opcode,
+						instr_name, args_type);
+					break;
+				case 0x6:
+					decode_instr_opcode_group_4(instruction, reg_a_index,
+						reg_b_index, reg_c_index, opcode);
+					__encoding_stuff.get_iog4_instr_from_opcode(opcode,
 						instr_name, args_type);
 					break;
 				default:
@@ -176,8 +183,27 @@ antlrcpp::Any Disassembler::visitLine
 					break;
 				case EncodingStuff::ArgsType::TwoRegsOneSimmLdst:
 					printout(std::hex, *instr_name, " ", *reg_a_name, ", ",
-						"[", *reg_b_name, ", ", "0x", immediate, "]", 
+						"[", *reg_b_name, ", ", "0x", simm12, "]", 
 						std::dec);
+					break;
+				case EncodingStuff::ArgsType::NoArgs:
+					printout(*instr_name);
+					break;
+				case EncodingStuff::ArgsType::OneIretaOneReg:
+					printout(*instr_name, 
+						strappcom2("ireta", *reg_a_name));
+					break;
+				case EncodingStuff::ArgsType::OneRegOneIreta:
+					printout(*instr_name, 
+						strappcom2(*reg_a_name, "ireta"));
+					break;
+				case EncodingStuff::ArgsType::OneIdstaOneReg:
+					printout(*instr_name, 
+						strappcom2("idsta", *reg_a_name));
+					break;
+				case EncodingStuff::ArgsType::OneRegOneIdsta:
+					printout(*instr_name, 
+						strappcom2(*reg_a_name, "idsta"));
 					break;
 				case EncodingStuff::ArgsType::Unknown:
 					show_unknown_instruction_as_dot_db();

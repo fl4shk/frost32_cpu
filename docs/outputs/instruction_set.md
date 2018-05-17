@@ -27,7 +27,10 @@
 <br>
 	`sp` (recommended for use as the stack pointer)
 * Special Purpose Registers (32-bit)
-	* `pc` (program counter)
+	* `pc` (program counter), `ireta` (interrupt return address)
+	`idsta` (interrupt destination address)
+* Special Purpose Registers (1-bit)
+	* `ie` (interrupt enable)
 <br><br>
 * Opcode Group:  0b0000
 	* Encoding:  `0000 aaaa bbbb cccc  0000 0000 0000 oooo`
@@ -230,6 +233,32 @@
 		* <b>stbi</b> rA, [rB, simm12]
 			* Opcode:  0b1111
 <br><br>
+* Opcode Group:  0b0110
+<br><br>
+	* Encoding:  `0110 aaaa bbbb cccc  0000 0000 0000 oooo`
+		* `a`:  rA
+		* `b`:  rB
+		* `c`:  rC
+		* `o`;  opcode
+	* Instructions:
+		* <b>ei</b>
+			* Note:  Enable interrupts
+			* Opcode:  0x0
+		* <b>di</b>
+			* Note:  Disable interrupts
+			* Opcode:  0x1
+		* <b>cpy</b> ireta, rA
+			* Opcode:  0x2
+		* <b>cpy</b> rA, ireta
+			* Opcode:  0x3
+		* <b>cpy</b> idsta, rA
+			* Opcode:  0x4
+		* <b>cpy</b> rA, idsta
+			* Opcode:  0x5
+		* <b>reti</b>
+			* Note:  Enable interrupts and change the program counter to the
+			value contained in `ireta`
+			* Opcode:  0x6
 * Pseudo Instructions:
 	* <b>inv</b> rA, rB
 		* Encoded as <code>nor rA, rB, zero</code>
