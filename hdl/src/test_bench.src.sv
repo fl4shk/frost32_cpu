@@ -14,6 +14,8 @@ module TestBench;
 
 	Frost32Cpu __inst_frost32_cpu(.clk(__half_clk), .in(__in_frost32_cpu),
 		.out(__out_frost32_cpu));
+	//Frost32Cpu __inst_frost32_cpu(.clk(__clk), .in(__in_frost32_cpu),
+	//	.out(__out_frost32_cpu));
 
 	PkgMainMem::PortIn_MainMem __in_main_mem;
 	PkgMainMem::PortOut_MainMem __out_main_mem;
@@ -25,6 +27,7 @@ module TestBench;
 
 
 	assign __in_frost32_cpu.data = __out_main_mem.data;
+	assign __in_frost32_cpu.stall = __out_main_mem.stall;
 
 	assign __in_main_mem.data = __out_frost32_cpu.data;
 	assign __in_main_mem.addr = __out_frost32_cpu.addr;
@@ -33,5 +36,18 @@ module TestBench;
 	assign __in_main_mem.data_inout_access_size
 		= __out_frost32_cpu.data_inout_access_size;
 	assign __in_main_mem.req_mem_access = __out_frost32_cpu.req_mem_access;
+
+	//initial
+	//begin
+	//	//#500
+	//	#50
+	//	$finish;
+	//end
+
+	//always @ (posedge __half_clk)
+	//begin
+	//	
+	//end
+
 
 endmodule

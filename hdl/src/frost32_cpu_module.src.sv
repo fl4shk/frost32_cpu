@@ -21,7 +21,7 @@ module Frost32Cpu(input logic clk,
 	// Data output by or used by the Instruction Decode stage
 	struct packed
 	{
-		// Counter for stalling while waitng for later stages to do their
+		// Counter for stalling while waiting for later stages to do their
 		// thing.
 		// 
 		// Initial value is specific to each instruction that actually uses
@@ -172,9 +172,10 @@ module Frost32Cpu(input logic clk,
 		.b(__stage_execute_input_data.rfile_rb_data),
 		.out(__out_compare_ctrl_flow));
 
-	`ifdef DEBUG
 	// Debug stuff
 	always @ (posedge clk)
+	begin
+	if (!in.stall)
 	begin
 		if (__locals.pc >= 32'h8000)
 		//if (__locals.pc >= 32'hc000)
@@ -183,8 +184,12 @@ module Frost32Cpu(input logic clk,
 			$finish;
 		end
 	end
+	end
 
+	`ifdef DEBUG
 	always @ (posedge clk)
+	begin
+	if (!in.stall)
 	begin
 		__locals.cycles_counter <= __locals.cycles_counter + 1;
 
@@ -214,6 +219,7 @@ module Frost32Cpu(input logic clk,
 		`endif		// DEBUG_INSTR_DECODER
 
 		$display();
+	end
 	end
 	`endif		// DEBUG
 
@@ -349,15 +355,13 @@ module Frost32Cpu(input logic clk,
 		if (condition)
 		begin
 			__locals.pc <= __out_alu.data;
-			prep_mem_read(__out_alu.data, 
-				PkgFrost32Cpu::Dias32);
+			prep_mem_read(__out_alu.data, PkgFrost32Cpu::Dias32);
 		end
 
 		else // if (!condition)
 		begin
 			__locals.pc <= __following_pc;
-			prep_mem_read(__following_pc, 
-				PkgFrost32Cpu::Dias32);
+			prep_mem_read(__following_pc, PkgFrost32Cpu::Dias32);
 		end
 	endtask
 
@@ -413,6 +417,8 @@ module Frost32Cpu(input logic clk,
 
 	// Stage 0:  Instruction Decode
 	always @ (posedge clk)
+	begin
+	//if (!in.stall)
 	begin
 		//$display("Decode:  next_pc:  %h",
 		//	__stage_execute_output_data.next_pc);
@@ -662,10 +668,16 @@ module Frost32Cpu(input logic clk,
 		end
 	end
 
+	//else // if (in.stall)
+	//begin
+	//	stop_mem_access();
+	//end
+	end
+
 	// Stage 1:  Execute 
-	// (Most of the interesting code for this stage is located in the
-	// "always_comb" block after the write back stage's "always" block)
 	always @ (posedge clk)
+	begin
+	//if (!in.stall)
 	begin
 	//if (!__multi_stage_data_1.nop)
 	//begin
@@ -897,9 +909,12 @@ module Frost32Cpu(input logic clk,
 		endcase
 	//end
 	end
+	end
 
 	// Stage 2:  Write Back
 	always @ (posedge clk)
+	begin
+	//if (!in.stall)
 	begin
 	//if (!__multi_stage_data_2.nop)
 	//begin
@@ -1086,9 +1101,12 @@ module Frost32Cpu(input logic clk,
 		endcase
 	//end
 	end
+	end
 
 	// ALU input stuff
 	always_comb
+	begin
+	//if (!in.stall)
 	begin
 		case (__multi_stage_data_1.instr_group)
 			// Group 0:  Three-register ALU operations
@@ -1290,6 +1308,15 @@ module Frost32Cpu(input logic clk,
 			end
 		endcase
 		//__in_alu.a = __stage_execute_input_data.rfile_rb_data
+	end
+
+	//else // if (in.stall)
+	//begin
+	//	__locals.mul_partial_result_x0_y0 = 0;
+	//	__locals.mul_partial_result_x0_y1 = 0;
+	//	__locals.mul_partial_result_x1_y0 = 0;
+	//	__in_alu = 0;
+	//end
 	end
 
 endmodule

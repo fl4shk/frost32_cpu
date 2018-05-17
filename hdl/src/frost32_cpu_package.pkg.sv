@@ -44,6 +44,8 @@ typedef struct packed
 typedef struct packed
 {
 	logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] data;
+
+	logic stall;
 	//logic interrupt;
 } PortIn_Frost32Cpu;
 

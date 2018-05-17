@@ -6,9 +6,11 @@
 `define WIDTH_TO_MSB_POS(some_width) ((some_width) - 1)
 `define ARR_SIZE_TO_LAST_INDEX(some_size) ((some_size) - 1)
 
+`ifdef ICARUS
 `define DEBUG
 `define DEBUG_INSTR_DECODER
 `define DEBUG_MEM_ACCESS
 `define DEBUG_REGISTER_FILE
+`endif		// ICARUS
 
 `endif		// src__slash__misc_defines_header_sv

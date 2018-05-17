@@ -1,0 +1,36 @@
+.org 0x0000
+main:
+{
+	cpyi sp, 0xffff
+
+	subi sp, 12
+
+	cpyi u0, 1
+	cpyi u1, 2
+	cpyi u2, 3
+
+	stri u0, [sp, 4]
+	stri u1, [sp, 8]
+	stri u2, [sp, 12]
+
+	ldri u3, [sp, 4]
+	ldri u4, [sp, 8]
+	ldri u5, [sp, 12]
+
+	addi sp, 12
+
+
+	add zero, zero, zero
+	add zero, zero, zero
+	add zero, zero, zero
+	add zero, zero, zero
+
+	jmpa quit
+}
+
+
+.org 0xc000
+quit:
+{
+	add zero, zero, zero
+}

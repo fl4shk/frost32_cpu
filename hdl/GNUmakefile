@@ -13,10 +13,10 @@ PROJ := frost32_cpu
 # (System)Verilog Compiler
 VC=iverilog
 
-
-BUILD_VVP=$(VC) -g2009 -o $(PROJ).vvp
-BUILD_VHDL=$(VC) -g2009 -tvhdl -o $(PROJ).vhd
-PREPROCESS=$(VC) -g2009 -E -o $(PROJ).E
+EXTRA_IVERILOG_OPTIONS:=-g2009 -DICARUS
+BUILD_VVP=$(VC) $(EXTRA_IVERILOG_OPTIONS) -o $(PROJ).vvp
+BUILD_VHDL=$(VC) $(EXTRA_IVERILOG_OPTIONS) -tvhdl -o $(PROJ).vhd
+PREPROCESS=$(VC) $(EXTRA_IVERILOG_OPTIONS) -E -o $(PROJ).E
 
 
 PKG_FILES := $(foreach DIR,$(SRC_DIRS),$(wildcard $(DIR)/*.pkg.sv))
