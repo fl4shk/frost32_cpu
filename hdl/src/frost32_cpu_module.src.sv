@@ -632,6 +632,12 @@ module Frost32Cpu(input logic clk,
 					endcase
 				end
 
+				else if (__stage_instr_decode_data.stall_state
+					== PkgFrost32Cpu::StInit)
+				begin
+					
+				end
+
 				else
 				begin
 					$display("stall_counter == 1:  Eek!");
@@ -726,8 +732,6 @@ module Frost32Cpu(input logic clk,
 		//else // if (__stage_instr_decode_data.stall_counter == 0)
 		else // if (!in_stall())
 		begin
-			//if (!in.interrupt 
-			//	|| (in.interrupt && !__locals.ie))
 			if (!(in.interrupt && __locals.ie))
 			begin
 				// Update the program counter via owner computes (only this
@@ -744,25 +748,18 @@ module Frost32Cpu(input logic clk,
 						// "reti" gets the new program counter from
 						// __locals.ireta, and also enables interrupts.
 
-						$display("reti:  %h", __locals.ireta);
+						$display("reti:  %h %h", __locals.ie, 
+							__locals.ireta);
 						// This is a valid instruction even when *not* in
 						// an interrupt (mostly because of how simple it
 						// is)
 						__locals.ie <= 1;
-						//__locals.pc <= __locals.ireta;
-
-						//prep_mem_read(__locals.ireta, 
-						//	PkgFrost32Cpu::Dias32);
 						prep_load_next_instruction(__locals.ireta);
 					end
 
 					else
 					begin
 						// Every instruction is 4 bytes long (...for now)
-						//__locals.pc <= __locals.pc + 4;
-
-						//prep_mem_read(__locals.pc + 4, 
-						//	PkgFrost32Cpu::Dias32);
 						prep_load_next_instruction(__locals.pc + 4);
 					end
 				end
@@ -869,9 +866,11 @@ module Frost32Cpu(input logic clk,
 					__locals.idsta,
 					__locals.pc,
 					__locals.ireta);
-				__locals.pc <= __locals.idsta;
+				//__locals.pc <= __locals.idsta;
 				__locals.ireta <= __locals.pc;
 				__locals.ie <= 0;
+
+				prep_load_next_instruction(__locals.idsta);
 			end
 		end
 	end

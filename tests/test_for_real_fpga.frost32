@@ -4,25 +4,33 @@ main:
 	; Assume top of available memory is here.
 	cpyi sp, 0x7fff
 
+	cpyi u1, 0
+
 	; Set the interrupt handler
 	cpyi u0, interrupt_handler
 	cpy idsta, u0
 
-	cpya u0, -7
-	cpya u1, -5
+	cpya u7, 0
+	;cpya u0, -7
+	;cpya u1, -5
 	;cpya u0, 5
 	;cpya u1, 7
 
-loop:
-	inc u0
-	;blts u0, u1, loop
-	bles u0, u1, loop
+;loop:
+;	inc u0
+;	;blts u0, u1, loop
+;	bles u0, u1, loop
 
+
+	;ei
+
+	;bra wait_for_interrupt
+
+	;bra quit
 
 	ei
-
 	bra wait_for_interrupt
-	;bra quit
+
 }
 
 
@@ -31,12 +39,21 @@ interrupt_handler:
 {
 	; The high 8 bits of u7 are shown on the LEDs of my FPGA 
 	addi u7, 20
+	;reti
+
+	;inv u1, u1
+	;addi u1, 20
+
+
+	;cpy lr, ireta
+	;jmp lr
 	reti
 }
 
 
 wait_for_interrupt:
 {
+	; Constantly decrement "u7"
 	dec u7
 	bra wait_for_interrupt
 }

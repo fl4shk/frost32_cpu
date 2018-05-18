@@ -73,10 +73,21 @@ module TestBench;
 		//#100
 		//$finish;
 
-		#100
+		#104
 		__locals.interrupt = 1;
 
 		//__locals.interrupt = 0;
+
+		//#160
+		#60
+		__locals.interrupt = 0;
+
+		#104
+		__locals.interrupt = 1;
+
+		#60
+		__locals.interrupt = 0;
+		$finish;
 	end
 
 	//always @ (posedge __clk)
