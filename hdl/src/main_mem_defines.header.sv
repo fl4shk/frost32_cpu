@@ -5,6 +5,4 @@
 
 `include "src/misc_defines.header.sv"
 
-//`define WIDTH__MAIN_MEM_
-
 `endif		// src__slash__main_mem_defines_header_sv

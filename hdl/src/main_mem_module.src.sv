@@ -284,3 +284,23 @@ module MainMem(input logic clk,
 
 
 endmodule
+
+`define WIDTH__SINGLE_PORT_RAM_DATA_INOUT 32
+`define MSB_POS__SINGLE_PORT_RAM_DATA_INOUT \
+	`WIDTH_TO_MSB_POS(`WIDTH__SINGLE_PORT_RAM_DATA_INOUT)
+
+// 32 kiB
+`define WIDTH__SINGLE_PORT_RAM_ADDR 13
+`define MSB_POS__SINGLE_PORT_RAM_ADDR \
+	`WIDTH_TO_MSB_POS(`WIDTH__SINGLE_PORT_RAM_ADDR)
+
+
+//// Synthesizeable block RAM (32 kiB) with one 32-bit read port and one
+//// 32-bit write port
+//module SinglePortRam(input logic clk,
+//	input logic [`MSB_POS__SINGLE_PORT_RAM_DATA_INOUT:0] in_data,
+//	input logic [`MSB_POS__SINGLE_PORT_RAM_ADDR:0] in_addr,
+//	input logic in_we,
+//	output logic [`MSB_POS__SINGLE_PORT_RAM_DATA_INOUT:0] out_data);
+//endmodule
+

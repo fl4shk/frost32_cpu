@@ -5,10 +5,15 @@ There's a three-stage pipeline:
     Instruction Decode -> Execute -> Write Back
 
 ## Instructions that take more than one cycle
-Branches, Jumps, and Calls (which by the way are **all** conditional,
-except for `reti`) all take two cycles.
+Relative branches take two cycles, and jumps and calls take three cycles.
+`reti` is the exception to this, as it take t
 
+<!--
 Multiplications are single-cycle, but only produce 32-bit results.
+-->
+
+Multiplications (once fully implemented) will also take more than one than
+one cycle, but it isn't clear yet exactly how many cycles they will take.
 
 Conditions are resolved in the instruction decode stage, and the
 instruction decode stage **also** handles all memory access.
