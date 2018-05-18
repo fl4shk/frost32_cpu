@@ -253,14 +253,14 @@
 				end
 				PkgInstrDecoder::Bltu_TwoRegsOneSimm:
 				begin
-					$display("blt r%d, r%d, 0x%x",
+					$display("bltu r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
 				end
 				PkgInstrDecoder::Bgeu_TwoRegsOneSimm:
 				begin
-					$display("bge r%d, r%d, 0x%x",
+					$display("bgeu r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
@@ -268,28 +268,28 @@
 
 				PkgInstrDecoder::Bleu_TwoRegsOneSimm:
 				begin
-					$display("ble r%d, r%d, 0x%x",
+					$display("bleu r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
 				end
 				PkgInstrDecoder::Bgtu_TwoRegsOneSimm:
 				begin
-					$display("bgt r%d, r%d, 0x%x",
+					$display("bgtu r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
 				end
 				PkgInstrDecoder::Blts_TwoRegsOneSimm:
 				begin
-					$display("blt r%d, r%d, 0x%x",
+					$display("blts r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
 				end
 				PkgInstrDecoder::Bges_TwoRegsOneSimm:
 				begin
-					$display("bge r%d, r%d, 0x%x",
+					$display("bges r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
@@ -297,14 +297,14 @@
 
 				PkgInstrDecoder::Bles_TwoRegsOneSimm:
 				begin
-					$display("ble r%d, r%d, 0x%x",
+					$display("bles r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
 				end
 				PkgInstrDecoder::Bgts_TwoRegsOneSimm:
 				begin
-					$display("bgt r%d, r%d, 0x%x",
+					$display("bgts r%d, r%d, 0x%x",
 						__out_instr_decoder.ra_index, 
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);

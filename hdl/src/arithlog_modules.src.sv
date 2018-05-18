@@ -37,8 +37,35 @@ module Compare #(parameter DATA_WIDTH=32)
 			& (a[__DATA_MSB_POS] ^ __temp[__DATA_MSB_POS])));
 
 		// (greater than or equal) and (not equal to zero)
-		out.gtu = ((!out.ltu) && (!__temp));
-		out.gts = ((!out.lts) && (!__temp));
+
+		//out.gtu = ((!out.ltu) && (!__temp));
+		//out.gts = ((!out.lts) && (!__temp));
+		//out.gtu = a > b;
+		//out.gts = $signed(a) > $signed(b);
+
+		//$display("Compare:  %h %h\t\t%h\t\t%h %h\t\t%h %h\t\t%h %h %h",
+		//	a, b, __temp, out.ltu, out.lts, out.gtu, out.gts,
+		//	!out.ltu, !out.lts, !__temp);
+
+		if (out.ltu || (a == b))
+		begin
+			out.gtu = 0;
+		end
+
+		else
+		begin
+			out.gtu = 1;
+		end
+
+		if (out.lts || (a == b))
+		begin
+			out.gts = 0;
+		end
+
+		else
+		begin
+			out.gts = 1;
+		end
 	end
 endmodule
 

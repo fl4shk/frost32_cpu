@@ -405,12 +405,16 @@ module Frost32Cpu(input logic clk,
 
 		if (condition)
 		begin
+			//$display("handle_ctrl_flow_in_decode_stage:  %s",
+			//	"taking branch");
 			__locals.pc <= __out_alu.data;
 			prep_mem_read(__out_alu.data, PkgFrost32Cpu::Dias32);
 		end
 
 		else // if (!condition)
 		begin
+			//$display("handle_ctrl_flow_in_decode_stage:  %s",
+			//	"NOT taking branch");
 			__locals.pc <= __following_pc;
 			prep_mem_read(__following_pc, PkgFrost32Cpu::Dias32);
 		end
@@ -562,8 +566,8 @@ module Frost32Cpu(input logic clk,
 						end
 						PkgInstrDecoder::CtGeu:
 						begin
-							handle_ctrl_flow_in_decode_stage
-								(!__out_compare_ctrl_flow.ltu);
+							//handle_ctrl_flow_in_decode_stage
+							//	(!__out_compare_ctrl_flow.ltu);
 						end
 
 						PkgInstrDecoder::CtLeu:
@@ -579,6 +583,13 @@ module Frost32Cpu(input logic clk,
 
 						PkgInstrDecoder::CtLts:
 						begin
+					//$display("Decode stage CtLts:  %h %h %h %h\t\t%h %h",
+					//	__out_compare_ctrl_flow.ltu,
+					//	__out_compare_ctrl_flow.lts,
+					//	__out_compare_ctrl_flow.gtu,
+					//	__out_compare_ctrl_flow.gts,
+					//	__stage_execute_input_data.rfile_ra_data,
+					//	__stage_execute_input_data.rfile_rb_data);
 							handle_ctrl_flow_in_decode_stage
 								(__out_compare_ctrl_flow.lts);
 						end
@@ -595,6 +606,13 @@ module Frost32Cpu(input logic clk,
 							//	__out_compare_ctrl_flow.lts,
 							//	__out_compare_ctrl_flow.gtu,
 							//	__out_compare_ctrl_flow.gts);
+				//$display("Decode stage CtLes:  %h %h %h %h\t\t%h %h\t\t%h",
+				//		__out_compare_ctrl_flow.ltu,
+				//		__out_compare_ctrl_flow.lts,
+				//		__out_compare_ctrl_flow.gtu,
+				//		__out_compare_ctrl_flow.gts,
+				//		__stage_execute_input_data.rfile_ra_data,
+				//		__stage_execute_input_data.rfile_rb_data);
 							handle_ctrl_flow_in_decode_stage
 								(!__out_compare_ctrl_flow.gts);
 						end
