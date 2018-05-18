@@ -153,7 +153,13 @@ module MainMem(input logic clk,
 	//always_ff @ (posedge clk)
 	always @ (posedge clk)
 	begin
-		//$display("__counter:  %h", __counter);
+		//$display("Stuff:  %h %h\t\t%h %h\t\t%h %h\t\t%h %h",
+		//	__counter, __wait_for_mem,
+		//	in.addr, out.data,
+		//	__in_true_dual_port_ram_addr_a,
+		//	__in_true_dual_port_ram_addr_b,
+		//	__out_true_dual_port_ram_data_a,
+		//	__out_true_dual_port_ram_data_b);
 		if (__counter == 0)
 		begin
 			if (in.req_mem_access)
@@ -162,7 +168,7 @@ module MainMem(input logic clk,
 				__wait_for_mem <= 1;
 
 				// Temporarily assume 32-bit memory access
-				__counter <= 4;
+				__counter <= 3;
 
 				if (in.data_inout_access_type
 					== PkgFrost32Cpu::DiatRead)
@@ -178,45 +184,43 @@ module MainMem(input logic clk,
 					__in_true_dual_port_ram_we_a <= 1;
 					__in_true_dual_port_ram_we_b <= 1;
 				end
-			end
-
-			else
-			begin
-				__in_true_dual_port_ram_we_a <= 0;
-				__in_true_dual_port_ram_we_b <= 0;
-			end
-
-		end
-
-		else // if (__counter != 0)
-		begin
-			__counter <= __counter - 1;
-			if (__counter == 4)
-			begin
 				// Two cycle delay
 				__in_true_dual_port_ram_data_a <= in.data[31:24];
 				__in_true_dual_port_ram_data_b <= in.data[23:16];
 				__in_true_dual_port_ram_addr_a 
-					= (in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
+					<= (in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
 					& __MOD_THING);
 				__in_true_dual_port_ram_addr_b 
-					= ((in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
+					<= ((in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
 					+ 16'h1) & __MOD_THING);
 				//$display("__counter == 4:  %h %h",
 				//	__in_true_dual_port_ram_addr_a,
 				//	__in_true_dual_port_ram_addr_b);
 				out.data <= 0;
+
 			end
 
-			else if (__counter == 3)
+			else
+			begin
+				__wait_for_mem <= 0;
+			end
+
+			//__in_true_dual_port_ram_we_a <= 0;
+			//__in_true_dual_port_ram_we_b <= 0;
+		end
+
+		else // if (__counter != 0)
+		begin
+			__counter <= __counter - 1;
+			if (__counter == 3)
 			begin
 				__in_true_dual_port_ram_data_a <= in.data[15:8];
 				__in_true_dual_port_ram_data_b <= in.data[7:0];
 				__in_true_dual_port_ram_addr_a 
-					= ((in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
+					<= ((in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
 					+ 16'h2) & __MOD_THING);
 				__in_true_dual_port_ram_addr_b 
-					= ((in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
+					<= ((in.addr[`MSB_POS__TRUE_DUAL_PORT_RAM_ADDR:0] 
 					+ 16'h3) & __MOD_THING);
 				//get_out_data_high();
 				//$display("__counter == 3:  %h %h",
