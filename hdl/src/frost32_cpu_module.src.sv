@@ -1077,7 +1077,11 @@ module Frost32Cpu(input logic clk,
 	always @ (posedge clk)
 	begin
 		__multi_stage_data_execute <= __multi_stage_data_register_read;
-		__stage_execute_input_data <= __stage_register_read_input_data;
+		//__stage_execute_input_data <= __stage_register_read_input_data;
+		__stage_execute_input_data.ireta_data
+			<= __stage_register_read_input_data.ireta_data;
+		__stage_execute_input_data.idsta_data
+			<= __stage_register_read_input_data.idsta_data;
 	end
 	`endif		// HAVE_REGISTER_READ_STAGE
 
@@ -1814,7 +1818,8 @@ module Frost32Cpu(input logic clk,
 					// the instruction decoder **also** performed a
 					// sign extend, from 12-bit to 16-bit)
 					__locals.ldst_adder_b 
-						= {{16{__multi_stage_data_execute.instr_imm_val[15]}},
+						= {{16{__multi_stage_data_execute.instr_imm_val
+						[15]}},
 						__multi_stage_data_execute.instr_imm_val};
 				end
 
