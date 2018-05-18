@@ -100,6 +100,10 @@ module Frost32Cpu(input logic clk,
 		logic [`MSB_POS__ALU_INOUT:0] mul_partial_result_x0_y0,
 			mul_partial_result_x1_y0, mul_partial_result_x0_y1;
 
+		logic [`MSB_POS__FROST32_CPU_ADDR:0] 
+			branch_or_ldst_adder_a, branch_or_ldst_adder_b;
+		logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc_after_ctrl_flow;
+		logic [`MSB_POS__FROST32_CPU_ADDR:0] ldst_address;
 
 
 		`ifdef DEBUG
@@ -400,25 +404,32 @@ module Frost32Cpu(input logic clk,
 		//__multi_stage_data_1.nop <= 1'b1;
 	endtask
 
+	//task handle_ctrl_flow_in_decode_stage_part_1;
 	task handle_ctrl_flow_in_decode_stage;
 		input condition;
 
 		if (condition)
 		begin
-			//$display("handle_ctrl_flow_in_decode_stage:  %s",
+			//$display("handle_ctrl_flow_in_decode_stage_part_1:  %s",
 			//	"taking branch");
-			__locals.pc <= __out_alu.data;
-			prep_mem_read(__out_alu.data, PkgFrost32Cpu::Dias32);
+			//prep_load_next_instruction(__out_alu.data);
+			prep_load_next_instruction(__locals.next_pc_after_ctrl_flow);
+			//__locals.next_pc_after_ctrl_flow <= __out_alu.data;
 		end
 
 		else // if (!condition)
 		begin
-			//$display("handle_ctrl_flow_in_decode_stage:  %s",
+			//$display("handle_ctrl_flow_in_decode_stage_part_1:  %s",
 			//	"NOT taking branch");
-			__locals.pc <= __following_pc;
-			prep_mem_read(__following_pc, PkgFrost32Cpu::Dias32);
+			//__locals.pc <= __following_pc;
+			//prep_mem_read(__following_pc, PkgFrost32Cpu::Dias32);
+			prep_load_next_instruction(__following_pc);
+			//__locals.next_pc_after_ctrl_flow <= __following_pc;
 		end
 	endtask
+	//task handle_ctrl_flow_in_decode_stage_part_2;
+	//	prep_load_next_instruction(__locals.next_pc_after_ctrl_flow);
+	//endtask
 
 	task handle_call_in_execute_stage;
 		input condition;
@@ -566,8 +577,8 @@ module Frost32Cpu(input logic clk,
 						end
 						PkgInstrDecoder::CtGeu:
 						begin
-							//handle_ctrl_flow_in_decode_stage
-							//	(!__out_compare_ctrl_flow.ltu);
+							handle_ctrl_flow_in_decode_stage
+								(!__out_compare_ctrl_flow.ltu);
 						end
 
 						PkgInstrDecoder::CtLeu:
@@ -624,10 +635,12 @@ module Frost32Cpu(input logic clk,
 
 						default:
 						begin
-							// Eek!
+							//// Eek!
 							__locals.pc <= __following_pc;
 							prep_mem_read(__following_pc,
 								PkgFrost32Cpu::Dias32);
+							//__locals.next_pc_after_ctrl_flow
+							//	<= __following_pc;
 						end
 					endcase
 				end
@@ -646,75 +659,79 @@ module Frost32Cpu(input logic clk,
 
 			else // if (we're in the middle of executing a multi-cycle
 				// instruction (and not about to finish it))
-				// 
-				// So far, this only applies to loads and stores.
-				// 
-				// Note that only **this** always block (the decode stage's
-				// one) is permitted to write to the output port for memory
-				// access.  This follows from the principle of owner
-				// computes, and is also **required** to be followed if the
-				// code is to be synthesizeable.
 			begin
+				////if ((__stage_instr_decode_data.stall_state
+				////	== PkgFrost32Cpu::StCtrlFlow)
+				////	&& (__stage_instr_decode_data.stall_counter == 2))
+				//if (__stage_instr_decode_data.stall_state
+				//	== PkgFrost32Cpu::StCtrlFlow)
+				//begin
+				//	handle_ctrl_flow_in_decode_stage_part_2();
+				//end
 				// Memory access:  We've done the address computation in
 				// the execute stage (within the "always_comb" block
 				// located after the "always" block that performs the
 				// write back stage)
-				if ((__stage_instr_decode_data.stall_state
+				//else if ((__stage_instr_decode_data.stall_state
+				//	== PkgFrost32Cpu::StMemAccess)
+				//	&& (__stage_instr_decode_data.stall_counter == 2))
+				if (__stage_instr_decode_data.stall_state
 					== PkgFrost32Cpu::StMemAccess)
-					&& (__stage_instr_decode_data.stall_counter == 2))
 				begin
-					// We're in the first cycle after initiating a
-					// multi-cycle load/store instruction.
-					// 
-					// The computed address is in __out_alu.data, and (for
-					// stores) the value to store is in
-					// __stage_execute_input_data.rfile_ra_data.
+					//// We're in the first cycle after initiating a
+					//// multi-cycle load/store instruction.
+					//// 
+					//// The computed address is in __out_alu.data, and (for
+					//// stores) the value to store is in
+					//// __stage_execute_input_data.rfile_ra_data.
 					case (__multi_stage_data_1.instr_ldst_type)
 						PkgInstrDecoder::Ld32:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__out_alu.data,
+							//prep_mem_read(__out_alu.data,
+							//	PkgFrost32Cpu::Dias32);
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias32);
 						end
 						PkgInstrDecoder::LdU16:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__out_alu.data,
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias16);
 						end
 						PkgInstrDecoder::LdS16:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__out_alu.data,
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias16);
 						end
 						PkgInstrDecoder::LdU8:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__out_alu.data,
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias8);
 						end
 						PkgInstrDecoder::LdS8:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__out_alu.data,
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias8);
 						end
 						PkgInstrDecoder::St32:
 						begin
-							prep_mem_write(__out_alu.data,
+							prep_mem_write(__locals.ldst_address,
 								PkgFrost32Cpu::Dias32,
 								__stage_execute_input_data.rfile_ra_data);
 						end
 						PkgInstrDecoder::St16:
 						begin
-							prep_mem_write(__out_alu.data,
+							prep_mem_write(__locals.ldst_address,
 								PkgFrost32Cpu::Dias16,
 								__stage_execute_input_data.rfile_ra_data);
 						end
 						PkgInstrDecoder::St8:
 						begin
-							prep_mem_write(__out_alu.data,
+							prep_mem_write(__locals.ldst_address,
 								PkgFrost32Cpu::Dias8,
 								__stage_execute_input_data.rfile_ra_data);
 						end
@@ -776,6 +793,7 @@ module Frost32Cpu(input logic clk,
 							<= PkgFrost32Cpu::StCtrlFlow;
 
 						__stage_instr_decode_data.stall_counter <= 1;
+						//__stage_instr_decode_data.stall_counter <= 2;
 					end
 
 					// All loads and stores are in group 5, and they take
@@ -1393,15 +1411,23 @@ module Frost32Cpu(input logic clk,
 				//	__in_alu.a, __in_alu.b, __in_alu.oper);
 
 				// We just always perform the temporary multiplications
-				__locals.mul_partial_result_x0_y0
-					= __stage_execute_input_data.rfile_rb_data[15:0]
-					* __stage_execute_input_data.rfile_rc_data[15:0];
-				__locals.mul_partial_result_x0_y1 
-					= __stage_execute_input_data.rfile_rb_data[15:0]
-					* __stage_execute_input_data.rfile_rc_data[31:16];
-				__locals.mul_partial_result_x1_y0
-					= __stage_execute_input_data.rfile_rb_data[31:16]
-					* __stage_execute_input_data.rfile_rc_data[15:0];
+				//__locals.mul_partial_result_x0_y0
+				//	= __stage_execute_input_data.rfile_rb_data[15:0]
+				//	* __stage_execute_input_data.rfile_rc_data[15:0];
+				//__locals.mul_partial_result_x0_y1 
+				//	= __stage_execute_input_data.rfile_rb_data[15:0]
+				//	* __stage_execute_input_data.rfile_rc_data[31:16];
+				//__locals.mul_partial_result_x1_y0
+				//	= __stage_execute_input_data.rfile_rb_data[31:16]
+				//	* __stage_execute_input_data.rfile_rc_data[15:0];
+				__locals.mul_partial_result_x0_y0 = 0;
+				__locals.mul_partial_result_x0_y1 = 0;
+				__locals.mul_partial_result_x1_y0 = 0;
+
+				__locals.branch_or_ldst_adder_a = 0;
+				__locals.branch_or_ldst_adder_b = 0;
+				__locals.next_pc_after_ctrl_flow = 0;
+				__locals.ldst_address = 0;
 			end
 
 			// Group 1:  Immediates
@@ -1410,15 +1436,18 @@ module Frost32Cpu(input logic clk,
 				//__in_alu.oper = __multi_stage_data_1.instr_opcode;
 
 				// We just always perform the temporary multiplications
-				__locals.mul_partial_result_x0_y0
-					= __stage_execute_input_data.rfile_rb_data[15:0]
-					* __multi_stage_data_1.instr_imm_val;
-				__locals.mul_partial_result_x0_y1 
-					= __stage_execute_input_data.rfile_rb_data[15:0]
-					* 16'h0000;
-				__locals.mul_partial_result_x1_y0
-					= __stage_execute_input_data.rfile_rb_data[31:16]
-					* __multi_stage_data_1.instr_imm_val;
+				//__locals.mul_partial_result_x0_y0
+				//	= __stage_execute_input_data.rfile_rb_data[15:0]
+				//	* __multi_stage_data_1.instr_imm_val;
+				//__locals.mul_partial_result_x0_y1 
+				//	= __stage_execute_input_data.rfile_rb_data[15:0]
+				//	* 16'h0000;
+				//__locals.mul_partial_result_x1_y0
+				//	= __stage_execute_input_data.rfile_rb_data[31:16]
+				//	* __multi_stage_data_1.instr_imm_val;
+				__locals.mul_partial_result_x0_y0 = 0;
+				__locals.mul_partial_result_x0_y1 = 0;
+				__locals.mul_partial_result_x1_y0 = 0;
 
 				case (__multi_stage_data_1.instr_opcode)
 					PkgInstrDecoder::Sltsi_TwoRegsOneSimm:
@@ -1479,6 +1508,11 @@ module Frost32Cpu(input logic clk,
 				endcase
 				//$display("always_comb thing:  %h %h %h",
 				//	__in_alu.a, __in_alu.b, __in_alu.oper);
+
+				__locals.branch_or_ldst_adder_a = 0;
+				__locals.branch_or_ldst_adder_b = 0;
+				__locals.next_pc_after_ctrl_flow = 0;
+				__locals.ldst_address = 0;
 			end
 
 			// Group 2:  Branches
@@ -1489,14 +1523,25 @@ module Frost32Cpu(input logic clk,
 				__locals.mul_partial_result_x1_y0 = 0;
 
 				//__in_alu.a = __multi_stage_data_1.pc_val + 4;
-				__in_alu.a = __following_pc;
+				//__in_alu.a = __following_pc;
+				__locals.branch_or_ldst_adder_a = __following_pc;
 
 				// Sign extend the immediate value
-				__in_alu.b 
+				//__in_alu.b 
+				//	= {{16{__multi_stage_data_1.instr_imm_val[15]}}, 
+				//	__multi_stage_data_1.instr_imm_val};
+				__locals.branch_or_ldst_adder_b
 					= {{16{__multi_stage_data_1.instr_imm_val[15]}}, 
 					__multi_stage_data_1.instr_imm_val};
 
-				__in_alu.oper = PkgAlu::Add;
+				//__in_alu.oper = PkgAlu::Add;
+
+				__locals.next_pc_after_ctrl_flow
+					= __locals.branch_or_ldst_adder_a 
+					+ __locals.branch_or_ldst_adder_b;
+				__locals.ldst_address = 0;
+
+				__in_alu = 0;
 			end
 
 			// Group 3:  Jumps
@@ -1506,16 +1551,23 @@ module Frost32Cpu(input logic clk,
 				__locals.mul_partial_result_x0_y1 = 0;
 				__locals.mul_partial_result_x1_y0 = 0;
 
-				// Allows resolving conditional jump destinations with code
-				// that is very similar to the branch destination
-				// resolving.  Simply grab the destination address from the
-				// ALU, no matter the type of control flow (branch, jump,
-				// or call)
-				// 
-				// (See the task handle_ctrl_flow_in_decode())
-				__in_alu.a = __stage_execute_input_data.rfile_rc_data;
-				__in_alu.b = 0;
-				__in_alu.oper = PkgAlu::Add;
+				//// Allows resolving conditional jump destinations with code
+				//// that is very similar to the branch destination
+				//// resolving.  Simply grab the destination address from the
+				//// ALU, no matter the type of control flow (branch, jump,
+				//// or call)
+				//// 
+				//// (See the task handle_ctrl_flow_in_decode())
+				//__in_alu.a = __stage_execute_input_data.rfile_rc_data;
+				//__in_alu.b = 0;
+				//__in_alu.oper = PkgAlu::Add;
+				__locals.branch_or_ldst_adder_a = 0;
+				__locals.branch_or_ldst_adder_b = 0;
+				__locals.next_pc_after_ctrl_flow 
+					= __stage_execute_input_data.rfile_rc_data;
+				__locals.ldst_address = 0;
+
+				__in_alu = 0;
 			end
 
 			// Group 4:  Calls
@@ -1525,16 +1577,24 @@ module Frost32Cpu(input logic clk,
 				__locals.mul_partial_result_x0_y1 = 0;
 				__locals.mul_partial_result_x1_y0 = 0;
 
-				// Allows resolving conditional jump destinations with code
-				// that is very similar to the branch destination
-				// resolving.  Simply grab the destination address from the
-				// ALU, no matter the type of control flow (branch, jump,
-				// or call)
-				// 
-				// (See the task handle_ctrl_flow_in_decode())
-				__in_alu.a = __stage_execute_input_data.rfile_rc_data;
-				__in_alu.b = 0;
-				__in_alu.oper = PkgAlu::Add;
+				//// Allows resolving conditional jump destinations with code
+				//// that is very similar to the branch destination
+				//// resolving.  Simply grab the destination address from the
+				//// ALU, no matter the type of control flow (branch, jump,
+				//// or call)
+				//// 
+				//// (See the task handle_ctrl_flow_in_decode())
+				//__in_alu.a = __stage_execute_input_data.rfile_rc_data;
+				//__in_alu.b = 0;
+				//__in_alu.oper = PkgAlu::Add;
+
+				__locals.branch_or_ldst_adder_a = 0;
+				__locals.branch_or_ldst_adder_b = 0;
+				__locals.next_pc_after_ctrl_flow
+					= __stage_execute_input_data.rfile_rc_data;
+				__locals.ldst_address = 0;
+
+				__in_alu = 0;
 			end
 
 			// Group 5:  Loads and stores
@@ -1544,7 +1604,10 @@ module Frost32Cpu(input logic clk,
 				__locals.mul_partial_result_x0_y1 = 0;
 				__locals.mul_partial_result_x1_y0 = 0;
 
-				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
+				__in_alu = 0;
+
+				__locals.branch_or_ldst_adder_a 
+					= __stage_execute_input_data.rfile_rb_data;
 
 				// Immediate-indexed loads and stores have
 				// (__multi_stage_data_1.instr_opcode[3] == 1)
@@ -1554,18 +1617,21 @@ module Frost32Cpu(input logic clk,
 					// immediate (actually sign extended twice since
 					// the instruction decoder **also** performed a
 					// sign extend, from 12-bit to 16-bit)
-					__in_alu.b = {{16{__multi_stage_data_1
-						.instr_imm_val[15]}},
+					__locals.branch_or_ldst_adder_b 
+						= {{16{__multi_stage_data_1.instr_imm_val[15]}},
 						__multi_stage_data_1.instr_imm_val};
 				end
 
 				else
 				begin
 					// memory address computation:  rB + rC
-					__in_alu.b = __stage_execute_input_data
-						.rfile_rc_data;
+					__locals.branch_or_ldst_adder_b 
+						= __stage_execute_input_data.rfile_rc_data;
 				end
-				__in_alu.oper = PkgAlu::Add;
+				//__in_alu.oper = PkgAlu::Add;
+
+				__locals.ldst_address = __locals.branch_or_ldst_adder_a
+					+ __locals.branch_or_ldst_adder_b;
 			end
 
 			default:
@@ -1573,6 +1639,11 @@ module Frost32Cpu(input logic clk,
 				__locals.mul_partial_result_x0_y0 = 0;
 				__locals.mul_partial_result_x0_y1 = 0;
 				__locals.mul_partial_result_x1_y0 = 0;
+
+				__locals.branch_or_ldst_adder_a = 0;
+				__locals.branch_or_ldst_adder_b = 0;
+				__locals.next_pc_after_ctrl_flow = 0;
+				__locals.ldst_address = 0;
 
 				// Perform a bogus add
 				__in_alu = 0;
