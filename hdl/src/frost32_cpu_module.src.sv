@@ -3,6 +3,17 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
+`ifdef HAVE_REGISTER_READ_STAGE
+`define MULTI_STAGE_DATA_AFTER_INSTR_DECODE \
+	__multi_stage_data_register_read
+`define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
+	__stage_register_read_input_data
+`else
+`define MULTI_STAGE_DATA_AFTER_INSTR_DECODE \
+	__multi_stage_data_execute
+`define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
+	__stage_execute_input_data
+`endif
 
 module Frost32Cpu(input logic clk,
 	input PkgFrost32Cpu::PortIn_Frost32Cpu in,
@@ -255,7 +266,7 @@ module Frost32Cpu(input logic clk,
 		`ifdef HAVE_REGISTER_READ_STAGE
 		$display("Frost32Cpu pc's:  %h %h %h %h", 
 			__multi_stage_data_instr_decode.pc_val, 
-			__multi_stage_data_register_read,
+			__multi_stage_data_register_read.pc_val,
 			__multi_stage_data_execute.pc_val,
 			__multi_stage_data_write_back.pc_val);
 		`else
@@ -451,29 +462,17 @@ module Frost32Cpu(input logic clk,
 		__in_reg_file.read_sel_rb <= 0;
 		__in_reg_file.read_sel_rc <= 0;
 
-		`ifdef HAVE_REGISTER_READ_STAGE
-		//__multi_stage_data_register_read <= 0;
-		__multi_stage_data_register_read.instr_ra_index <= 0;
-		__multi_stage_data_register_read.instr_rb_index <= 0;
-		__multi_stage_data_register_read.instr_rc_index <= 0;
-		__multi_stage_data_register_read.instr_group <= 0;
-		__multi_stage_data_register_read.instr_opcode <= 0;
-		__multi_stage_data_register_read.instr_ldst_type <= 0;
-		__multi_stage_data_register_read.instr_causes_stall <= 0;
-		__multi_stage_data_register_read.instr_condition_type <= 0;
-		//__multi_stage_data_register_read.nop <= 1'b1;
-		`else
-		//__multi_stage_data_execute <= 0;
-		__multi_stage_data_execute.instr_ra_index <= 0;
-		__multi_stage_data_execute.instr_rb_index <= 0;
-		__multi_stage_data_execute.instr_rc_index <= 0;
-		__multi_stage_data_execute.instr_group <= 0;
-		__multi_stage_data_execute.instr_opcode <= 0;
-		__multi_stage_data_execute.instr_ldst_type <= 0;
-		__multi_stage_data_execute.instr_causes_stall <= 0;
-		__multi_stage_data_execute.instr_condition_type <= 0;
-		//__multi_stage_data_execute.nop <= 1'b1;
-		`endif		// HAVE_REGISTER_READ_STAGE
+		//`MULTI_STAGE_DATA_AFTER_INSTR_DECODE <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_ra_index <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_rb_index <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_rc_index <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_group <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_opcode <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_ldst_type <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_causes_stall <= 0;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_condition_type <= 0;
+		//`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.nop <= 1'b1;
+
 	endtask
 
 	//task handle_ctrl_flow_in_decode_stage_part_1;
@@ -740,8 +739,7 @@ module Frost32Cpu(input logic clk,
 				end
 			end
 
-			else // if (we're in the middle of executing a multi-cycle
-				// instruction (and not about to finish it))
+			else if (__stage_instr_decode_data.stall_counter == 2)
 			begin
 				if (__stage_instr_decode_data.stall_state
 					== PkgFrost32Cpu::StCtrlFlowJumpCall)
@@ -861,6 +859,9 @@ module Frost32Cpu(input logic clk,
 						end
 						PkgInstrDecoder::St32:
 						begin
+							$display("Storing %h to address %h",
+								__stage_execute_input_data.rfile_ra_data,
+								__locals.ldst_address);
 							prep_mem_write(__locals.ldst_address,
 								PkgFrost32Cpu::Dias32,
 								__stage_execute_input_data.rfile_ra_data);
@@ -1012,33 +1013,18 @@ module Frost32Cpu(input logic clk,
 				// decode stage.
 				else
 				begin
-					`ifdef HAVE_REGISTER_READ_STAGE
 					// We only send a non-bubble instruction to
-					// __multi_stage_data_register_read when there's a new
-					// instruction that is NOT "ei" or "di"
-					__multi_stage_data_register_read 
+					// `MULTI_STAGE_DATA_AFTER_INSTR_DECODE when there's a
+					// new instruction that is NOT "ei" or "di"
+					`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
 						<= __multi_stage_data_instr_decode;
-					__multi_stage_data_register_read 
+					`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
 						<= __multi_stage_data_instr_decode;
 
-					__stage_register_read_input_data.ireta_data 
+					`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.ireta_data 
 						<= __locals.ireta;
-					__stage_register_read_input_data.idsta_data 
+					`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.idsta_data 
 						<= __locals.idsta;
-					`else
-					// We only send a non-bubble instruction to
-					// __multi_stage_data_execute when there's a new
-					// instruction that is NOT "ei" or "di"
-					__multi_stage_data_execute 
-						<= __multi_stage_data_instr_decode;
-					__multi_stage_data_execute 
-						<= __multi_stage_data_instr_decode;
-
-					__stage_execute_input_data.ireta_data 
-						<= __locals.ireta;
-					__stage_execute_input_data.idsta_data 
-						<= __locals.idsta;
-					`endif		// HAVE_REGISTER_READ_STAGE
 
 					// Use all three register file read ports.
 					// Do this whenever we're not in a stall.

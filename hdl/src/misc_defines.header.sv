@@ -15,7 +15,7 @@
 `endif		// ICARUS
 
 // Temporary
-//`define DEBUG_REGISTER_FILE
+`define DEBUG_REGISTER_FILE
 
 //`define USE_SINGLE_CYCLE_MULTIPLY
 `define HAVE_REGISTER_READ_STAGE

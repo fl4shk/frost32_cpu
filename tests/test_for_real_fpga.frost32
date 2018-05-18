@@ -55,6 +55,12 @@ wait_for_interrupt:
 {
 	; Constantly decrement "u7"
 	dec u7
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
 	bra wait_for_interrupt
 }
 
