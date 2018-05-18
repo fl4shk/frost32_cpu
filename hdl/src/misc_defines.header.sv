@@ -11,9 +11,13 @@
 `define DEBUG_INSTR_DECODER
 `define DEBUG_MEM_ACCESS
 `define DEBUG_REGISTER_FILE
+`define USE_SINGLE_CYCLE_MULTIPLY
 `endif		// ICARUS
 
 // Temporary
 //`define DEBUG_REGISTER_FILE
+
+//`define USE_SINGLE_CYCLE_MULTIPLY
+`define HAVE_REGISTER_READ_STAGE
 
 `endif		// src__slash__misc_defines_header_sv

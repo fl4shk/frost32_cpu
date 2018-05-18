@@ -1,5 +1,21 @@
 `include "src/register_file_defines.header.sv"
 
+`ifdef HAVE_REGISTER_READ_STAGE
+`define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
+	always_ff @ (posedge clk) \
+	begin \
+		if (in.write_en && (in.write_sel == in.read_sel_name) \
+			&& (in.write_sel != 0)) \
+		begin \
+			out.read_data_name <= in.write_data; \
+		end \
+\
+		else \
+		begin \
+			out.read_data_name <= __regfile[in.read_sel_name]; \
+		end \
+	end
+`else
 `define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
 	always_comb \
 	begin \
@@ -14,8 +30,13 @@
 			out.read_data_name = __regfile[in.read_sel_name]; \
 		end \
 	end
+`endif		//
 
-// Asynchronous reads (three ports), synchronous writes (one port)
+
+// No register read stage:  Asynchronous reads (three ports), synchronous
+// writes (one port)
+// With register read stage:  Synchronous reads (three ports), synchronous
+// writes (one port)
 module RegisterFile(input logic clk,
 	input PkgRegisterFile::PortIn_RegFile in,
 	output PkgRegisterFile::PortOut_RegFile out

@@ -1,24 +1,26 @@
 # Frost32 CPU
 My first attempt at a pipelined CPU, being implemented in SystemVerilog.
 
-There's a three-stage pipeline:  
+There's either a three-stage or a four-stage pipeline:  
+* Three-stage pipeline:
     Instruction Decode -> Execute -> Write Back
+* Four-stage pipeline:
+    Instruction Decode -> Register Read -> Execute -> Write Back
 
 ## Instructions that take more than one cycle
-Relative branches take two cycles, and jumps and calls take three cycles.
-`reti` is the exception to this, as it takes one cycle.
 
-Multiplications are single-cycle, but only produce 32-bit results.
+* When there's a three-stage pipeline:
+    * Relative branches take two cycles, and jumps and calls take three cycles.
+    `reti` is the exception to this, as it takes one cycle.
+    * Multiplications (once fully implemented) will also take more than one than
+    one cycle, but it isn't clear yet exactly how many cycles they will take.
+    * Conditions are resolved in the instruction decode stage, and the
+    instruction decode stage **also** handles all memory access.
+    * Loads and stores take three cycles each.
 
-<!--
-Multiplications (once fully implemented) will also take more than one than
-one cycle, but it isn't clear yet exactly how many cycles they will take.
--->
-
-Conditions are resolved in the instruction decode stage, and the
-instruction decode stage **also** handles all memory access.
-
-Loads and stores take three cycles each.
+* When there's a four-stage pipeline:
+    * Instructions that take more than one cycle all take one more than
+    they would have if there was a three-stage pipeline
 
 
 # The Assembler

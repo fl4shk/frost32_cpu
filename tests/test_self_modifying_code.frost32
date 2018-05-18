@@ -4,8 +4,10 @@ main:
 	// Assume top of available memory is here
 	cpya sp, 0x7fff
 
-	cpya u0, 9
-	cpya u1, 8
+	;cpya u0, 9
+	;cpya u1, 8
+	cpya u0, 0xdeadbeef
+	cpya u1, 0xcafe9000
 
 	; Try some self-modifying code
 	addsi lr, pc, 8
