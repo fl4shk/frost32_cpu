@@ -6,14 +6,14 @@ There's a three-stage pipeline:
 
 ## Instructions that take more than one cycle
 Relative branches take two cycles, and jumps and calls take three cycles.
-`reti` is the exception to this, as it take t
+`reti` is the exception to this, as it takes one cycle.
+
+Multiplications are single-cycle, but only produce 32-bit results.
 
 <!--
-Multiplications are single-cycle, but only produce 32-bit results.
--->
-
 Multiplications (once fully implemented) will also take more than one than
 one cycle, but it isn't clear yet exactly how many cycles they will take.
+-->
 
 Conditions are resolved in the instruction decode stage, and the
 instruction decode stage **also** handles all memory access.
