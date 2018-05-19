@@ -21,7 +21,7 @@ main:
 
 	; I really need a pseudo instruction for non-indexed loads and stores.
 	; That will probably be coming....
-	cpyi u3, data_for_dec_u1
+	cpyi u3, data_for_subtract_from_u1
 	ldr u3, [u3, zero]
 	cpyi u4, data_for_add_to_u1
 	ldr u4, [u4, zero]
@@ -41,13 +41,13 @@ main:
 
 interrupt_handler:
 {
-	; Switch to an add
+	; Switch to an addi
 	str u4, [u2, zero]
 
 	; Change the variable
 	call u5
 
-	; Switch back to a decrement
+	; Switch back to a subi
 	str u3, [u2, zero]
 
 	reti
@@ -70,7 +70,8 @@ change_var:
 	ldr u1, [u0, zero]
 
 code_to_modify:
-	dec u1
+	;dec u1
+	subi u1, 20
 
 	cpy u7, u1
 
@@ -82,9 +83,11 @@ code_to_modify:
 	jmp lr
 
 
-data_for_dec_u1:
+;data_for_dec_u1:
+data_for_subtract_from_u1:
 {
-	dec u1
+	;dec u1
+	subi u1, 20
 }
 
 data_for_add_to_u1:

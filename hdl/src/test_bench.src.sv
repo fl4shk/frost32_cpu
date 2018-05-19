@@ -18,10 +18,10 @@ module TestBench;
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;
 	PkgFrost32Cpu::PortOut_Frost32Cpu __out_frost32_cpu;
 
-	//Frost32Cpu __inst_frost32_cpu(.clk(__half_clk), .in(__in_frost32_cpu),
-	//	.out(__out_frost32_cpu));
-	Frost32Cpu __inst_frost32_cpu(.clk(__clk), .in(__in_frost32_cpu),
+	Frost32Cpu __inst_frost32_cpu(.clk(__half_clk), .in(__in_frost32_cpu),
 		.out(__out_frost32_cpu));
+	//Frost32Cpu __inst_frost32_cpu(.clk(__clk), .in(__in_frost32_cpu),
+	//	.out(__out_frost32_cpu));
 
 	PkgMainMem::PortIn_MainMem __in_main_mem;
 	PkgMainMem::PortOut_MainMem __out_main_mem;
@@ -81,15 +81,17 @@ module TestBench;
 
 		//#160
 		#60
-		//__locals.interrupt = 0;
+		__locals.interrupt = 0;
 
-		#1000
+		#2000
 
 		#104
 		__locals.interrupt = 1;
 
 		#60
-		//__locals.interrupt = 0;
+		__locals.interrupt = 0;
+
+		#1000
 		$finish;
 	end
 

@@ -949,7 +949,8 @@ module Frost32Cpu(input logic clk,
 		//else // if (__stage_instr_decode_data.stall_counter == 0)
 		else // if (!in_stall())
 		begin
-			if (!(in.interrupt && __locals.ie))
+			//if (!(in.interrupt && __locals.ie))
+			if ((in.interrupt && !__locals.ie) || (!in.interrupt))
 			begin
 				// Update the program counter via owner computes (only this
 				// always block can perform an actual change to the program
@@ -971,9 +972,12 @@ module Frost32Cpu(input logic clk,
 						// an interrupt
 						__locals.ie <= 1;
 						prep_load_next_instruction(__locals.ireta);
+
+						// Send a bubble through
+						make_bubble();
 					end
 
-					else
+					//else
 					begin
 						// Every instruction is 4 bytes long (...for now)
 						prep_load_next_instruction(__locals.pc + 4);
@@ -1050,20 +1054,27 @@ module Frost32Cpu(input logic clk,
 				end
 
 				// Handle what the execute stage sees next
+				//if ((__multi_stage_data_instr_decode.instr_group == 6)
+				//	&& ((__multi_stage_data_instr_decode.instr_opcode 
+				//	== PkgInstrDecoder::Ei_NoArgs)
+				//	|| (__multi_stage_data_instr_decode.instr_opcode
+				//	== PkgInstrDecoder::Di_NoArgs)
+				//	|| (__multi_stage_data_instr_decode.instr_opcode
+				//	== PkgInstrDecoder::Reti_NoArgs)))
 				if ((__multi_stage_data_instr_decode.instr_group == 6)
 					&& ((__multi_stage_data_instr_decode.instr_opcode 
 					== PkgInstrDecoder::Ei_NoArgs)
 					|| (__multi_stage_data_instr_decode.instr_opcode
-					== PkgInstrDecoder::Di_NoArgs)
-					|| (__multi_stage_data_instr_decode.instr_opcode
-					== PkgInstrDecoder::Reti_NoArgs)))
+					== PkgInstrDecoder::Di_NoArgs)))
 				begin
-					if (__multi_stage_data_instr_decode.instr_opcode
-						!= PkgInstrDecoder::Reti_NoArgs)
-					begin
-						__locals.ie <= (__multi_stage_data_instr_decode
-							.instr_opcode == PkgInstrDecoder::Ei_NoArgs);
-					end
+					//if (__multi_stage_data_instr_decode.instr_opcode
+					//	!= PkgInstrDecoder::Reti_NoArgs)
+					//begin
+					//	__locals.ie <= (__multi_stage_data_instr_decode
+					//		.instr_opcode == PkgInstrDecoder::Ei_NoArgs);
+					//end
+					__locals.ie <= (__multi_stage_data_instr_decode
+						.instr_opcode == PkgInstrDecoder::Ei_NoArgs);
 
 					// Just send a bubble through to the later stages since
 					// they don't really need to know anything about "ei",
