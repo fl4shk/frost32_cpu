@@ -502,8 +502,8 @@ module Frost32Cpu(input logic clk,
 	task prep_ra_write;
 		input [`MSB_POS__REG_FILE_DATA:0] s_data;
 
-		//$display("prep_ra_write:  %h %h",
-		//	__multi_stage_data_write_back.instr_ra_index, s_data);
+		$display("prep_ra_write:  %h %h",
+			__multi_stage_data_write_back.instr_ra_index, s_data);
 		__in_reg_file.write_sel 
 			<= __multi_stage_data_write_back.instr_ra_index;
 		__in_reg_file.write_data <= s_data;
@@ -892,6 +892,7 @@ module Frost32Cpu(input logic clk,
 							// Write-back handles the store to the register
 							//prep_mem_read(__out_alu.data,
 							//	PkgFrost32Cpu::Dias32);
+							$display("Ld32:  %h", __locals.ldst_address);
 							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias32);
 						end
@@ -1478,6 +1479,9 @@ module Frost32Cpu(input logic clk,
 				case (__multi_stage_data_write_back.instr_opcode)
 					PkgInstrDecoder::Ldr_ThreeRegsLdst:
 					begin
+						$display("Load into r%d:  %h", 
+							__multi_stage_data_write_back.instr_ra_index,
+							in.data);
 						prep_ra_write(in.data);
 					end
 
@@ -1621,8 +1625,8 @@ module Frost32Cpu(input logic clk,
 				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
 				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
 				__in_alu.oper = __multi_stage_data_execute.instr_opcode;
-				//$display("always_comb thing:  %h %h %h",
-				//	__in_alu.a, __in_alu.b, __in_alu.oper);
+				$display("group 0 always_comb thing:  %h %h %h",
+					__in_alu.a, __in_alu.b, __in_alu.oper);
 
 				//// We just always perform the temporary multiplications
 				`ifdef USE_SINGLE_CYCLE_MULTIPLY

@@ -1,4 +1,6 @@
 
+	if (__stage_instr_decode_data.stall_counter != 1)
+	begin
 	case (__out_instr_decoder.group)
 		0:
 		begin
@@ -746,3 +748,9 @@
 			$display("unknown");
 		end
 	endcase
+	end
+
+	else
+	begin
+		$display("__stage_instr_decode_data.stall_counter == 1");
+	end
