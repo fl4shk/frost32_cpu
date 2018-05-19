@@ -502,8 +502,8 @@ module Frost32Cpu(input logic clk,
 	task prep_ra_write;
 		input [`MSB_POS__REG_FILE_DATA:0] s_data;
 
-		$display("prep_ra_write:  %h %h",
-			__multi_stage_data_write_back.instr_ra_index, s_data);
+		//$display("prep_ra_write:  %h %h",
+		//	__multi_stage_data_write_back.instr_ra_index, s_data);
 		__in_reg_file.write_sel 
 			<= __multi_stage_data_write_back.instr_ra_index;
 		__in_reg_file.write_data <= s_data;
@@ -1182,8 +1182,8 @@ module Frost32Cpu(input logic clk,
 				if (__multi_stage_data_execute.instr_opcode 
 					!= PkgInstrDecoder::Mul_ThreeRegs)
 				begin
-					$display("Three registers ALU operation:  %h",
-						__out_alu.data);
+					//$display("Three registers ALU operation:  %h",
+					//	__out_alu.data);
 					__stage_write_back_input_data.n_reg_data 
 						<= __out_alu.data;
 
@@ -1228,8 +1228,8 @@ module Frost32Cpu(input logic clk,
 					begin
 						__stage_write_back_input_data.n_reg_data 
 							<= __out_alu.data;
-						$display("Two registers, one imm ALU op:  %h",
-							__out_alu.data);
+						//$display("Two registers, one imm ALU op:  %h",
+						//	__out_alu.data);
 					end
 
 					else

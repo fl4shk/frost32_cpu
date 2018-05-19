@@ -10,12 +10,16 @@ main:
 	cpya u1, 0xcafe9000
 
 	; Try some self-modifying code
-	addsi lr, pc, 8
-	bra modify_subroutine
+	;addsi lr, pc, 8
+	;bra modify_subroutine
+	cpyi lr, modify_subroutine
+	call lr
 
-	; Branch to subroutine
-	addsi lr, pc, 8
-	bra to_modify
+	;; Branch to subroutine
+	;addsi lr, pc, 8
+	;bra to_modify
+	cpyi lr, to_modify
+	call lr
 
 
 done:
