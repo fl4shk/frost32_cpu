@@ -86,6 +86,8 @@ module RegisterFile(input logic clk,
 		begin
 			__regfile[i] = 0;
 		end
+
+		out = 0;
 	end
 
 	// Reading

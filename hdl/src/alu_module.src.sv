@@ -86,15 +86,15 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 			end
 			PkgAlu::Lsl:
 			begin
-				if (in.b[__MSB_POS_INOUT : 5])
-				begin
-					out.data = {__WIDTH_INOUT{1'b0}};
-				end
+				//if (in.b[__MSB_POS_INOUT : 5])
+				//begin
+				//	out.data = {__WIDTH_INOUT{1'b0}};
+				//end
 
-				else
-				begin
+				//else
+				//begin
 					out.data = __out_lsl32.data;
-				end
+				//end
 			end
 
 
@@ -102,35 +102,35 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 
 			PkgAlu::Lsr:
 			begin
-				if (in.b[__MSB_POS_INOUT : 5])
-				begin
-					out.data = {__WIDTH_INOUT{1'b0}};
-				end
+				//if (in.b[__MSB_POS_INOUT : 5])
+				//begin
+				//	out.data = {__WIDTH_INOUT{1'b0}};
+				//end
 
-				else
-				begin
+				//else
+				//begin
 					out.data = __out_lsr32.data;
-				end
+				//end
 			end
 			PkgAlu::Asr:
 			begin
-				if (in.b[__MSB_POS_INOUT : 5])
-				begin
-					if (in.a[__MSB_POS_INOUT])
-					begin
-						out.data = {__WIDTH_INOUT{1'b1}};
-					end
+				//if (in.b[__MSB_POS_INOUT : 5])
+				//begin
+				//	if (in.a[__MSB_POS_INOUT])
+				//	begin
+				//		out.data = {__WIDTH_INOUT{1'b1}};
+				//	end
 
-					else
-					begin
-						out.data = {__WIDTH_INOUT{1'b0}};
-					end
-				end
+				//	else
+				//	begin
+				//		out.data = {__WIDTH_INOUT{1'b0}};
+				//	end
+				//end
 
-				else
-				begin
+				//else
+				//begin
 					out.data = __out_asr32.data;
-				end
+				//end
 			end
 
 			// The processor probably doesn't actually use this operation

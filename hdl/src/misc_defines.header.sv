@@ -17,7 +17,7 @@
 // Temporary
 //`define DEBUG_REGISTER_FILE
 
-`define USE_SINGLE_CYCLE_MULTIPLY
+//`define USE_SINGLE_CYCLE_MULTIPLY
 `define HAVE_REGISTER_READ_STAGE
 
 `endif		// src__slash__misc_defines_header_sv
