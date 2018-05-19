@@ -72,6 +72,7 @@ change_var:
 code_to_modify:
 	;dec u1
 	subi u1, 20
+	;add zero, zero, zero
 
 	cpy u7, u1
 
@@ -88,6 +89,7 @@ data_for_subtract_from_u1:
 {
 	;dec u1
 	subi u1, 20
+	;dec u1
 }
 
 data_for_add_to_u1:
