@@ -351,7 +351,7 @@ module Frost32Cpu(input logic clk,
 		__stage_execute_input_data.rfile_ra_data
 			= ((__stage_execute_output_data.prev_written_reg_index
 			== __multi_stage_data_execute.instr_ra_index)
-			&& (__stage_execute_output_data.prev_written_reg_index != 0)) 
+			&& (__stage_execute_output_data.prev_written_reg_index != 0))
 			? __stage_write_back_input_data.n_reg_data
 			: __out_reg_file.read_data_ra;
 	end
@@ -360,7 +360,7 @@ module Frost32Cpu(input logic clk,
 		__stage_execute_input_data.rfile_rb_data
 			= ((__stage_execute_output_data.prev_written_reg_index
 			== __multi_stage_data_execute.instr_rb_index)
-			&& (__stage_execute_output_data.prev_written_reg_index != 0)) 
+			&& (__stage_execute_output_data.prev_written_reg_index != 0))
 			? __stage_write_back_input_data.n_reg_data
 			: __out_reg_file.read_data_rb;
 	end
@@ -369,7 +369,7 @@ module Frost32Cpu(input logic clk,
 		__stage_execute_input_data.rfile_rc_data
 			= ((__stage_execute_output_data.prev_written_reg_index
 			== __multi_stage_data_execute.instr_rc_index)
-			&& (__stage_execute_output_data.prev_written_reg_index != 0)) 
+			&& (__stage_execute_output_data.prev_written_reg_index != 0))
 			? __stage_write_back_input_data.n_reg_data
 			: __out_reg_file.read_data_rc;
 	end
