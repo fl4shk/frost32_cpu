@@ -242,10 +242,11 @@ module Frost32Cpu(input logic clk,
 	Alu __inst_alu(.in(__in_alu), .out(__out_alu));
 
 	PkgAlu::PortOut_Compare __out_compare_ctrl_flow;
-	Compare #(.DATA_WIDTH(`WIDTH__REG_FILE_DATA)) __inst_compare_ctrl_flow
-		(.a(__stage_execute_input_data.rfile_ra_data),
-		.b(__stage_execute_input_data.rfile_rb_data),
-		.out(__out_compare_ctrl_flow));
+	assign __out_compare_ctrl_flow = 0;
+	//Compare #(.DATA_WIDTH(`WIDTH__REG_FILE_DATA)) __inst_compare_ctrl_flow
+	//	(.a(__stage_execute_input_data.rfile_ra_data),
+	//	.b(__stage_execute_input_data.rfile_rb_data),
+	//	.out(__out_compare_ctrl_flow));
 
 	// Debug stuff
 	`ifdef ICARUS
@@ -723,51 +724,51 @@ module Frost32Cpu(input logic clk,
 								(__locals.cond_eq);
 						end
 
-						PkgInstrDecoder::CtLtu:
-						begin
-							//handle_branch_in_decode_stage
-							//	(__out_compare_ctrl_flow.ltu);
-							handle_branch_in_decode_stage
-								(__locals.cond_ltu);
-						end
-						PkgInstrDecoder::CtGeu:
-						begin
-							handle_branch_in_decode_stage
-								(__locals.cond_geu);
-						end
+						//PkgInstrDecoder::CtLtu:
+						//begin
+						//	//handle_branch_in_decode_stage
+						//	//	(__out_compare_ctrl_flow.ltu);
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_ltu);
+						//end
+						//PkgInstrDecoder::CtGeu:
+						//begin
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_geu);
+						//end
 
-						PkgInstrDecoder::CtLeu:
-						begin
-							handle_branch_in_decode_stage
-								(__locals.cond_leu);
-						end
-						PkgInstrDecoder::CtGtu:
-						begin
-							handle_branch_in_decode_stage
-								(__locals.cond_gtu);
-						end
+						//PkgInstrDecoder::CtLeu:
+						//begin
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_leu);
+						//end
+						//PkgInstrDecoder::CtGtu:
+						//begin
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_gtu);
+						//end
 
-						PkgInstrDecoder::CtLts:
-						begin
-							handle_branch_in_decode_stage
-								(__locals.cond_lts);
-						end
-						PkgInstrDecoder::CtGes:
-						begin
-							handle_branch_in_decode_stage
-								(__locals.cond_ges);
-						end
+						//PkgInstrDecoder::CtLts:
+						//begin
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_lts);
+						//end
+						//PkgInstrDecoder::CtGes:
+						//begin
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_ges);
+						//end
 
-						PkgInstrDecoder::CtLes:
-						begin
-							handle_branch_in_decode_stage
-								(__locals.cond_les);
-						end
-						PkgInstrDecoder::CtGts:
-						begin
-							handle_branch_in_decode_stage
-								(__locals.cond_gts);
-						end
+						//PkgInstrDecoder::CtLes:
+						//begin
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_les);
+						//end
+						//PkgInstrDecoder::CtGts:
+						//begin
+						//	handle_branch_in_decode_stage
+						//		(__locals.cond_gts);
+						//end
 
 						default:
 						begin
@@ -819,51 +820,51 @@ module Frost32Cpu(input logic clk,
 								(__locals.cond_eq);
 						end
 
-						PkgInstrDecoder::CtLtu:
-						begin
-							//handle_jump_or_call_in_decode_stage
-							//	(__out_compare_ctrl_flow.ltu);
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_ltu);
-						end
-						PkgInstrDecoder::CtGeu:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_geu);
-						end
+						//PkgInstrDecoder::CtLtu:
+						//begin
+						//	//handle_jump_or_call_in_decode_stage
+						//	//	(__out_compare_ctrl_flow.ltu);
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_ltu);
+						//end
+						//PkgInstrDecoder::CtGeu:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_geu);
+						//end
 
-						PkgInstrDecoder::CtLeu:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_leu);
-						end
-						PkgInstrDecoder::CtGtu:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_gtu);
-						end
+						//PkgInstrDecoder::CtLeu:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_leu);
+						//end
+						//PkgInstrDecoder::CtGtu:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_gtu);
+						//end
 
-						PkgInstrDecoder::CtLts:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_lts);
-						end
-						PkgInstrDecoder::CtGes:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_ges);
-						end
+						//PkgInstrDecoder::CtLts:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_lts);
+						//end
+						//PkgInstrDecoder::CtGes:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_ges);
+						//end
 
-						PkgInstrDecoder::CtLes:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_les);
-						end
-						PkgInstrDecoder::CtGts:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_gts);
-						end
+						//PkgInstrDecoder::CtLes:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_les);
+						//end
+						//PkgInstrDecoder::CtGts:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_gts);
+						//end
 
 						default:
 						begin
