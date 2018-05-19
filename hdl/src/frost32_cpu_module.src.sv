@@ -13,6 +13,10 @@
 	__multi_stage_data_execute
 `define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
 	__stage_execute_input_data
+//`define MULTI_STAGE_DATA_AFTER_INSTR_DECODE \
+//	__multi_stage_data_use_alu,
+//`define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
+//	__stage_use_alu_input_data
 `endif
 
 module Frost32Cpu(input logic clk,
@@ -76,7 +80,12 @@ module Frost32Cpu(input logic clk,
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] ireta_data, idsta_data;
 
 		//logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
-	} __stage_register_read_input_data, __stage_execute_input_data;
+	} 
+	`ifdef HAVE_REGISTER_READ_STAGE
+		__stage_register_read_input_data, 
+	`endif
+		//__stage_use_alu_input_data,
+		__stage_execute_input_data;
 
 	struct packed
 	{

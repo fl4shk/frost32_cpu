@@ -7,22 +7,15 @@ There's either a three-stage or a four-stage pipeline:
 * Four-stage pipeline:
     Instruction Decode -> Register Read -> Execute -> Write Back
 
-Reasoning for configurable number of pipeline stages:  in synthesizing for
-an actual FPGA, it was determined that register reading was the limiting
-factor in the maximum clock rate, so an (optional) register reading stage
-was added.
-On my FPGA board's FPGA, the maximum clock rate increased by about 10 MHz
-when I added the register read stage.
-The reason this is optional is so that at lower clock rates you can get
-one less cycle per multi-cycle instruction.
 
 ## Instructions that take more than one cycle
-
 * When there's a three-stage pipeline:
     * Relative branches take two cycles, and jumps and calls take three cycles.
     `reti` is the exception to this, as it takes one cycle.
+<!--
     * Multiplications (once fully implemented) will also take more than one than
     one cycle, but it isn't clear yet exactly how many cycles they will take.
+-->
     * Conditions are resolved in the instruction decode stage, and the
     instruction decode stage **also** handles all memory access.
     * Loads and stores take three cycles each.
