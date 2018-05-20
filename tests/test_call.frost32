@@ -8,10 +8,6 @@ main:
 
 	calla test_subroutine		; 0x4
 
-	;;cpya u0, (test_subroutine & 0xffff)
-	;;addi u0, test_subroutine
-	;cpyi u0, test_subroutine
-	;call u0
 
 	jmpa quit					; 0x8
 	;cpyi u1, quit
@@ -21,14 +17,13 @@ main:
 test_subroutine:
 {
 preserve:
-	;; Preserve lr, u0, u1, u2, u3
-	;subi sp, 24
-	;stri lr, [sp, 4]
+	; Preserve, u0, u1, u2, u3
+	subi sp, 16
 
-	;stri u0, [sp, 8]
-	;stri u1, [sp, 12]
-	;stri u2, [sp, 16]
-	;stri u3, [sp, 20]
+	stri u0, [sp, 4]
+	stri u1, [sp, 8]
+	stri u2, [sp, 12]
+	stri u3, [sp, 16]
 
 
 pre_loop:
@@ -46,13 +41,12 @@ loop:
 	bne u2, zero, loop			; 0x28
 
 restore:
-	;; Restore lr, u4, u5, u6, u7
-	;ldri lr, [sp, 4]
-	;ldri u0, [sp, 8]
-	;ldri u1, [sp, 12]
-	;ldri u2, [sp, 16]
-	;ldri u3, [sp, 20]
-	;addi sp, 24
+	; Restore u4, u5, u6, u7
+	ldri u0, [sp, 4]
+	ldri u1, [sp, 8]
+	ldri u2, [sp, 12]
+	ldri u3, [sp, 16]
+	addi sp, 16
 
 return:
 	jmp lr						; 0x2c

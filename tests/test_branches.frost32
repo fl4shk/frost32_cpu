@@ -1,0 +1,29 @@
+.org 0x0000
+main:
+{
+	// Assume top of available memory is here
+	cpya sp, 0x7fff
+
+
+	cpyi u0, data
+	ldr u0, [u0, zero]
+
+	beq
+
+zero:
+	
+not_zero:
+
+	bra quit
+}
+
+
+data
+{
+}
+
+.org 0x4000
+quit:
+{
+	bra quit
+}
