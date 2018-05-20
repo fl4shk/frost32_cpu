@@ -43,27 +43,33 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 			end
 			PkgAlu::Sltu:
 			begin
-				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.ltu};
+				//out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.ltu};
+				out.data = __out_compare.ltu;
 			end
 			PkgAlu::Slts:
 			begin
-				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.lts};
+				//out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.lts};
+				out.data = __out_compare.lts;
 			end
 
 
 			PkgAlu::Sgtu:
 			begin
-				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.gtu};
+				//out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.gtu};
+				out.data = 0;
 			end
 			PkgAlu::Sgts:
 			begin
-				out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.gts};
+				//out.data = {{__MSB_POS_INOUT{1'b0}}, __out_compare.gts};
+				out.data = 0;
 			end
 
 			// The processor probably doesn't actually use this operation
 			PkgAlu::AndN:
 			begin
-				out.data = in.a & (~in.b);
+				//out.data = in.a & (~in.b);
+				//out.data = in.a;
+				out.data = 0;
 			end
 			PkgAlu::And:
 			begin
@@ -136,14 +142,24 @@ module Alu(input PkgAlu::PortIn_Alu in, output PkgAlu::PortOut_Alu out);
 			// The processor probably doesn't actually use this operation
 			PkgAlu::OrN:
 			begin
-				out.data = in.a | (~in.b);
+				//out.data = in.a | (~in.b);
+				//out.data = in.a;
+				out.data = 0;
 			end
 
 			// The processor probably doesn't actually use this operation
 			PkgAlu::Nand:
 			begin
-				out.data = ~(in.a & in.b);
+				//out.data = ~(in.a & in.b);
+				//out.data = in.a;
+				out.data = 0;
 			end
+			//PkgAlu::Cpyhi:
+			//begin
+			//	//$display("PkgAlu::Cpyhi:  %h %h",
+			//	//	in.b[15:0], in.a[15:0]);
+			//	//out.data = {in.b[15:0], in.a[15:0]};
+			//end
 		endcase
 	end
 endmodule

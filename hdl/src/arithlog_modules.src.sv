@@ -47,25 +47,27 @@ module Compare #(parameter DATA_WIDTH=32)
 		//	a, b, __temp, out.ltu, out.lts, out.gtu, out.gts,
 		//	!out.ltu, !out.lts, !__temp);
 
-		if (out.ltu || (a == b))
-		begin
-			out.gtu = 0;
-		end
+		//if (out.ltu || (a == b))
+		//begin
+		//	out.gtu = 0;
+		//end
 
-		else
-		begin
-			out.gtu = 1;
-		end
+		//else
+		//begin
+		//	out.gtu = 1;
+		//end
 
-		if (out.lts || (a == b))
-		begin
-			out.gts = 0;
-		end
+		//if (out.lts || (a == b))
+		//begin
+		//	out.gts = 0;
+		//end
 
-		else
-		begin
-			out.gts = 1;
-		end
+		//else
+		//begin
+		//	out.gts = 1;
+		//end
+		out.gtu = 0;
+		out.gts = 0;
 	end
 endmodule
 

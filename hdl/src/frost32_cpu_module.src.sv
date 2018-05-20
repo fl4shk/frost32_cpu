@@ -1189,96 +1189,79 @@ module Frost32Cpu(input logic clk,
 				// For operand forwarding
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_execute.instr_ra_index;
-				//__stage_execute_output_data
-				//	.perform_operand_forwarding <= 1;
 
-				if (__multi_stage_data_execute.instr_opcode 
-					!= PkgInstrDecoder::Mul_ThreeRegs)
-				begin
-					//$display("Three registers ALU operation:  %h",
-					//	__out_alu.data);
-					__stage_write_back_input_data.n_reg_data 
-						<= __out_alu.data;
+				__stage_write_back_input_data.n_reg_data 
+					<= __out_alu.data;
+				//if (__multi_stage_data_execute.instr_opcode 
+				//	!= PkgInstrDecoder::Mul_ThreeRegs)
+				//begin
+				//	//$display("Three registers ALU operation:  %h",
+				//	//	__out_alu.data);
+				//	__stage_write_back_input_data.n_reg_data 
+				//		<= __out_alu.data;
+				//end
 
-					////$display("0:  Changing next_pc to %h", __following_pc);
-
-					//// The reason this is commented out is so that bubbles
-					//// in the form of "add zero, zero, zero" can be used.
-					//// Don't uncomment this!  Also, this assumes that no
-					//// control flow is performed by group 0 instructions,
-					//// which is true as of writing this comment.
-					////__stage_execute_output_data.next_pc <= __following_pc;
-				end
-
-				else
-				begin
-					`ifdef USE_SINGLE_CYCLE_MULTIPLY
-					__stage_write_back_input_data.n_reg_data
-						<= ({(__locals.mul_partial_result_x1_y0
-						+ __locals.mul_partial_result_x0_y1),
-						16'h0000})
-						+ __locals.mul_partial_result_x0_y0;
-					`else
-					__stage_write_back_input_data.n_reg_data <= 0;
-					`endif		// USE_SINGLE_CYCLE_MULTIPLY
-				end
+				//else
+				//begin
+				//	`ifdef USE_SINGLE_CYCLE_MULTIPLY
+				//	__stage_write_back_input_data.n_reg_data
+				//		<= ({(__locals.mul_partial_result_x1_y0
+				//		+ __locals.mul_partial_result_x0_y1),
+				//		16'h0000})
+				//		+ __locals.mul_partial_result_x0_y0;
+				//	`else
+				//	__stage_write_back_input_data.n_reg_data <= 0;
+				//	`endif		// USE_SINGLE_CYCLE_MULTIPLY
+				//end
 			end
 
 			4'd1:
 			begin
-				//__stage_execute_output_data
-				//	.perform_operand_forwarding <= 1;
-				if (__multi_stage_data_execute.instr_opcode
-					!= PkgInstrDecoder::Cpyhi_OneRegOneImm)
-				begin
-					// For operand forwarding
-					__stage_execute_output_data.prev_written_reg_index
-						<= __multi_stage_data_execute.instr_ra_index;
+				// For operand forwarding
+				__stage_execute_output_data.prev_written_reg_index
+					<= __multi_stage_data_execute.instr_ra_index;
+				////__stage_execute_output_data
+				////	.perform_operand_forwarding <= 1;
+				//if (__multi_stage_data_execute.instr_opcode
+				//	== PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				//begin
+				//	// cpyhi only changes the high 15 bits of rA
+				//	__stage_write_back_input_data.n_reg_data
+				//		<= {__multi_stage_data_execute.instr_imm_val,
+				//		__stage_execute_input_data.rfile_ra_data[15:0]};
+				//end
 
+				////else if (__multi_stage_data_execute.instr_opcode
+				////	== PkgInstrDecoder::Muli_TwoRegsOneImm)
+				////begin
+				////	`ifdef USE_SINGLE_CYCLE_MULTIPLY
+				////	__stage_write_back_input_data.n_reg_data
+				////		<= ({(__locals.mul_partial_result_x1_y0
+				////		+ __locals.mul_partial_result_x0_y1),
+				////		16'h0000})
+				////		+ __locals.mul_partial_result_x0_y0;
+				////	`else
+				////	__stage_write_back_input_data.n_reg_data <= 0;
+				////	`endif		// USE_SINGLE_CYCLE_MULTIPLY
+				////end
 
-					if (__multi_stage_data_execute.instr_opcode
-						!= PkgInstrDecoder::Muli_TwoRegsOneImm)
-					begin
-						__stage_write_back_input_data.n_reg_data 
-							<= __out_alu.data;
-						//$display("Two registers, one imm ALU op:  %h",
-						//	__out_alu.data);
-					end
+				//else
+				//begin
+				//	__stage_write_back_input_data.n_reg_data 
+				//		<= __out_alu.data;
+				//	//$display("Two registers, one imm ALU op:  %h",
+				//	//	__out_alu.data);
+				//end
+				__stage_write_back_input_data.n_reg_data 
+					<= __out_alu.data;
 
-					else
-					begin
-						`ifdef USE_SINGLE_CYCLE_MULTIPLY
-						__stage_write_back_input_data.n_reg_data
-							<= ({(__locals.mul_partial_result_x1_y0
-							+ __locals.mul_partial_result_x0_y1),
-							16'h0000})
-							+ __locals.mul_partial_result_x0_y0;
-						`else
-						__stage_write_back_input_data.n_reg_data <= 0;
-						`endif		// USE_SINGLE_CYCLE_MULTIPLY
-					end
-				end
-
-				else // if (__multi_stage_data_execute.instr_opcode
-					// == PkgInstrDecoder::Cpyhi_OneRegOneImm)
-				begin
-					// cpyhi only changes the high 15 bits of rA
-					__stage_write_back_input_data.n_reg_data
-						<= {__multi_stage_data_execute.instr_imm_val,
-						__stage_execute_input_data.rfile_ra_data[15:0]};
-
-					// For operand forwarding
-					__stage_execute_output_data.prev_written_reg_index
-						<= __multi_stage_data_execute.instr_ra_index;
-				end
 			end
 
 			// Group 2:  Branches
 			4'd2:
 			begin
 				// Prevent operand forwarding
-				__stage_execute_output_data.prev_written_reg_index
-					<= 0;
+				__stage_execute_output_data.prev_written_reg_index <= 0;
 				//__stage_execute_output_data.perform_operand_forwarding 
 				//	<= 0;
 			end
@@ -1286,8 +1269,7 @@ module Frost32Cpu(input logic clk,
 			4'd3:
 			begin
 				// Prevent operand forwarding
-				__stage_execute_output_data.prev_written_reg_index
-					<= 0;
+				__stage_execute_output_data.prev_written_reg_index <= 0;
 				//__stage_execute_output_data.perform_operand_forwarding 
 				//	<= 0;
 			end
@@ -1297,8 +1279,6 @@ module Frost32Cpu(input logic clk,
 			begin
 				// Prevent operand forwarding
 				__stage_execute_output_data.prev_written_reg_index <= 0;
-				//__stage_execute_output_data.perform_operand_forwarding 
-				//	<= 0;
 
 				case (__multi_stage_data_execute.instr_condition_type)
 					PkgInstrDecoder::CtNe:
@@ -1311,41 +1291,41 @@ module Frost32Cpu(input logic clk,
 						handle_call_in_execute_stage(__locals.cond_eq);
 					end
 
-					PkgInstrDecoder::CtLtu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_ltu);
-					end
-					PkgInstrDecoder::CtGeu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_geu);
-					end
+					//PkgInstrDecoder::CtLtu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_ltu);
+					//end
+					//PkgInstrDecoder::CtGeu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_geu);
+					//end
 
-					PkgInstrDecoder::CtLeu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_leu);
-					end
-					PkgInstrDecoder::CtGtu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_gtu);
-					end
+					//PkgInstrDecoder::CtLeu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_leu);
+					//end
+					//PkgInstrDecoder::CtGtu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_gtu);
+					//end
 
-					PkgInstrDecoder::CtLts:
-					begin
-						handle_call_in_execute_stage(__locals.cond_lts);
-					end
-					PkgInstrDecoder::CtGes:
-					begin
-						handle_call_in_execute_stage(__locals.cond_ges);
-					end
+					//PkgInstrDecoder::CtLts:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_lts);
+					//end
+					//PkgInstrDecoder::CtGes:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_ges);
+					//end
 
-					PkgInstrDecoder::CtLes:
-					begin
-						handle_call_in_execute_stage(__locals.cond_les);
-					end
-					PkgInstrDecoder::CtGts:
-					begin
-						handle_call_in_execute_stage(__locals.cond_gts);
-					end
+					//PkgInstrDecoder::CtLes:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_les);
+					//end
+					//PkgInstrDecoder::CtGts:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_gts);
+					//end
 
 					default:
 					begin
@@ -1726,6 +1706,28 @@ module Frost32Cpu(input logic clk,
 							__multi_stage_data_execute.instr_imm_val};
 
 						__in_alu.oper = PkgAlu::Add;
+					end
+
+					PkgInstrDecoder::Cpyhi_OneRegOneImm:
+					begin
+						// cpyhi only changes the high 15 bits of rA
+						__in_alu.a
+							= {__multi_stage_data_execute.instr_imm_val,
+							__stage_execute_input_data
+							.rfile_ra_data[15:0]};
+
+						__in_alu.b = 0;
+						__in_alu.oper = PkgAlu::Add;
+
+						//__in_alu.a 
+						//	= __stage_execute_input_data.rfile_ra_data;
+
+						//__in_alu.b
+						//	= __multi_stage_data_execute.instr_imm_val;
+
+						////$display("Cpyhi:  %h %h",
+						////	__in_alu.a, __in_alu.b);
+						//__in_alu.oper = PkgAlu::Cpyhi;
 					end
 
 

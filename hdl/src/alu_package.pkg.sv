@@ -44,6 +44,7 @@ typedef enum logic [`MSB_POS__ALU_OPER:0]
 	Asr,
 	OrN,
 	Nand
+	//Cpyhi
 } AluOper;
 
 typedef struct packed
