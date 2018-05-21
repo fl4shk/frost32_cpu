@@ -1,7 +1,6 @@
 `include "src/register_file_defines.header.sv"
 
-`ifdef HAVE_REGISTER_READ_STAGE
-`define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
+`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
 	always_ff @ (posedge clk) \
 	begin \
 		if (in.write_en && (in.write_sel == in.read_sel_name) \
@@ -15,8 +14,7 @@
 			out.read_data_name <= __regfile[in.read_sel_name]; \
 		end \
 	end
-`else
-`define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
+`define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \
 	always_comb \
 	begin \
 		if (in.write_en && (in.write_sel == in.read_sel_name) \
@@ -30,8 +28,14 @@
 			out.read_data_name = __regfile[in.read_sel_name]; \
 		end \
 	end
-`endif		//
 
+`ifdef HAVE_REGISTER_READ_STAGE
+`define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
+	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name)
+`else
+`define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
+	`GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name)
+`endif		// HAVE_REGISTER_READ_STAGE
 
 // No register read stage:  Asynchronous reads (three ports), synchronous
 // writes (one port)
@@ -94,6 +98,11 @@ module RegisterFile(input logic clk,
 	`GEN_REG_FILE_READ(read_sel_ra, read_data_ra)
 	`GEN_REG_FILE_READ(read_sel_rb, read_data_rb)
 	`GEN_REG_FILE_READ(read_sel_rc, read_data_rc)
+
+	`ifdef HAVE_REGISTER_READ_STAGE
+	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_ra, read_data_cond_ra)
+	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_rb, read_data_cond_rb)
+	`endif		// HAVE_REGISTER_READ_STAGE
 
 	always_ff @ (posedge clk)
 	begin

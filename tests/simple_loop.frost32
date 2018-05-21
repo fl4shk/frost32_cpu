@@ -1,30 +1,38 @@
 .org 0x0000
 main:
 {
-	cpyi u0, 0x50		; 0x0
+	;cpyi u0, 0x50		; 0x0
+	;cpyi u0, 20			; 0x0
+	subi u0, zero, 19		; 0x0
 	cpy u1, u0			; 0x4
 
+	subi u2, zero, 20		; 0x8
+
+
 loop:
-	inc u1				; 0x8
+	inc u1				; 0xc
 	
-	dec u0				; 0xc
-	bne u0, zero, loop	; 0x10
+	dec u0				; 0x10
+	;add zero, zero, zero	; 0x14
+	;add zero, zero, zero	; 0x18
+	;add zero, zero, zero	; 0x1c
+	;add zero, zero, zero	; 0x20
+	;add zero, zero, zero	; 0x24
+	;add zero, zero, zero	; 0x28
+	;bra quit
+	bges u0, u2, loop	; 0x14
 
-	calla test_call		; 0x14
+	;calla test_call		; 0x18
+	addsi lr, pc, 8		; 0x18
+	bra test_call		; 0x1c
 
-	bra quit			; 0x18
+	bra quit
 }
 
 test_call:
 {
-	cpyi u3, 6			; 0x1c
-	jmp lr				; 0x20
-	;cpya u4, 0x80ab9000
-	;;cpyhi u4, 0x9000
-
-
-	;;bra quit
-	;jmpa quit
+	cpyi u3, 6
+	jmp lr
 }
 
 .org 0x4000
