@@ -99,10 +99,10 @@ module RegisterFile(input logic clk,
 	`GEN_REG_FILE_READ(read_sel_rb, read_data_rb)
 	`GEN_REG_FILE_READ(read_sel_rc, read_data_rc)
 
-	`ifdef HAVE_REGISTER_READ_STAGE
+	//`ifdef HAVE_REGISTER_READ_STAGE
 	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_ra, read_data_cond_ra)
 	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_rb, read_data_cond_rb)
-	`endif		// HAVE_REGISTER_READ_STAGE
+	//`endif		// HAVE_REGISTER_READ_STAGE
 
 	always_ff @ (posedge clk)
 	begin

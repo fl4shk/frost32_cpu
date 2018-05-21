@@ -8,15 +8,15 @@
 	__multi_stage_data_register_read
 `define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
 	__stage_register_read_input_data
+`define LOCALS_CONDITION_ALWAYS_BLOCK_TYPE always @ (posedge clk)
+`define LOCALS_CONDITION_ASSIGNMENT_TYPE <=
 `else
 `define MULTI_STAGE_DATA_AFTER_INSTR_DECODE \
 	__multi_stage_data_execute
 `define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
 	__stage_execute_input_data
-//`define MULTI_STAGE_DATA_AFTER_INSTR_DECODE \
-//	__multi_stage_data_use_alu,
-//`define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
-//	__stage_use_alu_input_data
+`define LOCALS_CONDITION_ALWAYS_BLOCK_TYPE always_comb
+`define LOCALS_CONDITION_ASSIGNMENT_TYPE =
 `endif
 
 module Frost32Cpu(input logic clk,
@@ -418,9 +418,9 @@ module Frost32Cpu(input logic clk,
 			: __out_reg_file.read_data_rc;
 	end
 
-	`ifdef HAVE_REGISTER_READ_STAGE
 	always_comb
 	begin
+		`ifdef HAVE_REGISTER_READ_STAGE
 		if ((__stage_execute_output_data.prev_written_reg_index
 			== __multi_stage_data_execute.instr_ra_index)
 			&& (__stage_register_read_output_data.prev_written_reg_index
@@ -433,12 +433,6 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_cond_ra_data
 				= __stage_write_back_input_data.n_reg_data;
-			if (__multi_stage_data_register_read.instr_group == 2)
-			begin
-				$display("cond ra stuff:  Perform forwarding:  %h",
-					__stage_instr_decode_data
-					.from_stage_register_read_rfile_cond_ra_data);
-			end
 		end
 
 		else
@@ -446,16 +440,16 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_cond_ra_data
 				= __out_reg_file.read_data_cond_ra;
-			if (__multi_stage_data_register_read.instr_group == 2)
-			begin
-				$display("cond ra stuff:  Don't perform forwarding:  %h",
-					__stage_instr_decode_data
-					.from_stage_register_read_rfile_cond_ra_data);
-			end
 		end
+		`else
+		__stage_instr_decode_data
+			.from_stage_register_read_rfile_cond_ra_data
+			= __stage_instr_decode_data.from_stage_execute_rfile_ra_data;
+		`endif		// HAVE_REGISTER_READ_STAGE
 	end
 	always_comb
 	begin
+		`ifdef HAVE_REGISTER_READ_STAGE
 		if ((__stage_execute_output_data.prev_written_reg_index
 			== __multi_stage_data_execute.instr_rb_index)
 			&& (__stage_register_read_output_data.prev_written_reg_index
@@ -468,12 +462,6 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_cond_rb_data
 				= __stage_write_back_input_data.n_reg_data;
-			if (__multi_stage_data_register_read.instr_group == 2)
-			begin
-				$display("cond rb stuff:  Perform forwarding:  %h",
-					__stage_instr_decode_data
-					.from_stage_register_read_rfile_cond_rb_data);
-			end
 		end
 
 		else
@@ -481,15 +469,13 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_cond_rb_data
 				= __out_reg_file.read_data_cond_rb;
-			if (__multi_stage_data_register_read.instr_group == 2)
-			begin
-				$display("cond rb stuff:  Don't perform forwarding:  %h",
-					__stage_instr_decode_data
-					.from_stage_register_read_rfile_cond_rb_data);
-			end
 		end
+		`else
+		__stage_instr_decode_data
+			.from_stage_register_read_rfile_cond_rb_data
+			= __stage_instr_decode_data.from_stage_execute_rfile_rb_data;
+		`endif		// HAVE_REGISTER_READ_STAGE
 	end
-	`endif		// HAVE_REGISTER_READ_STAGE
 
 	// Just some copies for use in the decode stage.
 	always_comb
@@ -539,11 +525,13 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	begin
 		//__locals.cond_branch_geu = !__out_compare_ctrl_flow.ltu;
+		//__locals.cond_branch_geu
+		//	= (__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_ra_data
+		//	>= __stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_rb_data);
 		__locals.cond_branch_geu
-			= (__stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_ra_data
-			>= __stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_rb_data);
+			= !__locals.cond_branch_ltu;
 	end
 
 	always_comb
@@ -559,11 +547,13 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	begin
 		//__locals.cond_branch_gtu = __out_compare_ctrl_flow.gtu;
+		//__locals.cond_branch_gtu
+		//	= (__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_ra_data
+		//	> __stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_rb_data);
 		__locals.cond_branch_gtu
-			= (__stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_ra_data
-			> __stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_rb_data);
+			= !__locals.cond_branch_leu;
 	end
 
 	always_comb
@@ -579,11 +569,13 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	begin
 		//__locals.cond_branch_ges = !__out_compare_ctrl_flow.lts;
+		//__locals.cond_branch_ges
+		//	= ($signed(__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_ra_data)
+		//	>= $signed(__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_rb_data));
 		__locals.cond_branch_ges
-			= ($signed(__stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_ra_data)
-			>= $signed(__stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_rb_data));
+			= !__locals.cond_branch_ges;
 	end
 
 	always_comb
@@ -621,80 +613,94 @@ module Frost32Cpu(input logic clk,
 			== __stage_instr_decode_data.from_stage_execute_rfile_rb_data);
 	end
 
-	always_comb
+
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
 	begin
-		//__locals.cond_ltu = __out_compare_ctrl_flow.ltu;
 		__locals.cond_ltu
-			= (__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			(__stage_instr_decode_data
+			.from_stage_register_read_rfile_cond_ra_data
 			< __stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data);
-	end
-	always_comb
-	begin
-		//__locals.cond_geu = !__out_compare_ctrl_flow.ltu;
-		__locals.cond_geu
-			= (__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data
-			>= __stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data);
+			.from_stage_register_read_rfile_cond_rb_data);
 	end
 
-	always_comb
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
+	begin
+		__locals.cond_geu
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			(__stage_instr_decode_data
+			.from_stage_register_read_rfile_cond_ra_data
+			>= __stage_instr_decode_data
+			.from_stage_register_read_rfile_cond_rb_data);
+		//__locals.cond_geu
+		//	`LOCALS_CONDITION_ASSIGNMENT_TYPE
+		//	!(__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_ra_data}
+		//	+ (~__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_rb_data))
+	end
+
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
 	begin
 		//__locals.cond_leu = !__out_compare_ctrl_flow.gtu;
 		__locals.cond_leu
-			= (__stage_instr_decode_data
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			(__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data
 			<= __stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data);
 	end
 
-	always_comb
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
 	begin
 		//__locals.cond_gtu = __out_compare_ctrl_flow.gtu;
 		__locals.cond_gtu
-			= (__stage_instr_decode_data
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			(__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data
 			> __stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data);
 	end
 
-	always_comb
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
 	begin
 		//__locals.cond_lts = __out_compare_ctrl_flow.lts;
 		__locals.cond_lts
-			= ($signed(__stage_instr_decode_data
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			($signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data)
 			< $signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data));
 	end
 
-	always_comb
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
 	begin
 		//__locals.cond_ges = !__out_compare_ctrl_flow.lts;
 		__locals.cond_ges
-			= ($signed(__stage_instr_decode_data
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			($signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data)
 			>= $signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data));
 	end
 
-	always_comb
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
 	begin
 		//__locals.cond_les = !__out_compare_ctrl_flow.gts;
 		__locals.cond_les
-			= ($signed(__stage_instr_decode_data
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			($signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data)
 			<= $signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data));
 	end
 
-	always_comb
+	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
 	begin
 		//__locals.cond_gts = __out_compare_ctrl_flow.gts;
 		__locals.cond_gts
-			= ($signed(__stage_instr_decode_data
+			`LOCALS_CONDITION_ASSIGNMENT_TYPE
+			($signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data)
 			> $signed(__stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data));
@@ -1199,6 +1205,9 @@ module Frost32Cpu(input logic clk,
 				if (__stage_instr_decode_data.stall_state
 					== PkgFrost32Cpu::StCtrlFlowJumpCall)
 				begin
+					//__locals.next_pc_after_jump_or_call
+					//	<= __stage_instr_decode_data
+					//	.from_stage_execute_rfile_rc_data;
 					case (__multi_stage_data_execute.instr_condition_type)
 						PkgInstrDecoder::CtNe:
 						begin
@@ -1776,6 +1785,9 @@ module Frost32Cpu(input logic clk,
 			begin
 				// Prevent operand forwarding
 				__stage_execute_output_data.prev_written_reg_index <= 0;
+				//__stage_write_back_input_data.n_reg_data 
+				//	<= __following_pc;
+				//__stage_write_back_input_data.do_write_lr <= 1;
 
 				case (__multi_stage_data_execute.instr_condition_type)
 					PkgInstrDecoder::CtNe:
@@ -1788,41 +1800,41 @@ module Frost32Cpu(input logic clk,
 						handle_call_in_execute_stage(__locals.cond_eq);
 					end
 
-					//PkgInstrDecoder::CtLtu:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_ltu);
-					//end
-					//PkgInstrDecoder::CtGeu:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_geu);
-					//end
+					PkgInstrDecoder::CtLtu:
+					begin
+						handle_call_in_execute_stage(__locals.cond_ltu);
+					end
+					PkgInstrDecoder::CtGeu:
+					begin
+						handle_call_in_execute_stage(__locals.cond_geu);
+					end
 
-					//PkgInstrDecoder::CtLeu:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_leu);
-					//end
-					//PkgInstrDecoder::CtGtu:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_gtu);
-					//end
+					PkgInstrDecoder::CtLeu:
+					begin
+						handle_call_in_execute_stage(__locals.cond_leu);
+					end
+					PkgInstrDecoder::CtGtu:
+					begin
+						handle_call_in_execute_stage(__locals.cond_gtu);
+					end
 
-					//PkgInstrDecoder::CtLts:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_lts);
-					//end
-					//PkgInstrDecoder::CtGes:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_ges);
-					//end
+					PkgInstrDecoder::CtLts:
+					begin
+						handle_call_in_execute_stage(__locals.cond_lts);
+					end
+					PkgInstrDecoder::CtGes:
+					begin
+						handle_call_in_execute_stage(__locals.cond_ges);
+					end
 
-					//PkgInstrDecoder::CtLes:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_les);
-					//end
-					//PkgInstrDecoder::CtGts:
-					//begin
-					//	handle_call_in_execute_stage(__locals.cond_gts);
-					//end
+					PkgInstrDecoder::CtLes:
+					begin
+						handle_call_in_execute_stage(__locals.cond_les);
+					end
+					PkgInstrDecoder::CtGts:
+					begin
+						handle_call_in_execute_stage(__locals.cond_gts);
+					end
 
 					default:
 					begin
