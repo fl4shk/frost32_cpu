@@ -66,8 +66,12 @@ module Compare #(parameter DATA_WIDTH=32)
 		//begin
 		//	out.gts = 1;
 		//end
-		out.gtu = 0;
-		out.gts = 0;
+		//out.gtu = !(out.ltu || (a == b));
+		//out.gts = !(out.lts || (a == b));
+
+
+		//out.gtu = 0;
+		//out.gts = 0;
 	end
 endmodule
 

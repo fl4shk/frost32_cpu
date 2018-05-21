@@ -149,6 +149,9 @@ module Frost32Cpu(input logic clk,
 			cond_ltu, cond_geu, cond_leu, cond_gtu,
 			cond_lts, cond_ges, cond_les, cond_gts;
 
+
+		logic [`MSB_POS__REG_FILE_DATA:0] cpyhi_data;
+
 		`ifdef DEBUG
 		// Debugging thing
 		logic [31:0] cycles_counter;
@@ -447,6 +450,75 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_gts = __out_compare_ctrl_flow.gts;
 	end
 
+	always_comb
+	begin
+		__locals.branch_adder_a = __following_pc;
+	end
+
+	always_comb
+	begin
+		// Sign extend the immediate value
+		//__in_alu.b 
+		//	= {{16{__multi_stage_data_execute.instr_imm_val[15]}}, 
+		//	__multi_stage_data_execute.instr_imm_val};
+		__locals.branch_adder_b
+			= {{16{__multi_stage_data_execute.instr_imm_val[15]}}, 
+			__multi_stage_data_execute.instr_imm_val};
+	end
+
+	//always_comb
+	//begin
+	//	__locals.dest_of_ctrl_flow_if_condition
+	//		= __locals.branch_adder_a + __locals.branch_adder_b;
+	//end
+
+	always_comb
+	begin
+		__locals.ldst_adder_a = __stage_execute_input_data.rfile_rb_data;
+	end
+
+	always_comb
+	begin
+		// Immediate-indexed loads and stores have
+		// (__multi_stage_data_execute.instr_opcode[3] == 1)
+		if (__multi_stage_data_execute.instr_opcode[3])
+		begin
+			// memory address computation:  rB + sign-extended
+			// immediate (actually sign extended twice since
+			// the instruction decoder **also** performed a
+			// sign extend, from 12-bit to 16-bit)
+			__locals.ldst_adder_b 
+				= {{16{__multi_stage_data_execute.instr_imm_val
+				[15]}},
+				__multi_stage_data_execute.instr_imm_val};
+		end
+
+		else
+		begin
+			// memory address computation:  rB + rC
+			__locals.ldst_adder_b 
+				= __stage_execute_input_data.rfile_rc_data;
+		end
+	end
+
+	//always_comb
+	//begin
+	//	__locals.ldst_address = __locals.ldst_adder_a
+	//		+ __locals.ldst_adder_b;
+	//end
+
+	always_comb
+	begin
+		__in_alu.a = __stage_execute_input_data.rfile_rb_data;
+	end
+
+	always_comb
+	begin
+		__locals.cpyhi_data
+			= {__multi_stage_data_execute.instr_imm_val,
+			__stage_execute_input_data.rfile_ra_data[15:0]};
+	end
+
 
 	// Tasks and functions
 	function logic in_stall();
@@ -547,8 +619,10 @@ module Frost32Cpu(input logic clk,
 			//$display("handle_ctrl_flow_in_decode_stage_part_1:  %s",
 			//	"taking branch");
 			//prep_load_next_instruction(__out_alu.data);
+			//prep_load_next_instruction
+			//	(__locals.dest_of_ctrl_flow_if_condition);
 			prep_load_next_instruction
-				(__locals.dest_of_ctrl_flow_if_condition);
+				(__locals.branch_adder_a + __locals.branch_adder_b);
 			//__locals.dest_of_ctrl_flow_if_condition <= __out_alu.data;
 		end
 
@@ -893,52 +967,86 @@ module Frost32Cpu(input logic clk,
 							// Write-back handles the store to the register
 							//prep_mem_read(__out_alu.data,
 							//	PkgFrost32Cpu::Dias32);
-							$display("Ld32:  %h", __locals.ldst_address);
-							prep_mem_read(__locals.ldst_address,
+							//$display("Ld32:  %h", __locals.ldst_address);
+							//prep_mem_read(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias32);
+							$display("Ld32:  %h", 
+								__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b);
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias32);
 						end
 						PkgInstrDecoder::LdU16:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__locals.ldst_address,
+							//prep_mem_read(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias16);
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias16);
 						end
 						PkgInstrDecoder::LdS16:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__locals.ldst_address,
+							//prep_mem_read(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias16);
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias16);
 						end
 						PkgInstrDecoder::LdU8:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__locals.ldst_address,
+							//prep_mem_read(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias8);
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias8);
 						end
 						PkgInstrDecoder::LdS8:
 						begin
 							// Write-back handles the store to the register
-							prep_mem_read(__locals.ldst_address,
+							//prep_mem_read(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias8);
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias8);
 						end
 						PkgInstrDecoder::St32:
 						begin
+							//$display("Storing %h to address %h",
+							//	__stage_execute_input_data.rfile_ra_data,
+							//	__locals.ldst_address);
+							//prep_mem_write(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias32,
+							//	__stage_execute_input_data.rfile_ra_data);
 							$display("Storing %h to address %h",
 								__stage_execute_input_data.rfile_ra_data,
-								__locals.ldst_address);
-							prep_mem_write(__locals.ldst_address,
+								(__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b));
+							prep_mem_write((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias32,
 								__stage_execute_input_data.rfile_ra_data);
 						end
 						PkgInstrDecoder::St16:
 						begin
-							prep_mem_write(__locals.ldst_address,
+							//prep_mem_write(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias16,
+							//	__stage_execute_input_data.rfile_ra_data);
+							prep_mem_write((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias16,
 								__stage_execute_input_data.rfile_ra_data);
 						end
 						PkgInstrDecoder::St8:
 						begin
-							prep_mem_write(__locals.ldst_address,
+							//prep_mem_write(__locals.ldst_address,
+							//	PkgFrost32Cpu::Dias8,
+							//	__stage_execute_input_data.rfile_ra_data);
+							prep_mem_write((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
 								PkgFrost32Cpu::Dias8,
 								__stage_execute_input_data.rfile_ra_data);
 						end
@@ -1252,8 +1360,19 @@ module Frost32Cpu(input logic clk,
 				//	//$display("Two registers, one imm ALU op:  %h",
 				//	//	__out_alu.data);
 				//end
-				__stage_write_back_input_data.n_reg_data 
-					<= __out_alu.data;
+
+				if (__multi_stage_data_execute.instr_opcode
+					!= PkgInstrDecoder::Cpyhi_OneRegOneImm)
+				begin
+					__stage_write_back_input_data.n_reg_data 
+						<= __out_alu.data;
+				end
+
+				else
+				begin
+					__stage_write_back_input_data.n_reg_data
+						<= __locals.cpyhi_data;
+				end
 
 			end
 
@@ -1614,7 +1733,8 @@ module Frost32Cpu(input logic clk,
 				// It's okay if the ALU performs a bogus operation, so
 				// let's decode the ALU opcode directly from the
 				// instruction for group 0 instructions.
-				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
+				//__in_alu.a = __stage_execute_input_data.rfile_rb_data;
+				//__locals.cpyhi_data = 0;
 				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
 				__in_alu.oper = __multi_stage_data_execute.instr_opcode;
 				$display("group 0 always_comb thing:  %h %h %h",
@@ -1631,18 +1751,18 @@ module Frost32Cpu(input logic clk,
 				__locals.mul_partial_result_x1_y0
 					= __stage_execute_input_data.rfile_rb_data[31:16]
 					* __stage_execute_input_data.rfile_rc_data[15:0];
-				`else
-				__locals.mul_partial_result_x0_y0 = 0;
-				__locals.mul_partial_result_x0_y1 = 0;
-				__locals.mul_partial_result_x1_y0 = 0;
+				//`else
+				//__locals.mul_partial_result_x0_y0 = 0;
+				//__locals.mul_partial_result_x0_y1 = 0;
+				//__locals.mul_partial_result_x1_y0 = 0;
 				`endif		// USE_SINGLE_CYCLE_MULTIPLY
 
-				__locals.branch_adder_a = 0;
-				__locals.branch_adder_b = 0;
-				__locals.dest_of_ctrl_flow_if_condition = 0;
-				__locals.ldst_adder_a = 0;
-				__locals.ldst_adder_b = 0;
-				__locals.ldst_address = 0;
+				//__locals.branch_adder_a = 0;
+				//__locals.branch_adder_b = 0;
+				//__locals.dest_of_ctrl_flow_if_condition = 0;
+				//__locals.ldst_adder_a = 0;
+				//__locals.ldst_adder_b = 0;
+				//__locals.ldst_address = 0;
 			end
 
 			// Group 1:  Immediates
@@ -1661,17 +1781,18 @@ module Frost32Cpu(input logic clk,
 				__locals.mul_partial_result_x1_y0
 					= __stage_execute_input_data.rfile_rb_data[31:16]
 					* __multi_stage_data_execute.instr_imm_val;
-				`else
-				__locals.mul_partial_result_x0_y0 = 0;
-				__locals.mul_partial_result_x0_y1 = 0;
-				__locals.mul_partial_result_x1_y0 = 0;
+				//`else
+				//__locals.mul_partial_result_x0_y0 = 0;
+				//__locals.mul_partial_result_x0_y1 = 0;
+				//__locals.mul_partial_result_x1_y0 = 0;
 				`endif		// USE_SINGLE_CYCLE_MULTIPLY
 
 				case (__multi_stage_data_execute.instr_opcode)
 					PkgInstrDecoder::Sltsi_TwoRegsOneSimm:
 					begin
-						__in_alu.a
-							= __stage_execute_input_data.rfile_rb_data;
+						//__locals.cpyhi_data = 0;
+						//__in_alu.a
+						//	= __stage_execute_input_data.rfile_rb_data;
 
 						// Sign extend the immediate value
 						__in_alu.b 
@@ -1683,8 +1804,9 @@ module Frost32Cpu(input logic clk,
 					end
 					PkgInstrDecoder::Sgtsi_TwoRegsOneSimm:
 					begin
-						__in_alu.a
-							= __stage_execute_input_data.rfile_rb_data;
+						//__in_alu.a
+						//	= __stage_execute_input_data.rfile_rb_data;
+						//__locals.cpyhi_data = 0;
 
 						// Sign extend the immediate value
 						__in_alu.b 
@@ -1697,7 +1819,8 @@ module Frost32Cpu(input logic clk,
 
 					PkgInstrDecoder::Addsi_OneRegOnePcOneSimm:
 					begin
-						__in_alu.a = __multi_stage_data_execute.pc_val;
+						//__in_alu.a = __multi_stage_data_execute.pc_val;
+						//__locals.cpyhi_data = 0;
 
 						// Sign extend the immediate value
 						__in_alu.b 
@@ -1711,13 +1834,18 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Cpyhi_OneRegOneImm:
 					begin
 						// cpyhi only changes the high 15 bits of rA
-						__in_alu.a
-							= {__multi_stage_data_execute.instr_imm_val,
-							__stage_execute_input_data
-							.rfile_ra_data[15:0]};
+						//__in_alu.a
+						//	= {__multi_stage_data_execute.instr_imm_val,
+						//	__stage_execute_input_data
+						//	.rfile_ra_data[15:0]};
+						//__locals.cpyhi_data
+						//	= {__multi_stage_data_execute.instr_imm_val,
+						//	__stage_execute_input_data
+						//	.rfile_ra_data[15:0]};
 
 						__in_alu.b = 0;
-						__in_alu.oper = PkgAlu::Add;
+						//__in_alu.oper = PkgAlu::Add;
+						__in_alu.oper = 0;
 
 						//__in_alu.a 
 						//	= __stage_execute_input_data.rfile_ra_data;
@@ -1736,8 +1864,9 @@ module Frost32Cpu(input logic clk,
 					// instructions from group 1
 					default:
 					begin
-						__in_alu.a 
-							= __stage_execute_input_data.rfile_rb_data;
+						//__in_alu.a 
+						//	= __stage_execute_input_data.rfile_rb_data;
+						//__locals.cpyhi_data = 0;
 
 						// Zero-extend the immediate value
 						__in_alu.b = {16'h0000,
@@ -1749,137 +1878,140 @@ module Frost32Cpu(input logic clk,
 				//$display("always_comb thing:  %h %h %h",
 				//	__in_alu.a, __in_alu.b, __in_alu.oper);
 
-				__locals.branch_adder_a = 0;
-				__locals.branch_adder_b = 0;
-				__locals.dest_of_ctrl_flow_if_condition = 0;
-				__locals.ldst_adder_a = 0;
-				__locals.ldst_adder_b = 0;
-				__locals.ldst_address = 0;
+				//__locals.branch_adder_a = 0;
+				//__locals.branch_adder_b = 0;
+				//__locals.dest_of_ctrl_flow_if_condition = 0;
+				//__locals.ldst_adder_a = 0;
+				//__locals.ldst_adder_b = 0;
+				//__locals.ldst_address = 0;
 			end
 
-			// Group 2:  Branches
-			2:
-			begin
-				__locals.mul_partial_result_x0_y0 = 0;
-				__locals.mul_partial_result_x0_y1 = 0;
-				__locals.mul_partial_result_x1_y0 = 0;
+			//// Group 2:  Branches
+			//2:
+			//begin
+			//	//__locals.mul_partial_result_x0_y0 = 0;
+			//	//__locals.mul_partial_result_x0_y1 = 0;
+			//	//__locals.mul_partial_result_x1_y0 = 0;
 
-				//__in_alu.a = __multi_stage_data_execute.pc_val + 4;
-				//__in_alu.a = __following_pc;
-				__locals.branch_adder_a = __following_pc;
+			//	////__in_alu.a = __multi_stage_data_execute.pc_val + 4;
+			//	////__in_alu.a = __following_pc;
+			//	//__locals.branch_adder_a = __following_pc;
 
-				// Sign extend the immediate value
-				//__in_alu.b 
-				//	= {{16{__multi_stage_data_execute.instr_imm_val[15]}}, 
-				//	__multi_stage_data_execute.instr_imm_val};
-				__locals.branch_adder_b
-					= {{16{__multi_stage_data_execute.instr_imm_val[15]}}, 
-					__multi_stage_data_execute.instr_imm_val};
+			//	//// Sign extend the immediate value
+			//	////__in_alu.b 
+			//	////	= {{16{__multi_stage_data_execute.instr_imm_val[15]}}, 
+			//	////	__multi_stage_data_execute.instr_imm_val};
+			//	//__locals.branch_adder_b
+			//	//	= {{16{__multi_stage_data_execute.instr_imm_val[15]}}, 
+			//	//	__multi_stage_data_execute.instr_imm_val};
 
-				//__in_alu.oper = PkgAlu::Add;
+			//	////__in_alu.oper = PkgAlu::Add;
 
-				__locals.dest_of_ctrl_flow_if_condition
-					= __locals.branch_adder_a + __locals.branch_adder_b;
-				__locals.ldst_adder_a = 0;
-				__locals.ldst_adder_b = 0;
-				__locals.ldst_address = 0;
+			//	//__locals.dest_of_ctrl_flow_if_condition
+			//	//	= __locals.branch_adder_a + __locals.branch_adder_b;
+			//	//__locals.ldst_adder_a = 0;
+			//	//__locals.ldst_adder_b = 0;
+			//	//__locals.ldst_address = 0;
 
-				__in_alu = 0;
-			end
+			//	__in_alu = 0;
+			//end
 
-			// Group 3:  Jumps
-			3:
-			begin
-				__locals.mul_partial_result_x0_y0 = 0;
-				__locals.mul_partial_result_x0_y1 = 0;
-				__locals.mul_partial_result_x1_y0 = 0;
+			//// Group 3:  Jumps
+			//3:
+			//begin
+			//	//__locals.mul_partial_result_x0_y0 = 0;
+			//	//__locals.mul_partial_result_x0_y1 = 0;
+			//	//__locals.mul_partial_result_x1_y0 = 0;
 
-				__locals.branch_adder_a = 0;
-				__locals.branch_adder_b = 0;
-				__locals.dest_of_ctrl_flow_if_condition 
-					= __stage_execute_input_data.rfile_rc_data;
-				__locals.ldst_adder_a = 0;
-				__locals.ldst_adder_b = 0;
-				__locals.ldst_address = 0;
+			//	//__locals.branch_adder_a = 0;
+			//	//__locals.branch_adder_b = 0;
+			//	//__locals.dest_of_ctrl_flow_if_condition 
+			//	//	= __stage_execute_input_data.rfile_rc_data;
+			//	//__locals.ldst_adder_a = 0;
+			//	//__locals.ldst_adder_b = 0;
+			//	//__locals.ldst_address = 0;
 
-				__in_alu = 0;
-			end
+			//	__in_alu = 0;
+			//end
 
-			// Group 4:  Calls
-			4:
-			begin
-				__locals.mul_partial_result_x0_y0 = 0;
-				__locals.mul_partial_result_x0_y1 = 0;
-				__locals.mul_partial_result_x1_y0 = 0;
+			//// Group 4:  Calls
+			//4:
+			//begin
+			//	//__locals.mul_partial_result_x0_y0 = 0;
+			//	//__locals.mul_partial_result_x0_y1 = 0;
+			//	//__locals.mul_partial_result_x1_y0 = 0;
 
 
-				__locals.branch_adder_a = 0;
-				__locals.branch_adder_b = 0;
-				__locals.dest_of_ctrl_flow_if_condition
-					= __stage_execute_input_data.rfile_rc_data;
-				__locals.ldst_adder_a = 0;
-				__locals.ldst_adder_b = 0;
-				__locals.ldst_address = 0;
+			//	//__locals.branch_adder_a = 0;
+			//	//__locals.branch_adder_b = 0;
+			//	//__locals.dest_of_ctrl_flow_if_condition
+			//	//	= __stage_execute_input_data.rfile_rc_data;
+			//	//__locals.ldst_adder_a = 0;
+			//	//__locals.ldst_adder_b = 0;
+			//	//__locals.ldst_address = 0;
 
-				__in_alu = 0;
-			end
+			//	__in_alu = 0;
+			//end
 
-			// Group 5:  Loads and stores
-			5:
-			begin
-				__locals.mul_partial_result_x0_y0 = 0;
-				__locals.mul_partial_result_x0_y1 = 0;
-				__locals.mul_partial_result_x1_y0 = 0;
+			//// Group 5:  Loads and stores
+			//5:
+			//begin
+			//	//__locals.mul_partial_result_x0_y0 = 0;
+			//	//__locals.mul_partial_result_x0_y1 = 0;
+			//	//__locals.mul_partial_result_x1_y0 = 0;
 
-				__in_alu = 0;
-				__locals.branch_adder_a = 0;
-				__locals.branch_adder_b = 0;
-				__locals.dest_of_ctrl_flow_if_condition = 0;
+			//	__in_alu = 0;
+			//	//__locals.branch_adder_a = 0;
+			//	//__locals.branch_adder_b = 0;
+			//	//__locals.dest_of_ctrl_flow_if_condition = 0;
 
-				__locals.ldst_adder_a 
-					= __stage_execute_input_data.rfile_rb_data;
+			//	//__locals.ldst_adder_a 
+			//	//	= __stage_execute_input_data.rfile_rb_data;
 
-				// Immediate-indexed loads and stores have
-				// (__multi_stage_data_execute.instr_opcode[3] == 1)
-				if (__multi_stage_data_execute.instr_opcode[3])
-				begin
-					// memory address computation:  rB + sign-extended
-					// immediate (actually sign extended twice since
-					// the instruction decoder **also** performed a
-					// sign extend, from 12-bit to 16-bit)
-					__locals.ldst_adder_b 
-						= {{16{__multi_stage_data_execute.instr_imm_val
-						[15]}},
-						__multi_stage_data_execute.instr_imm_val};
-				end
+			//	//// Immediate-indexed loads and stores have
+			//	//// (__multi_stage_data_execute.instr_opcode[3] == 1)
+			//	//if (__multi_stage_data_execute.instr_opcode[3])
+			//	//begin
+			//	//	// memory address computation:  rB + sign-extended
+			//	//	// immediate (actually sign extended twice since
+			//	//	// the instruction decoder **also** performed a
+			//	//	// sign extend, from 12-bit to 16-bit)
+			//	//	__locals.ldst_adder_b 
+			//	//		= {{16{__multi_stage_data_execute.instr_imm_val
+			//	//		[15]}},
+			//	//		__multi_stage_data_execute.instr_imm_val};
+			//	//end
 
-				else
-				begin
-					// memory address computation:  rB + rC
-					__locals.ldst_adder_b 
-						= __stage_execute_input_data.rfile_rc_data;
-				end
-				//__in_alu.oper = PkgAlu::Add;
+			//	//else
+			//	//begin
+			//	//	// memory address computation:  rB + rC
+			//	//	__locals.ldst_adder_b 
+			//	//		= __stage_execute_input_data.rfile_rc_data;
+			//	//end
+			//	////__in_alu.oper = PkgAlu::Add;
 
-				__locals.ldst_address = __locals.ldst_adder_a
-					+ __locals.ldst_adder_b;
-			end
+			//	//__locals.ldst_address = __locals.ldst_adder_a
+			//	//	+ __locals.ldst_adder_b;
+			//end
 
 			default:
 			begin
-				__locals.mul_partial_result_x0_y0 = 0;
-				__locals.mul_partial_result_x0_y1 = 0;
-				__locals.mul_partial_result_x1_y0 = 0;
+				//__locals.mul_partial_result_x0_y0 = 0;
+				//__locals.mul_partial_result_x0_y1 = 0;
+				//__locals.mul_partial_result_x1_y0 = 0;
 
-				__locals.branch_adder_a = 0;
-				__locals.branch_adder_b = 0;
-				__locals.dest_of_ctrl_flow_if_condition = 0;
-				__locals.ldst_adder_a = 0;
-				__locals.ldst_adder_b = 0;
-				__locals.ldst_address = 0;
+				//__locals.branch_adder_a = 0;
+				//__locals.branch_adder_b = 0;
+				//__locals.dest_of_ctrl_flow_if_condition = 0;
+				//__locals.ldst_adder_a = 0;
+				//__locals.ldst_adder_b = 0;
+				//__locals.ldst_address = 0;
 
 				// Perform a bogus add
-				__in_alu = 0;
+				//__in_alu = 0;
+				//__locals.cpyhi_data = 0;
+				__in_alu.b = 0;
+				__in_alu.oper = 0;
 			end
 		endcase
 		//__in_alu.a = __stage_execute_input_data.rfile_rb_data
@@ -1887,17 +2019,20 @@ module Frost32Cpu(input logic clk,
 
 	else // if (in.wait_for_mem)
 	begin
-		__locals.mul_partial_result_x0_y0 = 0;
-		__locals.mul_partial_result_x0_y1 = 0;
-		__locals.mul_partial_result_x1_y0 = 0;
-		__in_alu = 0;
+		//__locals.mul_partial_result_x0_y0 = 0;
+		//__locals.mul_partial_result_x0_y1 = 0;
+		//__locals.mul_partial_result_x1_y0 = 0;
+		//__in_alu = 0;
+		//__locals.cpyhi_data = 0;
+		__in_alu.b = 0;
+		__in_alu.oper = 0;
 
-		__locals.branch_adder_a = 0;
-		__locals.branch_adder_b = 0;
-		__locals.dest_of_ctrl_flow_if_condition = 0;
-		__locals.ldst_adder_a = 0;
-		__locals.ldst_adder_b = 0;
-		__locals.ldst_address = 0;
+		//__locals.branch_adder_a = 0;
+		//__locals.branch_adder_b = 0;
+		//__locals.dest_of_ctrl_flow_if_condition = 0;
+		//__locals.ldst_adder_a = 0;
+		//__locals.ldst_adder_b = 0;
+		//__locals.ldst_address = 0;
 	end
 	end
 
