@@ -15,12 +15,17 @@ loop:
 	inc u1				; 0xc
 	
 	dec u0				; 0x10
-	;bges u0, u2, loop	; 0x14
-	jges u0, u2, u3
+	bges u0, u2, loop	; 0x14
+	;jges u0, u2, u3
 
 	;calla test_call		; 0x18
-	addsi lr, pc, 8		; 0x18
-	bra test_call		; 0x1c
+	;addsi lr, pc, 8		; 0x18
+	;bra test_call		; 0x1c
+	;addsi lr, pc, . - test_call + 8
+	;addsi lr, pc, 
+	;;cpyi lr, test_call
+	addsi lr, pc, test_call - .
+	call lr
 
 	bra quit
 }

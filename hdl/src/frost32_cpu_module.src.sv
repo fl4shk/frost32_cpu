@@ -151,7 +151,11 @@ module Frost32Cpu(input logic clk,
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] 
 			branch_adder_a, branch_adder_b;
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] 
-			dest_of_ctrl_flow_if_condition, next_pc_after_jump_or_call;
+			dest_of_ctrl_flow_if_condition, 
+			next_pc_after_jump_or_call_cond,
+			next_pc_after_jump_or_call_not_cond;
+			//next_pc_after_jump_or_call;
+		logic jump_or_call_condition;
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] 
 			ldst_adder_a, ldst_adder_b;
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] ldst_address;
@@ -507,11 +511,12 @@ module Frost32Cpu(input logic clk,
 	end
 	always_comb
 	begin
-		__locals.cond_branch_eq
-			= (__stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_ra_data
-			== __stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_rb_data);
+		//__locals.cond_branch_eq
+		//	= (__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_ra_data
+		//	== __stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_rb_data);
+		__locals.cond_branch_eq = !__locals.cond_branch_ne;
 	end
 	always_comb
 	begin
@@ -575,7 +580,7 @@ module Frost32Cpu(input logic clk,
 		//	>= $signed(__stage_instr_decode_data
 		//	.from_stage_register_read_rfile_cond_rb_data));
 		__locals.cond_branch_ges
-			= !__locals.cond_branch_ges;
+			= !__locals.cond_branch_lts;
 	end
 
 	always_comb
@@ -591,11 +596,13 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	begin
 		//__locals.cond_branch_gts = __out_compare_ctrl_flow.gts;
+		//__locals.cond_branch_gts
+		//	= ($signed(__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_ra_data)
+		//	> $signed(__stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_rb_data));
 		__locals.cond_branch_gts
-			= ($signed(__stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_ra_data)
-			> $signed(__stage_instr_decode_data
-			.from_stage_register_read_rfile_cond_rb_data));
+			= !__locals.cond_branch_les;
 	end
 	`endif		// HAVE_REGISTER_READ_STAGE
 
@@ -905,20 +912,26 @@ module Frost32Cpu(input logic clk,
 
 	task handle_jump_or_call_in_decode_stage_part_1;
 		input condition;
-		
-		if (condition)
-		begin
-			//__locals.next_pc_after_jump_or_call
-			//	<= __locals.dest_of_ctrl_flow_if_condition;
-			__locals.next_pc_after_jump_or_call
-				<= __stage_instr_decode_data
-				.from_stage_execute_rfile_rc_data;
-		end
 
-		else
-		begin
-			__locals.next_pc_after_jump_or_call <= __following_pc;
-		end
+		__locals.jump_or_call_condition <= condition;
+		__locals.next_pc_after_jump_or_call_cond
+			<= __stage_instr_decode_data.from_stage_execute_rfile_rc_data;
+		__locals.next_pc_after_jump_or_call_not_cond
+			<= __following_pc;
+
+		//if (condition)
+		//begin
+		//	//__locals.next_pc_after_jump_or_call
+		//	//	<= __locals.dest_of_ctrl_flow_if_condition;
+		//	__locals.next_pc_after_jump_or_call
+		//		<= __stage_instr_decode_data
+		//		.from_stage_execute_rfile_rc_data;
+		//end
+
+		//else
+		//begin
+		//	__locals.next_pc_after_jump_or_call <= __following_pc;
+		//end
 	endtask
 	//task handle_ctrl_flow_in_decode_stage_part_2;
 	//	prep_load_next_instruction(__locals.dest_of_ctrl_flow_if_condition);
@@ -927,18 +940,21 @@ module Frost32Cpu(input logic clk,
 	task handle_call_in_execute_stage;
 		input condition;
 
-		if (condition)
-		begin
-			// We want to store the value of __following_pc in "lr".
-			__stage_write_back_input_data.n_reg_data <= __following_pc;
-			__stage_write_back_input_data.do_write_lr <= 1;
-		end
+		__stage_write_back_input_data.n_reg_data <= __following_pc;
+		__stage_write_back_input_data.do_write_lr <= condition;
 
-		else
-		begin
-			// We want to leave "lr" alone.
-			__stage_write_back_input_data.do_write_lr <= 0;
-		end
+		//if (condition)
+		//begin
+		//	// We want to store the value of __following_pc in "lr".
+		//	__stage_write_back_input_data.n_reg_data <= __following_pc;
+		//	__stage_write_back_input_data.do_write_lr <= 1;
+		//end
+
+		//else
+		//begin
+		//	// We want to leave "lr" alone.
+		//	__stage_write_back_input_data.do_write_lr <= 0;
+		//end
 	endtask
 
 
@@ -1184,8 +1200,20 @@ module Frost32Cpu(input logic clk,
 				else if (__stage_instr_decode_data.stall_state
 					== PkgFrost32Cpu::StCtrlFlowJumpCall)
 				begin
-					prep_load_next_instruction
-						(__locals.next_pc_after_jump_or_call);
+					//prep_load_next_instruction
+					//	(__locals.next_pc_after_jump_or_call);
+					if (__locals.jump_or_call_condition)
+					begin
+						prep_load_next_instruction
+							(__locals.next_pc_after_jump_or_call_cond);
+					end
+
+					else
+					begin
+						prep_load_next_instruction
+							(__locals
+							.next_pc_after_jump_or_call_not_cond);
+					end
 				end
 
 				else if (__stage_instr_decode_data.stall_state
@@ -1208,6 +1236,9 @@ module Frost32Cpu(input logic clk,
 					//__locals.next_pc_after_jump_or_call
 					//	<= __stage_instr_decode_data
 					//	.from_stage_execute_rfile_rc_data;
+					//__locals.next_pc_after_jump_or_call
+					//	<= __stage_instr_decode_data
+					//	.from_stage_execute_rfile_rc_data;
 					case (__multi_stage_data_execute.instr_condition_type)
 						PkgInstrDecoder::CtNe:
 						begin
@@ -1221,56 +1252,57 @@ module Frost32Cpu(input logic clk,
 								(__locals.cond_eq);
 						end
 
-						PkgInstrDecoder::CtLtu:
-						begin
-							//handle_jump_or_call_in_decode_stage
-							//	(__out_compare_ctrl_flow.ltu);
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_ltu);
-						end
-						PkgInstrDecoder::CtGeu:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_geu);
-						end
+						//PkgInstrDecoder::CtLtu:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_ltu);
+						//end
+						//PkgInstrDecoder::CtGeu:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_geu);
+						//end
 
-						PkgInstrDecoder::CtLeu:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_leu);
-						end
-						PkgInstrDecoder::CtGtu:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_gtu);
-						end
+						//PkgInstrDecoder::CtLeu:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_leu);
+						//end
+						//PkgInstrDecoder::CtGtu:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_gtu);
+						//end
 
-						PkgInstrDecoder::CtLts:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_lts);
-						end
-						PkgInstrDecoder::CtGes:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_ges);
-						end
+						//PkgInstrDecoder::CtLts:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_lts);
+						//end
+						//PkgInstrDecoder::CtGes:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_ges);
+						//end
 
-						PkgInstrDecoder::CtLes:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_les);
-						end
-						PkgInstrDecoder::CtGts:
-						begin
-							handle_jump_or_call_in_decode_stage_part_1
-								(__locals.cond_gts);
-						end
+						//PkgInstrDecoder::CtLes:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_les);
+						//end
+						//PkgInstrDecoder::CtGts:
+						//begin
+						//	handle_jump_or_call_in_decode_stage_part_1
+						//		(__locals.cond_gts);
+						//end
 
 						default:
 						begin
 							// Eek!
-							__locals.next_pc_after_jump_or_call
+							//__locals.next_pc_after_jump_or_call
+							//	<= __following_pc;
+							__locals.jump_or_call_condition <= 0;
+							__locals.next_pc_after_jump_or_call_not_cond
 								<= __following_pc;
 						end
 					endcase
@@ -1785,8 +1817,10 @@ module Frost32Cpu(input logic clk,
 			begin
 				// Prevent operand forwarding
 				__stage_execute_output_data.prev_written_reg_index <= 0;
-				//__stage_write_back_input_data.n_reg_data 
-				//	<= __following_pc;
+				////__stage_write_back_input_data.n_reg_data 
+				////	<= __following_pc;
+				////__stage_write_back_input_data.do_write_lr <= 1;
+				//__stage_write_back_input_data.n_reg_data <= __following_pc;
 				//__stage_write_back_input_data.do_write_lr <= 1;
 
 				case (__multi_stage_data_execute.instr_condition_type)
@@ -1800,41 +1834,41 @@ module Frost32Cpu(input logic clk,
 						handle_call_in_execute_stage(__locals.cond_eq);
 					end
 
-					PkgInstrDecoder::CtLtu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_ltu);
-					end
-					PkgInstrDecoder::CtGeu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_geu);
-					end
+					//PkgInstrDecoder::CtLtu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_ltu);
+					//end
+					//PkgInstrDecoder::CtGeu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_geu);
+					//end
 
-					PkgInstrDecoder::CtLeu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_leu);
-					end
-					PkgInstrDecoder::CtGtu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_gtu);
-					end
+					//PkgInstrDecoder::CtLeu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_leu);
+					//end
+					//PkgInstrDecoder::CtGtu:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_gtu);
+					//end
 
-					PkgInstrDecoder::CtLts:
-					begin
-						handle_call_in_execute_stage(__locals.cond_lts);
-					end
-					PkgInstrDecoder::CtGes:
-					begin
-						handle_call_in_execute_stage(__locals.cond_ges);
-					end
+					//PkgInstrDecoder::CtLts:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_lts);
+					//end
+					//PkgInstrDecoder::CtGes:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_ges);
+					//end
 
-					PkgInstrDecoder::CtLes:
-					begin
-						handle_call_in_execute_stage(__locals.cond_les);
-					end
-					PkgInstrDecoder::CtGts:
-					begin
-						handle_call_in_execute_stage(__locals.cond_gts);
-					end
+					//PkgInstrDecoder::CtLes:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_les);
+					//end
+					//PkgInstrDecoder::CtGts:
+					//begin
+					//	handle_call_in_execute_stage(__locals.cond_gts);
+					//end
 
 					default:
 					begin

@@ -21,8 +21,10 @@ There's either a three-stage or a four-stage pipeline:
     * Loads and stores take three cycles each.
 
 * When there's a four-stage pipeline:
-    * Instructions that take more than one cycle all take one more than
-    they would have if there was a three-stage pipeline
+    * Relative branches still take two cycles, but jumps and calls take
+    four cycles (this may be changed back to three cycles later)
+    * Loads and stores take four cycles, but this may be changed to three
+    cycles later.
 
 
 # The Assembler
