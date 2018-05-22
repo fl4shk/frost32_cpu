@@ -36,15 +36,15 @@ typedef enum logic [`MSB_POS__INSTR_CONDITION_TYPE:0]
 	CtLts,
 	CtGes,
 
-	//CtLes,
-	//CtGts,
-	//CtBad0,
-	//CtBad1,
+	CtLes,
+	CtGts,
+	CtBad0,
+	CtBad1,
 
-	//CtBad2,
-	//CtBad3,
-	//CtBad4,
-	//CtBad5
+	CtBad2,
+	CtBad3,
+	CtBad4,
+	CtBad5
 } CondType;
 
 

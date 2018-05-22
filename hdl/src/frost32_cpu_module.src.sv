@@ -646,9 +646,9 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_leu
 			`LOCALS_CONDITION_ASSIGNMENT_TYPE
 			(__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data
+			.from_stage_register_read_rfile_cond_ra_data
 			<= __stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data);
+			.from_stage_register_read_rfile_cond_rb_data);
 	end
 
 	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
@@ -657,9 +657,9 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_gtu
 			`LOCALS_CONDITION_ASSIGNMENT_TYPE
 			(__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data
+			.from_stage_register_read_rfile_cond_ra_data
 			> __stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data);
+			.from_stage_register_read_rfile_cond_rb_data);
 	end
 
 	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
@@ -668,9 +668,9 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_lts
 			`LOCALS_CONDITION_ASSIGNMENT_TYPE
 			($signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data)
+			.from_stage_register_read_rfile_cond_ra_data)
 			< $signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data));
+			.from_stage_register_read_rfile_cond_rb_data));
 	end
 
 	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
@@ -679,9 +679,9 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_ges
 			`LOCALS_CONDITION_ASSIGNMENT_TYPE
 			($signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data)
+			.from_stage_register_read_rfile_cond_ra_data)
 			>= $signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data));
+			.from_stage_register_read_rfile_cond_rb_data));
 	end
 
 	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
@@ -690,9 +690,9 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_les
 			`LOCALS_CONDITION_ASSIGNMENT_TYPE
 			($signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data)
+			.from_stage_register_read_rfile_cond_ra_data)
 			<= $signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data));
+			.from_stage_register_read_rfile_cond_rb_data));
 	end
 
 	`LOCALS_CONDITION_ALWAYS_BLOCK_TYPE
@@ -701,9 +701,9 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_gts
 			`LOCALS_CONDITION_ASSIGNMENT_TYPE
 			($signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data)
+			.from_stage_register_read_rfile_cond_ra_data)
 			> $signed(__stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data));
+			.from_stage_register_read_rfile_cond_rb_data));
 	end
 
 	always_comb

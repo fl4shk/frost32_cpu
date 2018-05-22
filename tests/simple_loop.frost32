@@ -1,44 +1,40 @@
 .org 0x0000
-//main:
-//{
-//	;cpyi u0, 0x50		; 0x0
-//	;cpyi u0, 20			; 0x0
-//	subi u0, zero, 19		; 0x0
-//	cpy u1, u0			; 0x4
-//
-//	subi u2, zero, 20		; 0x8
-//
-//
-//loop:
-//	inc u1				; 0xc
-//	
-//	dec u0				; 0x10
-//	;add zero, zero, zero	; 0x14
-//	;add zero, zero, zero	; 0x18
-//	;add zero, zero, zero	; 0x1c
-//	;add zero, zero, zero	; 0x20
-//	;add zero, zero, zero	; 0x24
-//	;add zero, zero, zero	; 0x28
-//	;bra quit
-//	bges u0, u2, loop	; 0x14
-//
-//	;calla test_call		; 0x18
-//	addsi lr, pc, 8		; 0x18
-//	bra test_call		; 0x1c
-//
-//	bra quit
-//}
-//
-//test_call:
-//{
-//	cpyi u3, 6
-//	jmp lr
-//}
-
 main:
 {
-	cpyi u0, 0x50
+	;cpyi u0, 0x50		; 0x0
+	;cpyi u0, 20			; 0x0
+	subi u0, zero, 19		; 0x0
+	cpy u1, u0			; 0x4
+
+	subi u2, zero, 20		; 0x8
+
+	cpyi u3, loop
+
+
+loop:
+	inc u1				; 0xc
+	
+	dec u0				; 0x10
+	;bges u0, u2, loop	; 0x14
+	jges u0, u2, u3
+
+	;calla test_call		; 0x18
+	addsi lr, pc, 8		; 0x18
+	bra test_call		; 0x1c
+
+	bra quit
 }
+
+test_call:
+{
+	cpyi u3, 6
+	jmp lr
+}
+
+//main:
+//{
+//	cpyi u0, 0x50
+//}
 
 .org 0x4000
 quit:
