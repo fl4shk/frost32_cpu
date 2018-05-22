@@ -3,7 +3,8 @@ main:
 {
 	;cpyi u0, 0x50		; 0x0
 	;cpyi u0, 20			; 0x0
-	subi u0, zero, 19		; 0x0
+	;subi u0, zero, 19		; 0x0
+	subi u0, zero, 4
 	cpy u1, u0			; 0x4
 
 	subi u2, zero, 20		; 0x8
@@ -24,10 +25,13 @@ loop:
 	;addsi lr, pc, . - test_call + 8
 	;addsi lr, pc, 
 	;;cpyi lr, test_call
+
+	; Relative call
 	addsi lr, pc, test_call - .
 	call lr
 
-	bra quit
+	;bra quit
+	bra 0x4000
 }
 
 test_call:
@@ -42,6 +46,7 @@ test_call:
 //}
 
 .org 0x4000
+;.org 0x4000 >> 2
 quit:
 {
 	bra quit

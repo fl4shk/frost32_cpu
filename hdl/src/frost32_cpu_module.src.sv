@@ -742,8 +742,11 @@ module Frost32Cpu(input logic clk,
 	//end
 
 	always_comb
+	//always @ (posedge clk)
 	begin
 		__locals.ldst_adder_a = __stage_execute_input_data.rfile_rb_data;
+		//__locals.ldst_adder_a <= __stage_instr_decode_data
+		//	.from_stage_register_read_rfile_cond_rb_data;
 	end
 
 	always_comb
@@ -856,6 +859,30 @@ module Frost32Cpu(input logic clk,
 
 	task stop_reg_write;
 		__in_reg_file.write_en <= 0;
+	endtask
+
+	task send_instr_through;
+		// We only send a non-bubble instruction to
+		// `MULTI_STAGE_DATA_AFTER_INSTR_DECODE when there's a
+		// new instruction that is NOT "ei" or "di"
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
+			<= __multi_stage_data_instr_decode;
+		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
+			<= __multi_stage_data_instr_decode;
+
+		`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.ireta_data 
+			<= __locals.ireta;
+		`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.idsta_data 
+			<= __locals.idsta;
+
+		// Use all three register file read ports.
+		// Do this whenever we're not in a stall.
+		__in_reg_file.read_sel_ra 
+			<= __multi_stage_data_instr_decode.instr_ra_index;
+		__in_reg_file.read_sel_rb 
+			<= __multi_stage_data_instr_decode.instr_rb_index;
+		__in_reg_file.read_sel_rc 
+			<= __multi_stage_data_instr_decode.instr_rc_index;
 	endtask
 
 	task make_bubble;
@@ -1412,6 +1439,18 @@ module Frost32Cpu(input logic clk,
 					endcase
 				end
 			end
+
+			//`ifdef HAVE_REGISTER_READ_STAGE
+			//else if (__stage_instr_decode_data.stall_counter == 4)
+			//begin
+			//	if (__stage_instr_decode_data.stall_state
+			//		== PkgFrost32Cpu::StMemAccess)
+			//	begin
+			//		send_instr_through();
+			//	end
+			//end
+			//`endif		// HAVE_REGISTER_READ_STAGE
+
 		end
 
 		//else // if (__stage_instr_decode_data.stall_counter == 0)
@@ -1550,32 +1589,17 @@ module Frost32Cpu(input logic clk,
 					make_bubble();
 				end
 
-				// The instruction is **NOT** "ei", "di", or "reti", which
-				// are all single cycle and completely resolved in the
-				// decode stage.
+				//`ifdef HAVE_REGISTER_READ_STAGE
+				//else if (__multi_stage_data_instr_decode.instr_group
+				//	== 5)
+				//begin
+				//	make_bubble();
+				//end
+				//`endif		// HAVE_REGISTER_READ_STAGE
+
 				else
 				begin
-					// We only send a non-bubble instruction to
-					// `MULTI_STAGE_DATA_AFTER_INSTR_DECODE when there's a
-					// new instruction that is NOT "ei" or "di"
-					`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
-						<= __multi_stage_data_instr_decode;
-					`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
-						<= __multi_stage_data_instr_decode;
-
-					`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.ireta_data 
-						<= __locals.ireta;
-					`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.idsta_data 
-						<= __locals.idsta;
-
-					// Use all three register file read ports.
-					// Do this whenever we're not in a stall.
-					__in_reg_file.read_sel_ra 
-						<= __multi_stage_data_instr_decode.instr_ra_index;
-					__in_reg_file.read_sel_rb 
-						<= __multi_stage_data_instr_decode.instr_rb_index;
-					__in_reg_file.read_sel_rc 
-						<= __multi_stage_data_instr_decode.instr_rc_index;
+					send_instr_through();
 				end
 			end
 
@@ -1705,29 +1729,25 @@ module Frost32Cpu(input logic clk,
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_execute.instr_ra_index;
 
-				__stage_write_back_input_data.n_reg_data 
-					<= __out_alu.data;
-				//if (__multi_stage_data_execute.instr_opcode 
-				//	!= PkgInstrDecoder::Mul_ThreeRegs)
-				//begin
-				//	//$display("Three registers ALU operation:  %h",
-				//	//	__out_alu.data);
-				//	__stage_write_back_input_data.n_reg_data 
-				//		<= __out_alu.data;
-				//end
+				//__stage_write_back_input_data.n_reg_data 
+				//	<= __out_alu.data;
+				if (__multi_stage_data_execute.instr_opcode 
+					!= PkgInstrDecoder::Mul_ThreeRegs)
+				begin
+					//$display("Three registers ALU operation:  %h",
+					//	__out_alu.data);
+					__stage_write_back_input_data.n_reg_data 
+						<= __out_alu.data;
+				end
 
-				//else
-				//begin
-				//	`ifdef USE_SINGLE_CYCLE_MULTIPLY
-				//	__stage_write_back_input_data.n_reg_data
-				//		<= ({(__locals.mul_partial_result_x1_y0
-				//		+ __locals.mul_partial_result_x0_y1),
-				//		16'h0000})
-				//		+ __locals.mul_partial_result_x0_y0;
-				//	`else
-				//	__stage_write_back_input_data.n_reg_data <= 0;
-				//	`endif		// USE_SINGLE_CYCLE_MULTIPLY
-				//end
+				else
+				begin
+					__stage_write_back_input_data.n_reg_data
+						<= ({(__locals.mul_partial_result_x1_y0
+						+ __locals.mul_partial_result_x0_y1),
+						16'h0000})
+						+ __locals.mul_partial_result_x0_y0;
+				end
 			end
 
 			4'd1:
@@ -1735,6 +1755,7 @@ module Frost32Cpu(input logic clk,
 				// For operand forwarding
 				__stage_execute_output_data.prev_written_reg_index
 					<= __multi_stage_data_execute.instr_ra_index;
+
 				////__stage_execute_output_data
 				////	.perform_operand_forwarding <= 1;
 				//if (__multi_stage_data_execute.instr_opcode
@@ -1785,6 +1806,16 @@ module Frost32Cpu(input logic clk,
 						+ {{16{__multi_stage_data_execute.instr_imm_val
 						[15]}}, 
 						__multi_stage_data_execute.instr_imm_val};
+				end
+
+				else if (__multi_stage_data_execute.instr_opcode
+					== PkgInstrDecoder::Muli_TwoRegsOneImm)
+				begin
+					__stage_write_back_input_data.n_reg_data
+						<= ({(__locals.mul_partial_result_x1_y0
+						+ __locals.mul_partial_result_x0_y1),
+						16'h0000})
+						+ __locals.mul_partial_result_x0_y0;
 				end
 
 				else
@@ -2420,9 +2451,11 @@ module Frost32Cpu(input logic clk,
 
 			default:
 			begin
-				//__locals.mul_partial_result_x0_y0 = 0;
-				//__locals.mul_partial_result_x0_y1 = 0;
-				//__locals.mul_partial_result_x1_y0 = 0;
+				`ifdef USE_SINGLE_CYCLE_MULTIPLY
+				__locals.mul_partial_result_x0_y0 = 0;
+				__locals.mul_partial_result_x0_y1 = 0;
+				__locals.mul_partial_result_x1_y0 = 0;
+				`endif		// USE_SINGLE_CYCLE_MULTIPLY
 
 				//__locals.branch_adder_a = 0;
 				//__locals.branch_adder_b = 0;
@@ -2443,9 +2476,11 @@ module Frost32Cpu(input logic clk,
 
 	else // if (in.wait_for_mem)
 	begin
-		//__locals.mul_partial_result_x0_y0 = 0;
-		//__locals.mul_partial_result_x0_y1 = 0;
-		//__locals.mul_partial_result_x1_y0 = 0;
+		`ifdef USE_SINGLE_CYCLE_MULTIPLY
+		__locals.mul_partial_result_x0_y0 = 0;
+		__locals.mul_partial_result_x0_y1 = 0;
+		__locals.mul_partial_result_x1_y0 = 0;
+		`endif		// USE_SINGLE_CYCLE_MULTIPLY
 		//__in_alu = 0;
 		//__locals.cpyhi_data = 0;
 		__in_alu.b = 0;

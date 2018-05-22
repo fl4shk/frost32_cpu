@@ -98,6 +98,8 @@ data_for_add_to_u1:
 	;muli u1, u5, 20
 }
 
+var:
+	.space 4
 
 .org 0x4000
 quit:
@@ -105,9 +107,7 @@ quit:
 	bra quit
 }
 
-.org 0x6000
-var:
-	.space 4
+;.org 0x6000 
 
 
 ;.org 0x9000
