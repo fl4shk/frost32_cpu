@@ -325,14 +325,19 @@ module SinglePortRam(input logic clk,
 			in_data, in_addr, in_we, out_data);
 	end
 
-	// Asynchronous reads
-	assign out_data = __mem[in_addr];
+	//// Asynchronous reads
+	//assign out_data = __mem[in_addr];
 
 	always_ff @ (posedge clk)
 	begin
 		if (in_we)
 		begin
 			__mem[in_addr] <= in_data;
+		end
+
+		else
+		begin
+			out_data <= __mem[in_addr];
 		end
 	end
 
@@ -361,16 +366,19 @@ module MainMem(input logic clk,
 		.in_we(__in_single_port_ram_we),
 		.out_data(__out_single_port_ram_data));
 
-	always_comb
-	begin
-		out.data = __out_single_port_ram_data;
-	end
+	//always_comb
+	//begin
+	//	out.data = __out_single_port_ram_data;
+	//end
 
-	always_comb
-	begin
-		out.wait_for_mem = (in.req_mem_access
-			&& (in.data_inout_access_type == PkgFrost32Cpu::DiatWrite));
-	end
+	//always_comb
+	//begin
+	//	//out.wait_for_mem = (in.req_mem_access
+	//	//	&& (in.data_inout_access_type == PkgFrost32Cpu::DiatWrite));
+	//	out.wait_for_mem = 0;
+	//end
+	assign out.data = __out_single_port_ram_data;
+	assign out.wait_for_mem = 0;
 
 	always_comb
 	begin

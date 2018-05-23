@@ -29,13 +29,13 @@
 		end \
 	end
 
-`ifdef OPT_HAVE_STAGE_REGISTER_READ
+//`ifdef OPT_HAVE_STAGE_REGISTER_READ
 `define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
 	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name)
-`else
-`define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
-	`GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name)
-`endif		// OPT_HAVE_STAGE_REGISTER_READ
+//`else
+//`define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
+//	`GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name)
+//`endif		// OPT_HAVE_STAGE_REGISTER_READ
 
 // No register read stage:  Asynchronous reads (three ports), synchronous
 // writes (one port)
@@ -99,15 +99,17 @@ module RegisterFile(input logic clk,
 	`GEN_REG_FILE_READ(read_sel_rb, read_data_rb)
 	`GEN_REG_FILE_READ(read_sel_rc, read_data_rc)
 
-	//`ifdef OPT_HAVE_STAGE_REGISTER_READ
-	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_ra, read_data_cond_ra)
-	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_rb, read_data_cond_rb)
-	//`endif		// OPT_HAVE_STAGE_REGISTER_READ
+	////`ifdef OPT_HAVE_STAGE_REGISTER_READ
+	//`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_ra, read_data_cond_ra)
+	//`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_rb, read_data_cond_rb)
+	////`endif		// OPT_HAVE_STAGE_REGISTER_READ
 
 	always_ff @ (posedge clk)
 	begin
 		if (in.write_en && (in.write_sel != 0))
 		begin
+			$display("RegisterFile:  write_sel, write_data:  %h, %h",
+				in.write_sel, in.write_data);
 			__regfile[in.write_sel] <= in.write_data;
 		end
 
