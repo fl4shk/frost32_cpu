@@ -82,9 +82,9 @@
 
 
 //module MainMem(input logic clk,
-//	`ifdef DEBUG_MEM_ACCESS
+//	`ifdef OPT_DEBUG_MEM_ACCESS
 //	input logic half_clk,
-//	`endif		// DEBUG_MEM_ACCESS
+//	`endif		// OPT_DEBUG_MEM_ACCESS
 //	input PkgMainMem::PortIn_MainMem in,
 //	output PkgMainMem::PortOut_MainMem out);
 //
@@ -339,9 +339,9 @@ module SinglePortRam(input logic clk,
 endmodule
 
 module MainMem(input logic clk,
-	`ifdef DEBUG_MEM_ACCESS
+	`ifdef OPT_DEBUG_MEM_ACCESS
 	input logic half_clk,
-	`endif		// DEBUG_MEM_ACCESS
+	`endif		// OPT_DEBUG_MEM_ACCESS
 	input PkgMainMem::PortIn_MainMem in,
 	output PkgMainMem::PortOut_MainMem out);
 

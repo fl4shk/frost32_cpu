@@ -26,9 +26,9 @@ module TestBench;
 	PkgMainMem::PortIn_MainMem __in_main_mem;
 	PkgMainMem::PortOut_MainMem __out_main_mem;
 	MainMem __inst_main_mem(.clk(__clk), 
-		`ifdef DEBUG_MEM_ACCESS
+		`ifdef OPT_DEBUG_MEM_ACCESS
 		.half_clk(__half_clk),
-		`endif		// DEBUG_MEM_ACCESS
+		`endif		// OPT_DEBUG_MEM_ACCESS
 		.in(__in_main_mem), .out(__out_main_mem));
 
 

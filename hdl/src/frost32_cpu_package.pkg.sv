@@ -76,13 +76,13 @@ typedef struct packed
 	//logic req_mem_access;
 	`MAKE_LIST_OF_MEMBERS__FROST32_CPU_PORTOUT_MEM_ACCESS
 
-	`ifdef DEBUG_REGISTER_FILE
+	`ifdef OPT_DEBUG_REGISTER_FILE
 	logic [`MSB_POS__REG_FILE_DATA:0] debug_reg_zero, debug_reg_u0,
 		debug_reg_u1, debug_reg_u2, debug_reg_u3, debug_reg_u4,
 		debug_reg_u5, debug_reg_u6, debug_reg_u7, debug_reg_u8,
 		debug_reg_u9, debug_reg_u10, debug_reg_temp, debug_reg_lr,
 		debug_reg_fp, debug_reg_sp;
-	`endif		// DEBUG_REGISTER_FILE
+	`endif		// OPT_DEBUG_REGISTER_FILE
 } PortOut_Frost32Cpu;
 
 endpackage : PkgFrost32Cpu

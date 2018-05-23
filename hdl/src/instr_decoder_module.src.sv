@@ -175,9 +175,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				// ...Treat it as a NOP ("add zero, zero, zero")
 				out = 0;
 
-				//`ifdef DEBUG_INSTR_DECODER
+				//`ifdef OPT_DEBUG_INSTR_DECODER
 				//$display("bad_invalid_group");
-				//`endif		// DEBUG_INSTR_DECODER
+				//`endif		// OPT_DEBUG_INSTR_DECODER
 			end
 		endcase
 	end

@@ -29,13 +29,13 @@
 		end \
 	end
 
-`ifdef HAVE_REGISTER_READ_STAGE
+`ifdef OPT_HAVE_STAGE_REGISTER_READ
 `define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
 	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name)
 `else
 `define GEN_REG_FILE_READ(read_sel_name, read_data_name) \
 	`GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name)
-`endif		// HAVE_REGISTER_READ_STAGE
+`endif		// OPT_HAVE_STAGE_REGISTER_READ
 
 // No register read stage:  Asynchronous reads (three ports), synchronous
 // writes (one port)
@@ -44,7 +44,7 @@
 module RegisterFile(input logic clk,
 	input PkgRegisterFile::PortIn_RegFile in,
 	output PkgRegisterFile::PortOut_RegFile out
-	`ifdef DEBUG_REGISTER_FILE
+	`ifdef OPT_DEBUG_REGISTER_FILE
 	,
 	output logic [`MSB_POS__REG_FILE_DATA:0] 
 		out_debug_zero, 
@@ -52,7 +52,7 @@ module RegisterFile(input logic clk,
 		out_debug_u4, out_debug_u5, out_debug_u6, out_debug_u7,
 		out_debug_u8, out_debug_u9, out_debug_u10, 
 		out_debug_temp, out_debug_lr, out_debug_fp, out_debug_sp
-	`endif		// DEBUG_REGISTER_FILE
+	`endif		// OPT_DEBUG_REGISTER_FILE
 	);
 
 	import PkgRegisterFile::*;
@@ -65,7 +65,7 @@ module RegisterFile(input logic clk,
 	logic [`MSB_POS__REG_FILE_DATA:0]
 		__regfile[0 : __LAST_INDEX__NUM_REGISTERS];
 
-	`ifdef DEBUG_REGISTER_FILE
+	`ifdef OPT_DEBUG_REGISTER_FILE
 	assign out_debug_zero = __regfile[0];
 	assign out_debug_u0 = __regfile[1];
 	assign out_debug_u1 = __regfile[2];
@@ -82,7 +82,7 @@ module RegisterFile(input logic clk,
 	assign out_debug_lr = __regfile[13];
 	assign out_debug_fp = __regfile[14];
 	assign out_debug_sp = __regfile[15];
-	`endif		// DEBUG_REGISTER_FILE
+	`endif		// OPT_DEBUG_REGISTER_FILE
 
 	initial
 	begin
@@ -99,10 +99,10 @@ module RegisterFile(input logic clk,
 	`GEN_REG_FILE_READ(read_sel_rb, read_data_rb)
 	`GEN_REG_FILE_READ(read_sel_rc, read_data_rc)
 
-	//`ifdef HAVE_REGISTER_READ_STAGE
+	//`ifdef OPT_HAVE_STAGE_REGISTER_READ
 	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_ra, read_data_cond_ra)
 	`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_rb, read_data_cond_rb)
-	//`endif		// HAVE_REGISTER_READ_STAGE
+	//`endif		// OPT_HAVE_STAGE_REGISTER_READ
 
 	always_ff @ (posedge clk)
 	begin
