@@ -108,8 +108,8 @@ module RegisterFile(input logic clk,
 	begin
 		if (in.write_en && (in.write_sel != 0))
 		begin
-			$display("RegisterFile:  write_sel, write_data:  %h, %h",
-				in.write_sel, in.write_data);
+			//$display("RegisterFile:  write_sel, write_data:  %h, %h",
+			//	in.write_sel, in.write_data);
 			__regfile[in.write_sel] <= in.write_data;
 		end
 

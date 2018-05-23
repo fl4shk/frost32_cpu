@@ -2,28 +2,28 @@
 main:
 {
 	// Assume top of available memory is here
-	cpya sp, 0x7fff
+	cpya sp, 0x7fff			; 0x0
 
 	;cpya u0, 9
 	;cpya u1, 8
-	cpya u0, 0xdeadbeef
-	cpya u1, 0xcafe9000
+	cpya u0, 0xdeadbeef		; 0x8
+	cpya u1, 0xcafe9000		; 0x10
 
 	; Try some self-modifying code
 	;addsi lr, pc, 8
 	;bra modify_subroutine
-	cpyi lr, modify_subroutine
-	call lr
+	cpyi lr, modify_subroutine		; 0x14
+	call lr							; 0x18
 
 	;; Branch to subroutine
 	;addsi lr, pc, 8
 	;bra to_modify
-	cpyi lr, to_modify
-	call lr
+	cpyi lr, to_modify				; 0x1c
+	call lr							; 0x20
 
 
 done:
-	bra quit
+	bra quit						; 0x24
 
 }
 
@@ -31,13 +31,13 @@ done:
 to_modify:
 {
 	;add u7, u0, u1
-	add zero, zero, zero
-	jmp lr
+	add zero, zero, zero			; 0x2000
+	jmp lr							; 0x2004
 }
 
 modify_subroutine:
 {
-	subi sp, 8
+	subi sp, 8						; 0x2008
 	stri u0, [sp, 4]
 	stri u1, [sp, 8]
 

@@ -164,7 +164,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.causes_stall 
 					= ((out.opcode == PkgInstrDecoder::Cpy_OneIretaOneReg)
 					|| (out.opcode 
-					== PkgInstrDecoder::Cpy_OneIdstaOneReg));
+					== PkgInstrDecoder::Cpy_OneIdstaOneReg)
+					|| (out.opcode
+					== PkgInstrDecoder::Reti_NoArgs));
 
 				out.condition_type = 0;
 			end

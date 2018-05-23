@@ -1,6 +1,7 @@
 
 	if (__stage_instr_decode_data.stall_counter != 1)
 	begin
+	$display("Program counter:  %h", __locals.pc);
 	case (__out_instr_decoder.group)
 		0:
 		begin
