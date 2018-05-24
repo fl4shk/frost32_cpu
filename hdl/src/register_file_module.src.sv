@@ -45,13 +45,26 @@
 			out.read_data_name <= __regfile[in.read_sel_name]; \
 		end \
 	end
+//`define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \
+//	always_comb \
+//	begin \
+//		if (in.write_en && (in.write_sel == in.read_sel_name) \
+//			&& (in.write_sel != 0)) \
+//		begin \
+//			out.read_data_name = in.write_data; \
+//		end \
+//\
+//		else \
+//		begin \
+//			out.read_data_name = __regfile[in.read_sel_name]; \
+//		end \
+//	end
 `define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \
 	always_comb \
 	begin \
-		if (in.write_en && (in.write_sel == in.read_sel_name) \
-			&& (in.write_sel != 0)) \
+		if (in.read_sel_name == 0) \
 		begin \
-			out.read_data_name = in.write_data; \
+			out.read_data_name = 0; \
 		end \
 \
 		else \
@@ -130,10 +143,12 @@ module RegisterFile(input logic clk,
 	`GEN_REG_FILE_READ(read_sel_rb, read_data_rb)
 	`GEN_REG_FILE_READ(read_sel_rc, read_data_rc)
 
-	////`ifdef OPT_HAVE_STAGE_REGISTER_READ
+	//`ifdef OPT_HAVE_STAGE_REGISTER_READ
 	//`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_ra, read_data_cond_ra)
 	//`GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_cond_rb, read_data_cond_rb)
-	////`endif		// OPT_HAVE_STAGE_REGISTER_READ
+	`GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_ra, read_data_cond_ra)
+	`GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_rb, read_data_cond_rb)
+	//`endif		// OPT_HAVE_STAGE_REGISTER_READ
 
 	always_ff @ (posedge clk)
 	begin

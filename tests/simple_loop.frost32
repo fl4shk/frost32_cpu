@@ -5,15 +5,16 @@ main:
 	;cpyi u0, 20			; 0x0
 	;subi u0, zero, 19		; 0x0
 	subi u0, zero, 4
-	cpy u1, u0			; 0x4
+	;cpy u1, u0			; 0x4
+	cpyi u1, 0x9000
 
 	subi u2, zero, 20		; 0x8
 
-	cpyi u3, loop
+	;cpyi u3, loop
 
 
 loop:
-	inc u1				; 0xc
+	;inc u1				; 0xc
 	
 	dec u0				; 0x10
 
@@ -22,7 +23,7 @@ loop:
 	;add zero, zero, zero
 	;add zero, zero, zero
 
-	bges u0, u2, loop	; 0x14
+	;bges u0, u2, loop	; 0x14
 
 	;slts temp, u0, u2
 	;beq temp, zero, loop
@@ -39,6 +40,13 @@ loop:
 	;; Relative call
 	;addsi lr, pc, test_call - .
 	;call lr
+
+	add zero, zero, zero
+	add zero, zero, zero
+	add zero, zero, zero
+	add zero, zero, zero
+	add zero, zero, zero
+	add zero, zero, zero
 
 	; Branch to subroutine
 	addsi lr, pc, 8
