@@ -85,17 +85,19 @@ module Frost32Cpu(input logic clk,
 	} __stage_register_read_output_data;
 	`endif		// OPT_HAVE_STAGE_REGISTER_READ
 
-	//struct packed
-	//{
-	//	// The next program counter for load and store instructions that
-	//	// stall (read by the instruction decode stage for updating the
-	//	// program counter in the case of these instructions)
-	//	logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc_after_ldst;
+	struct packed
+	{
+		// The next program counter for load and store instructions that
+		// stall (read by the instruction decode stage for updating the
+		// program counter in the case of these instructions)
+		//logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc_after_ldst;
 
-	//	logic [`MSB_POS__REG_FILE_SEL:0] prev_written_reg_index;
+		logic [`MSB_POS__REG_FILE_SEL:0] prev_written_reg_index;
 
-	//	//logic perform_operand_forwarding;
-	//} __stage_execute_output_data;
+		logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
+
+		//logic perform_operand_forwarding;
+	} __stage_execute_output_data;
 
 
 	struct packed
@@ -341,29 +343,29 @@ module Frost32Cpu(input logic clk,
 		end
 	end
 
-	//always_comb
-	//begin
-	//	__in_reg_file.read_sel_ra 
-	//		= __multi_stage_data_instr_decode.instr_ra_index;
-	//	$display("__in_reg_file.read_sel_ra:  %h",
-	//		__in_reg_file.read_sel_ra);
-	//end
+	always_comb
+	begin
+		__in_reg_file.read_sel_ra 
+			= __multi_stage_data_instr_decode.instr_ra_index;
+		$display("__in_reg_file.read_sel_ra:  %h",
+			__in_reg_file.read_sel_ra);
+	end
 
-	//always_comb
-	//begin
-	//	__in_reg_file.read_sel_rb 
-	//		= __multi_stage_data_instr_decode.instr_rb_index;
-	//	//$display("__in_reg_file.read_sel_rb:  %h",
-	//	//	__in_reg_file.read_sel_rb);
-	//end
+	always_comb
+	begin
+		__in_reg_file.read_sel_rb 
+			= __multi_stage_data_instr_decode.instr_rb_index;
+		$display("__in_reg_file.read_sel_rb:  %h",
+			__in_reg_file.read_sel_rb);
+	end
 
-	//always_comb
-	//begin
-	//	__in_reg_file.read_sel_rc 
-	//		= __multi_stage_data_instr_decode.instr_rc_index;
-	//	//$display("__in_reg_file.read_sel_rc:  %h",
-	//	//	__in_reg_file.read_sel_rc);
-	//end
+	always_comb
+	begin
+		__in_reg_file.read_sel_rc 
+			= __multi_stage_data_instr_decode.instr_rc_index;
+		$display("__in_reg_file.read_sel_rc:  %h",
+			__in_reg_file.read_sel_rc);
+	end
 
 	always_comb __multi_stage_data_instr_decode.raw_instruction 
 		= __in_instr_decoder;
@@ -411,56 +413,74 @@ module Frost32Cpu(input logic clk,
 
 
 
-	//// This is the operand forwarding.  It's so simple!
-	//// We only write to one register at a time, so we only need one
-	//// multiplexer per rfile_r..._data
+	// This is the operand forwarding.  It's so simple!
+	// We only write to one register at a time, so we only need one
+	// multiplexer per rfile_r..._data
+	always_comb
+	begin
+		//__stage_execute_input_data.rfile_ra_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_ra_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_write_back_input_data.n_reg_data
+		//	: __out_reg_file.read_data_ra;
+		__stage_execute_input_data.rfile_ra_data
+			= ((__stage_execute_output_data.prev_written_reg_index
+			== __multi_stage_data_execute.instr_ra_index)
+			&& (__stage_execute_output_data.prev_written_reg_index != 0))
+			? __stage_execute_output_data.n_reg_data
+			: __out_reg_file.read_data_ra;
+	end
+	always_comb
+	begin
+		//__stage_execute_input_data.rfile_rb_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_rb_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_write_back_input_data.n_reg_data
+		//	: __out_reg_file.read_data_rb;
+		__stage_execute_input_data.rfile_rb_data
+			= ((__stage_execute_output_data.prev_written_reg_index
+			== __multi_stage_data_execute.instr_rb_index)
+			&& (__stage_execute_output_data.prev_written_reg_index != 0))
+			? __stage_execute_output_data.n_reg_data
+			: __out_reg_file.read_data_rb;
+	end
+	always_comb
+	begin
+		//__stage_execute_input_data.rfile_rc_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_rc_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_write_back_input_data.n_reg_data
+		//	: __out_reg_file.read_data_rc;
+		__stage_execute_input_data.rfile_rc_data
+			= ((__stage_execute_output_data.prev_written_reg_index
+			== __multi_stage_data_execute.instr_rc_index)
+			&& (__stage_execute_output_data.prev_written_reg_index != 0))
+			? __stage_execute_output_data.n_reg_data
+			: __out_reg_file.read_data_rc;
+	end
+
 	//always_comb
 	//begin
 	//	__stage_execute_input_data.rfile_ra_data
-	//		= ((__stage_execute_output_data.prev_written_reg_index
-	//		== __multi_stage_data_execute.instr_ra_index)
-	//		&& (__stage_execute_output_data.prev_written_reg_index != 0))
-	//		? __stage_write_back_input_data.n_reg_data
-	//		: __out_reg_file.read_data_ra;
+	//		= __out_reg_file.read_data_ra;
+	//	//$display("__stage_execute_input_data.rfile_ra_data:  %h",
+	//	//	__stage_execute_input_data.rfile_ra_data);
+	//	//$display("__locals.cpyhi_data:  %h",
+	//	//	__locals.cpyhi_data);
 	//end
 	//always_comb
 	//begin
 	//	__stage_execute_input_data.rfile_rb_data
-	//		= ((__stage_execute_output_data.prev_written_reg_index
-	//		== __multi_stage_data_execute.instr_rb_index)
-	//		&& (__stage_execute_output_data.prev_written_reg_index != 0))
-	//		? __stage_write_back_input_data.n_reg_data
-	//		: __out_reg_file.read_data_rb;
+	//		= __out_reg_file.read_data_rb;
 	//end
 	//always_comb
 	//begin
 	//	__stage_execute_input_data.rfile_rc_data
-	//		= ((__stage_execute_output_data.prev_written_reg_index
-	//		== __multi_stage_data_execute.instr_rc_index)
-	//		&& (__stage_execute_output_data.prev_written_reg_index != 0))
-	//		? __stage_write_back_input_data.n_reg_data
-	//		: __out_reg_file.read_data_rc;
+	//		= __out_reg_file.read_data_rc;
 	//end
-
-	always_comb
-	begin
-		__stage_execute_input_data.rfile_ra_data
-			= __out_reg_file.read_data_ra;
-		//$display("__stage_execute_input_data.rfile_ra_data:  %h",
-		//	__stage_execute_input_data.rfile_ra_data);
-		//$display("__locals.cpyhi_data:  %h",
-		//	__locals.cpyhi_data);
-	end
-	always_comb
-	begin
-		__stage_execute_input_data.rfile_rb_data
-			= __out_reg_file.read_data_rb;
-	end
-	always_comb
-	begin
-		__stage_execute_input_data.rfile_rc_data
-			= __out_reg_file.read_data_rc;
-	end
 
 	// Just some copies for use in the decode stage.
 	// 
@@ -719,6 +739,9 @@ module Frost32Cpu(input logic clk,
 		__in_reg_file.write_sel <= s_sel;
 		__in_reg_file.write_data <= s_data;
 		__in_reg_file.write_en <= 1;
+
+		__stage_execute_output_data.prev_written_reg_index <= s_sel;
+		__stage_execute_output_data.n_reg_data <= s_data;
 	endtask
 
 	task prep_ra_write;
@@ -757,21 +780,21 @@ module Frost32Cpu(input logic clk,
 
 		//// Use all three register file read ports.
 		//// Do this whenever we're not in a stall.
-		__in_reg_file.read_sel_ra 
-			<= __multi_stage_data_instr_decode.instr_ra_index;
-		__in_reg_file.read_sel_rb 
-			<= __multi_stage_data_instr_decode.instr_rb_index;
-		__in_reg_file.read_sel_rc 
-			<= __multi_stage_data_instr_decode.instr_rc_index;
+		//__in_reg_file.read_sel_ra 
+		//	<= __multi_stage_data_instr_decode.instr_ra_index;
+		//__in_reg_file.read_sel_rb 
+		//	<= __multi_stage_data_instr_decode.instr_rb_index;
+		//__in_reg_file.read_sel_rc 
+		//	<= __multi_stage_data_instr_decode.instr_rc_index;
 	endtask
 
 	task make_bubble;
 		//// Send a bubble through while we're stalled a (actually
 		//// performs "add zero, zero, zero", but that does nothing
 		//// interesting anyway... besides maybe power consumption)
-		__in_reg_file.read_sel_ra <= 0;
-		__in_reg_file.read_sel_rb <= 0;
-		__in_reg_file.read_sel_rc <= 0;
+		//__in_reg_file.read_sel_ra <= 0;
+		//__in_reg_file.read_sel_rb <= 0;
+		//__in_reg_file.read_sel_rc <= 0;
 
 		//`MULTI_STAGE_DATA_AFTER_INSTR_DECODE <= 0;
 		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_ra_index <= 0;
@@ -1204,11 +1227,6 @@ module Frost32Cpu(input logic clk,
 						//	(__locals.pc);
 						//$display("Stuffs:  2");
 						prep_load_instruction(0);
-					end
-
-					1:
-					begin
-						$display("AAAA GGGG");
 					end
 				endcase
 			end
