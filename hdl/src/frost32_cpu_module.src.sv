@@ -391,29 +391,29 @@ module Frost32Cpu(input logic clk,
 	//		= __multi_stage_data_instr_decode.raw_instruction;
 	//end
 
-	always_comb
-	begin
-		__in_reg_file.read_sel_ra 
-			= __multi_stage_data_instr_decode.instr_ra_index;
-		//$display("__in_reg_file.read_sel_ra:  %h",
-		//	__in_reg_file.read_sel_ra);
-	end
+	//always_comb
+	//begin
+	//	__in_reg_file.read_sel_ra 
+	//		= __multi_stage_data_instr_decode.instr_ra_index;
+	//	//$display("__in_reg_file.read_sel_ra:  %h",
+	//	//	__in_reg_file.read_sel_ra);
+	//end
 
-	always_comb
-	begin
-		__in_reg_file.read_sel_rb 
-			= __multi_stage_data_instr_decode.instr_rb_index;
-		//$display("__in_reg_file.read_sel_rb:  %h",
-		//	__in_reg_file.read_sel_rb);
-	end
+	//always_comb
+	//begin
+	//	__in_reg_file.read_sel_rb 
+	//		= __multi_stage_data_instr_decode.instr_rb_index;
+	//	//$display("__in_reg_file.read_sel_rb:  %h",
+	//	//	__in_reg_file.read_sel_rb);
+	//end
 
-	always_comb
-	begin
-		__in_reg_file.read_sel_rc 
-			= __multi_stage_data_instr_decode.instr_rc_index;
-		//$display("__in_reg_file.read_sel_rc:  %h",
-		//	__in_reg_file.read_sel_rc);
-	end
+	//always_comb
+	//begin
+	//	__in_reg_file.read_sel_rc 
+	//		= __multi_stage_data_instr_decode.instr_rc_index;
+	//	//$display("__in_reg_file.read_sel_rc:  %h",
+	//	//	__in_reg_file.read_sel_rc);
+	//end
 
 	always_comb __multi_stage_data_instr_decode.raw_instruction 
 		= __in_instr_decoder;
@@ -541,12 +541,12 @@ module Frost32Cpu(input logic clk,
 		//	? __stage_execute_output_data.n_reg_data
 		//	: __stage_register_read_output_data.rfile_rb_data;
 
-		//$display("(Maybe) operand forwarding (_rb):  %h %h %h %h %h",
-		//	__stage_execute_input_data.rfile_rb_data,
-		//	__stage_execute_output_data.prev_written_reg_index,
-		//	__multi_stage_data_execute.instr_rb_index,
-		//	__stage_execute_output_data.n_reg_data,
-		//	__out_reg_file.read_data_rb);
+		$display("(Maybe) operand forwarding (_rb):  %h %h %h %h %h",
+			__stage_execute_input_data.rfile_rb_data,
+			__stage_execute_output_data.prev_written_reg_index,
+			__multi_stage_data_execute.instr_rb_index,
+			__stage_execute_output_data.n_reg_data,
+			__out_reg_file.read_data_rb);
 	end
 	always_comb
 	begin
@@ -960,12 +960,12 @@ module Frost32Cpu(input logic clk,
 
 		//// Use all three register file read ports.
 		//// Do this whenever we're not in a stall.
-		//__in_reg_file.read_sel_ra 
-		//	<= __multi_stage_data_instr_decode.instr_ra_index;
-		//__in_reg_file.read_sel_rb 
-		//	<= __multi_stage_data_instr_decode.instr_rb_index;
-		//__in_reg_file.read_sel_rc 
-		//	<= __multi_stage_data_instr_decode.instr_rc_index;
+		__in_reg_file.read_sel_ra 
+			<= __multi_stage_data_instr_decode.instr_ra_index;
+		__in_reg_file.read_sel_rb 
+			<= __multi_stage_data_instr_decode.instr_rb_index;
+		__in_reg_file.read_sel_rc 
+			<= __multi_stage_data_instr_decode.instr_rc_index;
 	endtask
 
 	task make_bubble;
@@ -1982,6 +1982,9 @@ module Frost32Cpu(input logic clk,
 				//	= __stage_execute_input_data.rfile_rb_data[31:16]
 				//	* __stage_execute_input_data.rfile_rc_data[15:0];
 				//`endif		// OPT_HAVE_SINGLE_CYCLE_MULTIPLY
+
+				$display("group 0 ALU stuff:  %h %h %h",
+					__in_alu.a, __in_alu.b, __in_alu.oper);
 			end
 
 			// Group 1:  Immediates
