@@ -267,9 +267,9 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
-		//$display("Frost32Cpu stall_counter, stall_state:  %h, %h",
-		//	__stage_instr_decode_data.stall_counter,
-		//	__stage_instr_decode_data.stall_state);
+		$display("Frost32Cpu stall_counter, stall_state:  %h, %h",
+			__stage_instr_decode_data.stall_counter,
+			__stage_instr_decode_data.stall_state);
 		`ifdef OPT_HAVE_STAGE_REGISTER_READ
 		$display("Frost32Cpu pc's:  %h %h %h %h", 
 			__locals.pc,
@@ -806,6 +806,10 @@ module Frost32Cpu(input logic clk,
 
 		if (condition)
 		begin
+			$display("handle_jump_or_call_in_fetch_stage:  %s%h",
+				"condition, loading from:  ",
+				__stage_instr_decode_data
+				.from_stage_execute_rfile_rc_data);
 			prep_load_instruction(__stage_instr_decode_data
 				.from_stage_execute_rfile_rc_data);
 		end
@@ -814,6 +818,9 @@ module Frost32Cpu(input logic clk,
 		begin
 			//__locals.next_pc_after_jump_or_call 
 			//	<= __following_pc_stage_execute;
+			$display("handle_jump_or_call_in_fetch_stage:  %s%h",
+				"!condition, loading from:  ",
+				__following_pc_stage_execute);
 			prep_load_instruction(__following_pc_stage_execute);
 		end
 	endtask
@@ -885,10 +892,13 @@ module Frost32Cpu(input logic clk,
 			// We just always do this when the stall_counter is 1
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
+				$display("Fetch stage:  stall_counter == 1:  %h",
+					__locals.pc + 4);
 				prep_load_following_instruction();
 			end
 
-			case (__stage_instr_decode_data.stall_counter)
+			//case (__stage_instr_decode_data.stall_counter)
+			case (__stage_instr_decode_data.stall_state)
 			PkgFrost32Cpu::StCpyRaToInterruptsRelatedAddr:
 			begin
 				case (__stage_instr_decode_data.stall_counter)
@@ -1082,6 +1092,7 @@ module Frost32Cpu(input logic clk,
 				case (__stage_instr_decode_data.stall_counter)
 					2:
 					begin
+						$display("in StCtrlFlowJumpCall");
 						case (__multi_stage_data_execute
 							.instr_condition_type)
 							PkgInstrDecoder::CtNe:
@@ -1143,6 +1154,8 @@ module Frost32Cpu(input logic clk,
 							default:
 							begin
 								// Eek!
+							$display("Jump or call in fetch stage:  %s",
+								"Eek!");
 								prep_load_instruction
 									(__following_pc_stage_execute);
 							end
@@ -1312,6 +1325,7 @@ module Frost32Cpu(input logic clk,
 					end
 					4:
 					begin
+						$display("The instruction stalls:  call");
 						__stage_instr_decode_data.stall_state
 							<= PkgFrost32Cpu::StCtrlFlowJumpCall;
 
@@ -1412,6 +1426,8 @@ module Frost32Cpu(input logic clk,
 					<= PkgFrost32Cpu::StRespondToInterrupt;
 				__stage_instr_decode_data.stall_counter
 					<= __STALL_COUNTER_RESPOND_TO_INTERRUPTS;
+
+				make_bubble();
 			end
 		end
 	end
