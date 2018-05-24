@@ -101,12 +101,6 @@ data_for_add_to_u1:
 var:
 	.space 4
 
-.org 0x4000
-quit:
-{
-	bra quit
-}
-
 ;.org 0x6000 
 
 

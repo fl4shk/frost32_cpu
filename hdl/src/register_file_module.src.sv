@@ -27,10 +27,23 @@
 //			in.read_sel_name, __regfile[in.read_sel_name]); \
 //		out.read_data_name <= __regfile[in.read_sel_name]; \
 //	end
+//`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
+//	always_ff @ (posedge clk) \
+//	begin \
+//		out.read_data_name <= __regfile[in.read_sel_name]; \
+//	end
 `define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
 	always_ff @ (posedge clk) \
 	begin \
-		out.read_data_name <= __regfile[in.read_sel_name]; \
+		if (in.read_sel_name == 0) \
+		begin \
+			out.read_data_name <= 0; \
+		end \
+\
+		else \
+		begin \
+			out.read_data_name <= __regfile[in.read_sel_name]; \
+		end \
 	end
 `define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \
 	always_comb \

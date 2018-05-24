@@ -16,7 +16,17 @@ loop:
 	inc u1				; 0xc
 	
 	dec u0				; 0x10
+
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+
 	bges u0, u2, loop	; 0x14
+
+	;slts temp, u0, u2
+	;beq temp, zero, loop
+
 	;jges u0, u2, u3
 
 	;calla test_call		; 0x18
@@ -26,9 +36,14 @@ loop:
 	;addsi lr, pc, 
 	;;cpyi lr, test_call
 
-	; Relative call
-	addsi lr, pc, test_call - .
-	call lr
+	;; Relative call
+	;addsi lr, pc, test_call - .
+	;call lr
+
+	; Branch to subroutine
+	addsi lr, pc, 8
+	bra test_call
+
 
 	;bra quit
 	bra 0x4000
