@@ -335,7 +335,7 @@ module SinglePortRam(input logic clk,
 			__mem[in_addr] <= in_data;
 		end
 
-		else
+		//else
 		begin
 			out_data <= __mem[in_addr];
 		end
@@ -388,8 +388,11 @@ module MainMem(input logic clk,
 	always_comb
 	begin
 		//__in_single_port_ram_addr = in.addr[15:2];
-		__in_single_port_ram_addr 
-			= in.addr[15 : 15 - `WIDTH__SINGLE_PORT_RAM_ADDR];
+		//__in_single_port_ram_addr 
+		//	= in.addr[15 : 15 - `WIDTH__SINGLE_PORT_RAM_ADDR];
+		//__in_single_port_ram_addr
+		//	= in.addr[15 : 2];
+		__in_single_port_ram_addr = in.addr >> 2;
 	end
 
 	always_comb

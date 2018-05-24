@@ -35,9 +35,9 @@ module Frost32Cpu(input logic clk,
 	parameter __STALL_COUNTER_RELATIVE_BRANCH = 3;
 	parameter __STALL_COUNTER_JUMP_OR_CALL = 3;
 	parameter __STALL_COUNTER_MEM_ACCESS = 3;
-	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 2;
+	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
 	//parameter __STALL_COUNTER_MULTIPLY = 4;
-	parameter __STALL_COUNTER_EEK = 2;
+	parameter __STALL_COUNTER_EEK = 3;
 	parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 1;
 
 
@@ -141,6 +141,8 @@ module Frost32Cpu(input logic clk,
 
 		logic [`MSB_POS__REG_FILE_DATA:0] cpyhi_data;
 
+		logic should_service_interrupt_if_not_in_stall;
+
 		`ifdef OPT_DEBUG
 		// Debugging thing
 		logic [31:0] cycles_counter;
@@ -150,9 +152,8 @@ module Frost32Cpu(input logic clk,
 	} __locals;
 
 
-	logic [`MSB_POS__FROST32_CPU_ADDR:0] __following_pc,
-		// Used if there's a register read stage
-		__following_pc_branch;
+	logic [`MSB_POS__FROST32_CPU_ADDR:0] __following_pc_stage_instr_decode,
+		__following_pc_stage_execute;
 
 	PkgFrost32Cpu::MultiStageData 
 		__multi_stage_data_instr_decode, 
@@ -266,6 +267,9 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
+		//$display("Frost32Cpu stall_counter, stall_state:  %h, %h",
+		//	__stage_instr_decode_data.stall_counter,
+		//	__stage_instr_decode_data.stall_state);
 		`ifdef OPT_HAVE_STAGE_REGISTER_READ
 		$display("Frost32Cpu pc's:  %h %h %h %h", 
 			__locals.pc,
@@ -307,49 +311,56 @@ module Frost32Cpu(input logic clk,
 	`endif		// OPT_DEBUG
 
 	// Assignments
-	assign __following_pc = __multi_stage_data_execute.pc_val + 4;
-	`ifdef OPT_HAVE_STAGE_REGISTER_READ
-	assign __following_pc_branch 
-		= __multi_stage_data_register_read.pc_val + 4;
-	`endif		// OPT_HAVE_STAGE_REGISTER_READ
+	assign __following_pc_stage_instr_decode 
+		= __multi_stage_data_instr_decode.pc_val + 4;
+	assign __following_pc_stage_execute 
+		= __multi_stage_data_execute.pc_val + 4;
 
 	always_comb
 	begin
-		if (!in_stall())
+		__locals.should_service_interrupt_if_not_in_stall
+			= !((in.interrupt && !__locals.ie) || (!in.interrupt));
+	end
+
+	always_comb
+	begin
+		// Keep old instruction whenever we're in a stall, which prevents
+		// new instructions from coming into the decode stage.
+		if (in_stall())
 		begin
-			__in_instr_decoder = in.data;
+			__in_instr_decoder
+				= __multi_stage_data_execute.raw_instruction;
 		end
 
 		else
 		begin
-			__in_instr_decoder
-				= `MULTI_STAGE_DATA_AFTER_INSTR_DECODE.raw_instruction;
+			__in_instr_decoder = in.data;
 		end
 	end
 
-	always_comb
-	begin
-		__in_reg_file.read_sel_ra 
-			= __multi_stage_data_instr_decode.instr_ra_index;
-		//$display("__in_reg_file.read_sel_ra:  %h",
-		//	__in_reg_file.read_sel_ra);
-	end
+	//always_comb
+	//begin
+	//	__in_reg_file.read_sel_ra 
+	//		= __multi_stage_data_instr_decode.instr_ra_index;
+	//	$display("__in_reg_file.read_sel_ra:  %h",
+	//		__in_reg_file.read_sel_ra);
+	//end
 
-	always_comb
-	begin
-		__in_reg_file.read_sel_rb 
-			= __multi_stage_data_instr_decode.instr_rb_index;
-		//$display("__in_reg_file.read_sel_rb:  %h",
-		//	__in_reg_file.read_sel_rb);
-	end
+	//always_comb
+	//begin
+	//	__in_reg_file.read_sel_rb 
+	//		= __multi_stage_data_instr_decode.instr_rb_index;
+	//	//$display("__in_reg_file.read_sel_rb:  %h",
+	//	//	__in_reg_file.read_sel_rb);
+	//end
 
-	always_comb
-	begin
-		__in_reg_file.read_sel_rc 
-			= __multi_stage_data_instr_decode.instr_rc_index;
-		//$display("__in_reg_file.read_sel_rc:  %h",
-		//	__in_reg_file.read_sel_rc);
-	end
+	//always_comb
+	//begin
+	//	__in_reg_file.read_sel_rc 
+	//		= __multi_stage_data_instr_decode.instr_rc_index;
+	//	//$display("__in_reg_file.read_sel_rc:  %h",
+	//	//	__in_reg_file.read_sel_rc);
+	//end
 
 	always_comb __multi_stage_data_instr_decode.raw_instruction 
 		= __in_instr_decoder;
@@ -373,21 +384,24 @@ module Frost32Cpu(input logic clk,
 		= __out_instr_decoder.condition_type;
 
 
-	always_comb
-	begin
-		if (!in_stall())
-		begin
-			__multi_stage_data_instr_decode.pc_val = __locals.pc;
-		end
+	//always_comb
+	//begin
+	//	//if (in_stall() || (!in_stall() 
+	//	//	&& __locals.should_service_interrupt_if_not_in_stall))
 
-		else
-		begin
-			//__multi_stage_data_instr_decode.pc_val
-			//	= `STAGE_AFTER_INSTR_DECODE_INPUT_DATA.pc_val;
-			__multi_stage_data_instr_decode.pc_val
-				= __multi_stage_data_execute.pc_val;
-		end
-	end
+	//	// If in a stall, use the execute stage's program counter.
+	//	if (in_stall())
+	//	begin
+	//		__multi_stage_data_instr_decode.pc_val
+	//			= __multi_stage_data_execute.pc_val;
+	//	end
+
+	//	else
+	//	begin
+	//		__multi_stage_data_instr_decode.pc_val = __locals.pc;
+	//	end
+	//end
+
 
 	//always_comb
 	//	__multi_stage_data_instr_decode.nop = 0;
@@ -429,6 +443,10 @@ module Frost32Cpu(input logic clk,
 	begin
 		__stage_execute_input_data.rfile_ra_data
 			= __out_reg_file.read_data_ra;
+		//$display("__stage_execute_input_data.rfile_ra_data:  %h",
+		//	__stage_execute_input_data.rfile_ra_data);
+		//$display("__locals.cpyhi_data:  %h",
+		//	__locals.cpyhi_data);
 	end
 	always_comb
 	begin
@@ -442,10 +460,12 @@ module Frost32Cpu(input logic clk,
 	end
 
 	// Just some copies for use in the decode stage.
+	// 
+	// Possibly adjust these later to use values either forwarded from the
+	// execute stage or read asynchronously from the register file.
 	always_comb
 		__stage_instr_decode_data.from_stage_execute_rfile_ra_data
 			= __stage_execute_input_data.rfile_ra_data;
-
 	always_comb
 		__stage_instr_decode_data.from_stage_execute_rfile_rb_data
 			= __stage_execute_input_data.rfile_rb_data;
@@ -472,8 +492,7 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	begin
 		__locals.cond_ltu
-			=
-			(__stage_instr_decode_data
+			= (__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data
 			< __stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data);
@@ -482,8 +501,7 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	begin
 		__locals.cond_geu
-			=
-			(__stage_instr_decode_data
+			= (__stage_instr_decode_data
 			.from_stage_execute_rfile_ra_data
 			>= __stage_instr_decode_data
 			.from_stage_execute_rfile_rb_data);
@@ -555,7 +573,7 @@ module Frost32Cpu(input logic clk,
 
 	always_comb
 	begin
-		__locals.branch_adder_a = __following_pc;
+		__locals.branch_adder_a = __following_pc_stage_execute;
 	end
 
 	always_comb
@@ -630,6 +648,10 @@ module Frost32Cpu(input logic clk,
 		__locals.cpyhi_data
 			= {__multi_stage_data_execute.instr_imm_val,
 			__stage_execute_input_data.rfile_ra_data[15:0]};
+		//$display("type 2:  cpyhi_data:  %h %h %h",
+		//	__multi_stage_data_execute.instr_imm_val,
+		//	__stage_execute_input_data.rfile_ra_data[15:0],
+		//	__locals.cpyhi_data);
 	end
 
 
@@ -650,13 +672,18 @@ module Frost32Cpu(input logic clk,
 		out.req_mem_access <= 1;
 	endtask
 
-	task prep_load_next_instruction;
+	task prep_load_instruction;
 		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
 
 		// Every instruction is 4 bytes long (...for now)
 		__locals.pc <= addr;
+		__multi_stage_data_instr_decode.pc_val <= __locals.pc;
 
 		prep_mem_read(addr, PkgFrost32Cpu::Dias32);
+	endtask
+
+	task prep_load_following_instruction;
+		prep_load_instruction(__locals.pc + 4);
 	endtask
 
 	task prep_mem_write;
@@ -721,21 +748,21 @@ module Frost32Cpu(input logic clk,
 
 		//// Use all three register file read ports.
 		//// Do this whenever we're not in a stall.
-		//__in_reg_file.read_sel_ra 
-		//	<= __multi_stage_data_instr_decode.instr_ra_index;
-		//__in_reg_file.read_sel_rb 
-		//	<= __multi_stage_data_instr_decode.instr_rb_index;
-		//__in_reg_file.read_sel_rc 
-		//	<= __multi_stage_data_instr_decode.instr_rc_index;
+		__in_reg_file.read_sel_ra 
+			<= __multi_stage_data_instr_decode.instr_ra_index;
+		__in_reg_file.read_sel_rb 
+			<= __multi_stage_data_instr_decode.instr_rb_index;
+		__in_reg_file.read_sel_rc 
+			<= __multi_stage_data_instr_decode.instr_rc_index;
 	endtask
 
 	task make_bubble;
 		//// Send a bubble through while we're stalled a (actually
 		//// performs "add zero, zero, zero", but that does nothing
 		//// interesting anyway... besides maybe power consumption)
-		//__in_reg_file.read_sel_ra <= 0;
-		//__in_reg_file.read_sel_rb <= 0;
-		//__in_reg_file.read_sel_rc <= 0;
+		__in_reg_file.read_sel_ra <= 0;
+		__in_reg_file.read_sel_rb <= 0;
+		__in_reg_file.read_sel_rc <= 0;
 
 		//`MULTI_STAGE_DATA_AFTER_INSTR_DECODE <= 0;
 		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_ra_index <= 0;
@@ -761,7 +788,7 @@ module Frost32Cpu(input logic clk,
 				__locals.branch_adder_a,
 				__locals.branch_adder_b,
 				__locals.branch_adder_a + __locals.branch_adder_b);
-			prep_load_next_instruction
+			prep_load_instruction
 				(__locals.branch_adder_a + __locals.branch_adder_b);
 		end
 
@@ -769,8 +796,8 @@ module Frost32Cpu(input logic clk,
 		begin
 			$display("handle_ctrl_flow_in_fetch_stage_part_1:  %s%h",
 				"NOT taking branch:  ",
-				__following_pc);
-			prep_load_next_instruction(__following_pc);
+				__following_pc_stage_execute);
+			prep_load_instruction(__following_pc_stage_execute);
 		end
 	endtask
 
@@ -779,14 +806,15 @@ module Frost32Cpu(input logic clk,
 
 		if (condition)
 		begin
-			prep_load_next_instruction(__stage_instr_decode_data
+			prep_load_instruction(__stage_instr_decode_data
 				.from_stage_execute_rfile_rc_data);
 		end
 
 		else
 		begin
-			//__locals.next_pc_after_jump_or_call <= __following_pc;
-			prep_load_next_instruction(__following_pc);
+			//__locals.next_pc_after_jump_or_call 
+			//	<= __following_pc_stage_execute;
+			prep_load_instruction(__following_pc_stage_execute);
 		end
 	endtask
 
@@ -811,7 +839,7 @@ module Frost32Cpu(input logic clk,
 
 		if (condition)
 		begin
-			prep_reg_write(__REG_LR_INDEX, __following_pc);
+			prep_reg_write(__REG_LR_INDEX, __following_pc_stage_execute);
 		end
 	endtask
 
@@ -846,40 +874,338 @@ module Frost32Cpu(input logic clk,
 	end
 
 	// Stage 0:  Instruction Fetch
-	// Instruction fetch now controls the program counter
+	// Instruction decode still controls the program counter and also other
+	// things.
 	always @ (posedge clk)
 	begin
 	if (!in.wait_for_mem)
 	begin
 		if (in_stall())
 		begin
+			// We just always do this when the stall_counter is 1
+			if (__stage_instr_decode_data.stall_counter == 1)
+			begin
+				prep_load_following_instruction();
+			end
+
+			case (__stage_instr_decode_data.stall_counter)
+			PkgFrost32Cpu::StCpyRaToInterruptsRelatedAddr:
+			begin
+				case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						// The fetch stage now controls access to the
+						// memory buses, and also writes to the program
+						// counter.
+						//prep_load_instruction(__following_pc);
+						prep_load_instruction
+							(__following_pc_stage_execute);
+					end
+				endcase
+			end
+
+			PkgFrost32Cpu::StMemAccess:
+			begin
+				// Memory access
+				case (__stage_instr_decode_data.stall_counter)
+					3:
+					begin
+					case (__multi_stage_data_execute.instr_ldst_type)
+						PkgInstrDecoder::Ld32:
+						begin
+							// Execute handles the store to the register
+							$display("Ld32:  %h", 
+								__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b);
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias32);
+						end
+						PkgInstrDecoder::LdU16:
+						begin
+							// Execute handles the store to the register
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias16);
+						end
+						PkgInstrDecoder::LdS16:
+						begin
+							// Execute handles the store to the register
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias16);
+						end
+						PkgInstrDecoder::LdU8:
+						begin
+							// Execute handles the store to the register
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias8);
+						end
+						PkgInstrDecoder::LdS8:
+						begin
+							// Execute handles the store to the register
+							prep_mem_read((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias8);
+						end
+						PkgInstrDecoder::St32:
+						begin
+							$display("Storing %h to address %h",
+								__stage_execute_input_data.rfile_ra_data,
+								__locals.ldst_address);
+							$display("Storing %h to address %h",
+								__stage_execute_input_data.rfile_ra_data,
+								(__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b));
+							prep_mem_write((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias32,
+								__stage_execute_input_data.rfile_ra_data);
+						end
+						PkgInstrDecoder::St16:
+						begin
+							prep_mem_write((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias16,
+								__stage_execute_input_data.rfile_ra_data);
+						end
+						PkgInstrDecoder::St8:
+						begin
+							prep_mem_write((__locals.ldst_adder_a 
+								+ __locals.ldst_adder_b),
+								PkgFrost32Cpu::Dias8,
+								__stage_execute_input_data.rfile_ra_data);
+						end
+					endcase
+					end
+
+					2:
+					begin
+						prep_load_instruction
+							(__following_pc_stage_execute);
+					end
+				endcase
+			end
+
+			// For branches, completely resolve conditional execution in
+			// this stage
+			PkgFrost32Cpu::StCtrlFlowBranch:
+			begin
+				case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						case (__multi_stage_data_execute
+							.instr_condition_type)
+							PkgInstrDecoder::CtNe:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_ne);
+							end
+
+							PkgInstrDecoder::CtEq:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_eq);
+							end
+
+							PkgInstrDecoder::CtLtu:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_ltu);
+							end
+							PkgInstrDecoder::CtGeu:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_geu);
+							end
+
+							PkgInstrDecoder::CtLeu:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_leu);
+							end
+							PkgInstrDecoder::CtGtu:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_gtu);
+							end
+
+							PkgInstrDecoder::CtLts:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_lts);
+							end
+							PkgInstrDecoder::CtGes:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_ges);
+							end
+
+							PkgInstrDecoder::CtLes:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_les);
+							end
+							PkgInstrDecoder::CtGts:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.cond_gts);
+							end
+
+							default:
+							begin
+								//// Eek!
+								//__locals.pc <= __following_pc;
+								//prep_mem_read(__following_pc,
+								//	PkgFrost32Cpu::Dias32);
+								//__locals.dest_of_ctrl_flow_if_condition
+								//	<= __following_pc;
+
+								//`ifdef OPT_HAVE_STAGE_REGISTER_READ
+								//prep_load_instruction
+								//	(__following_pc_branch);
+								//`else
+								//prep_load_instruction
+								//	(__following_pc);
+								//`endif
+								prep_load_instruction
+									(__following_pc_stage_execute);
+							end
+						endcase
+					end
+				endcase
+			end
+
+			PkgFrost32Cpu::StCtrlFlowJumpCall:
+			begin
+				case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						case (__multi_stage_data_execute
+							.instr_condition_type)
+							PkgInstrDecoder::CtNe:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_ne);
+							end
+
+							PkgInstrDecoder::CtEq:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_eq);
+							end
+
+							PkgInstrDecoder::CtLtu:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_ltu);
+							end
+							PkgInstrDecoder::CtGeu:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_geu);
+							end
+
+							PkgInstrDecoder::CtLeu:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_leu);
+							end
+							PkgInstrDecoder::CtGtu:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_gtu);
+							end
+
+							PkgInstrDecoder::CtLts:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_lts);
+							end
+							PkgInstrDecoder::CtGes:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_ges);
+							end
+
+							PkgInstrDecoder::CtLes:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_les);
+							end
+							PkgInstrDecoder::CtGts:
+							begin
+								handle_jump_or_call_in_fetch_stage
+									(__locals.cond_gts);
+							end
+
+							default:
+							begin
+								// Eek!
+								prep_load_instruction
+									(__following_pc_stage_execute);
+							end
+						endcase
+					end
+
+				endcase
+			end
+
+			PkgFrost32Cpu::StInit:
+			begin
+				$display("StInit:  %h",
+					__stage_instr_decode_data.stall_counter);
+				case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						//prep_load_instruction
+						//	(__following_pc);
+						//prep_load_instruction
+						//	(__locals.pc);
+						//$display("Stuffs:  2");
+						prep_load_instruction(0);
+					end
+
+					1:
+					begin
+						$display("AAAA GGGG");
+					end
+				endcase
+			end
+
+			PkgFrost32Cpu::StReti:
+			begin
+				case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						prep_load_instruction(__locals.ireta);
+					end
+				endcase
+			end
+				
+			PkgFrost32Cpu::StRespondToInterrupt:
+			begin
+				//prep_load_instruction(__locals.pc + 4);
+				//prep_load_following_instruction();
+			end
+			endcase
 		end
 
 		//else // if (__stage_instr_decode_data.stall_counter == 0)
 		else // if (!in_stall())
 		begin
-			//if (!(in.interrupt && __locals.ie))
-			if ((in.interrupt && !__locals.ie) || (!in.interrupt))
+			if (!__locals.should_service_interrupt_if_not_in_stall)
 			begin
+				//prep_load_instruction(__locals.pc);
+				prep_load_instruction(__locals.pc + 4);
+				//__locals.pc <= __locals.pc + 4;
 			end
 
-			else
+			else // if (__locals.should_service_interrupt_if_not_in_stall)
 			begin
-				$display("Interrupt happened:  %h %h %h",
-					__locals.idsta,
-					__locals.pc,
-					__locals.ireta);
 				//__locals.pc <= __locals.idsta;
-				__locals.ireta <= __locals.pc;
-				__locals.ie <= 0;
-
-				prep_load_next_instruction(__locals.idsta);
-				make_bubble();
-
-				__stage_instr_decode_data.stall_state
-					<= PkgFrost32Cpu::StRespondToInterrupt;
-				__stage_instr_decode_data.stall_counter
-					<= __STALL_COUNTER_RESPOND_TO_INTERRUPTS;
+				prep_load_instruction(__locals.idsta);
 			end
 		end
 	end
@@ -897,28 +1223,190 @@ module Frost32Cpu(input logic clk,
 	begin
 		if (in_stall())
 		begin
+			// Decrement the stall counter
+			__stage_instr_decode_data.stall_counter
+				<= __stage_instr_decode_data.stall_counter - 1;
+
+			//if (__stage_instr_decode_data.stall_counter == 1)
+			//begin
+			//	__multi_stage_data_instr_decode.pc_val
+			//		<= __locals.pc;
+			//end
+
+			case (__stage_instr_decode_data.stall_state)
+				PkgFrost32Cpu::StCpyRaToInterruptsRelatedAddr:
+				begin
+					case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						// "cpy ireta, rA"
+						if (__multi_stage_data_execute.instr_opcode
+							== PkgInstrDecoder::Cpy_OneIretaOneReg)
+						begin
+							__locals.ireta 
+								<= __stage_instr_decode_data
+								.from_stage_execute_rfile_ra_data;
+						end
+
+						// "cpy idsta, rA"
+						else
+						begin
+							__locals.idsta 
+								<= __stage_instr_decode_data
+								.from_stage_execute_rfile_ra_data;
+						end
+
+						////prep_load_instruction(__following_pc);
+						//prep_load_instruction
+						//	(__following_pc_stage_execute);
+					end
+
+					//1:
+					//begin
+					//	//prep_load_following_instruction();
+					//end
+					endcase
+				end
+
+			endcase
 		end
 
 		//else // if (__stage_instr_decode_data.stall_counter == 0)
 		else // if (!in_stall())
 		begin
 			//if (!(in.interrupt && __locals.ie))
-			if ((in.interrupt && !__locals.ie) || (!in.interrupt))
+			//if ((in.interrupt && !__locals.ie) || (!in.interrupt))
+			if (!__locals.should_service_interrupt_if_not_in_stall)
 			begin
+				if (__multi_stage_data_instr_decode.instr_causes_stall)
+				begin
+					case (__multi_stage_data_instr_decode.instr_group)
+					// Conditional branch 
+					//if (__multi_stage_data_instr_decode.instr_group == 2)
+					2:
+					begin
+						$display("Stage 1:  conditional branch:  %h",
+							__STALL_COUNTER_RELATIVE_BRANCH);
+						__stage_instr_decode_data.stall_state
+							<= PkgFrost32Cpu::StCtrlFlowBranch;
+
+						//__stage_instr_decode_data.stall_counter <= 1;
+						__stage_instr_decode_data.stall_counter
+							<= __STALL_COUNTER_RELATIVE_BRANCH;
+						//__stage_instr_decode_data.stall_counter <= 2;
+					end
+
+					// Conditional jump or conditional call
+					//else if ((__multi_stage_data_instr_decode.instr_group 
+					//	== 3)
+					//	|| (__multi_stage_data_instr_decode.instr_group 
+					//	== 4))
+					3:
+					begin
+						__stage_instr_decode_data.stall_state
+							<= PkgFrost32Cpu::StCtrlFlowJumpCall;
+
+						//__stage_instr_decode_data.stall_counter <= 2;
+						__stage_instr_decode_data.stall_counter
+							<= __STALL_COUNTER_JUMP_OR_CALL;
+					end
+					4:
+					begin
+						__stage_instr_decode_data.stall_state
+							<= PkgFrost32Cpu::StCtrlFlowJumpCall;
+
+						//__stage_instr_decode_data.stall_counter <= 2;
+						__stage_instr_decode_data.stall_counter
+							<= __STALL_COUNTER_JUMP_OR_CALL;
+					end
+
+					// All loads and stores are in group 5, and they take
+					// three cycles each to complete (find out that there's
+					// a memory access instruction, prep mem access for
+					// instruction itself, prep mem read of next
+					// instruction)
+					//else if (__multi_stage_data_instr_decode.instr_group 
+					//	== 5)
+					5:
+					begin
+						__stage_instr_decode_data.stall_state 
+							<= PkgFrost32Cpu::StMemAccess;
+						__stage_instr_decode_data.stall_counter
+							<= __STALL_COUNTER_MEM_ACCESS;
+					end
+
+					// "cpy ireta, rA"
+					// "cpy idsta, rA"
+					// "reti"
+					//else if (__multi_stage_data_instr_decode.instr_group 
+					//	== 6)
+					6:
+					begin
+						if (__multi_stage_data_instr_decode.instr_opcode
+							!= PkgInstrDecoder::Reti_NoArgs)
+						begin
+							__stage_instr_decode_data.stall_state
+								<= PkgFrost32Cpu
+								::StCpyRaToInterruptsRelatedAddr;
+						end
+
+						else
+						begin
+							__stage_instr_decode_data.stall_state
+								<= PkgFrost32Cpu::StReti;
+						end
+
+						__stage_instr_decode_data.stall_counter
+							<= __STALL_COUNTER_INTERRUPTS_STUFF;
+					end
+
+					// Eek!
+					//else
+					default:
+					begin
+						$display("instr_causes_stall:  Eek!");
+						__stage_instr_decode_data.stall_state 
+							<= PkgFrost32Cpu::StInit;
+						__stage_instr_decode_data.stall_counter
+							<= __STALL_COUNTER_EEK;
+					end
+					endcase
+				end
+
+				// Handle what the execute stage sees next
+				if ((__multi_stage_data_instr_decode.instr_group == 6)
+					&& ((__multi_stage_data_instr_decode.instr_opcode 
+					== PkgInstrDecoder::Ei_NoArgs)
+					|| (__multi_stage_data_instr_decode.instr_opcode
+					== PkgInstrDecoder::Di_NoArgs)))
+				begin
+					__locals.ie <= (__multi_stage_data_instr_decode
+						.instr_opcode == PkgInstrDecoder::Ei_NoArgs);
+
+					// Just send a bubble through to the later stage(s)
+					// since they don't really need to know anything about
+					// "ei" and "di"
+					make_bubble();
+				end
+
+				else
+				begin
+					send_instr_through();
+				end
 			end
 
-			else
+			else // if (__locals.should_service_interrupt_if_not_in_stall)
 			begin
+				//// Send a bubble through 
+				//make_bubble();
 				$display("Interrupt happened:  %h %h %h",
 					__locals.idsta,
 					__locals.pc,
 					__locals.ireta);
-				//__locals.pc <= __locals.idsta;
+
+				//__locals.ireta <= __multi_stage_data_instr_decode.pc_val;
 				__locals.ireta <= __locals.pc;
 				__locals.ie <= 0;
-
-				prep_load_next_instruction(__locals.idsta);
-				make_bubble();
 
 				__stage_instr_decode_data.stall_state
 					<= PkgFrost32Cpu::StRespondToInterrupt;
@@ -1249,8 +1737,8 @@ module Frost32Cpu(input logic clk,
 					end
 				endcase
 
-				$display("group 1 immediate stuff:  %h %h %h",
-					__in_alu.a, __in_alu.b, __in_alu.oper);
+				//$display("group 1 immediate stuff:  %h %h %h",
+				//	__in_alu.a, __in_alu.b, __in_alu.oper);
 			end
 
 
