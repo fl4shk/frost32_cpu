@@ -23,6 +23,8 @@
 `define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
 	always_ff @ (posedge clk) \
 	begin \
+		$display("RegisterFile read:  __regfile[%h] == %h", \
+			in.read_sel_name, __regfile[in.read_sel_name]); \
 		out.read_data_name <= __regfile[in.read_sel_name]; \
 	end
 `define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \

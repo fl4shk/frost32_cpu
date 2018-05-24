@@ -19,7 +19,7 @@ module Frost32Cpu(input logic clk,
 	parameter __STALL_COUNTER_RELATIVE_BRANCH = 4;
 	//parameter __STALL_COUNTER_RELATIVE_BRANCH = 3;
 	parameter __STALL_COUNTER_JUMP_OR_CALL = 4;
-	parameter __STALL_COUNTER_MEM_ACCESS = 5;
+	parameter __STALL_COUNTER_MEM_ACCESS = 4;
 	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 4;
 	//parameter __STALL_COUNTER_MULTIPLY = 4;
 	parameter __STALL_COUNTER_EEK = 4;
@@ -505,6 +505,13 @@ module Frost32Cpu(input logic clk,
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_execute_output_data.n_reg_data
 		//	: __stage_register_read_output_data.rfile_rb_data;
+
+		//$display("(Maybe) operand forwarding (_rb):  %h %h %h %h %h",
+		//	__stage_execute_input_data.rfile_rb_data,
+		//	__stage_execute_output_data.prev_written_reg_index,
+		//	__multi_stage_data_execute.instr_rb_index,
+		//	__stage_execute_output_data.n_reg_data,
+		//	__out_reg_file.read_data_rb);
 	end
 	always_comb
 	begin
@@ -587,12 +594,12 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_eq
 			= (__stage_instr_decode_data.from_stage_execute_rfile_ra_data
 			== __stage_instr_decode_data.from_stage_execute_rfile_rb_data);
-		$display("__locals.cond_eq stuff:  %h %h %h",
-			__locals.cond_eq,
-			__stage_instr_decode_data
-			.from_stage_execute_rfile_ra_data,
-			__stage_instr_decode_data
-			.from_stage_execute_rfile_rb_data);
+		//$display("__locals.cond_eq stuff:  %h %h %h",
+		//	__locals.cond_eq,
+		//	__stage_instr_decode_data
+		//	.from_stage_execute_rfile_ra_data,
+		//	__stage_instr_decode_data
+		//	.from_stage_execute_rfile_rb_data);
 	end
 
 
@@ -705,7 +712,7 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	//always @ (posedge clk)
 	begin
-		if (__stage_instr_decode_data.stall_counter == 3)
+		//if (__stage_instr_decode_data.stall_counter == 3)
 		begin
 			__locals.ldst_adder_a 
 				= __stage_execute_input_data.rfile_rb_data;
@@ -716,7 +723,7 @@ module Frost32Cpu(input logic clk,
 
 	always_comb
 	begin
-		if (__stage_instr_decode_data.stall_counter == 3)
+		//if (__stage_instr_decode_data.stall_counter == 3)
 		begin
 			// Immediate-indexed loads and stores have
 			// (__multi_stage_data_execute.instr_opcode[3] == 1)
@@ -1076,8 +1083,10 @@ module Frost32Cpu(input logic clk,
 						PkgInstrDecoder::Ld32:
 						begin
 							// Execute handles the store to the register
-							$display("Ld32:  %h", 
-								__locals.ldst_address);
+							$display("Loading 32-bit val:  %h, %h + %h", 
+								__locals.ldst_address,
+								__locals.ldst_adder_a,
+								__locals.ldst_adder_b);
 							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias32);
 						end
@@ -1107,9 +1116,11 @@ module Frost32Cpu(input logic clk,
 						end
 						PkgInstrDecoder::St32:
 						begin
-							$display("Storing %h to address %h",
+							$display("Storing %h to address %h, %h + %h",
 								__stage_execute_input_data.rfile_ra_data,
-								__locals.ldst_address);
+								__locals.ldst_address,
+								__locals.ldst_adder_a,
+								__locals.ldst_adder_b);
 							//$display("Storing %h to address %h",
 							//	__stage_execute_input_data.rfile_ra_data,
 							//	(__locals.ldst_adder_a 
