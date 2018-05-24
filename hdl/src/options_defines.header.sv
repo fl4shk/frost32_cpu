@@ -11,6 +11,8 @@
 // Temporary
 `define OPT_DEBUG_REGISTER_FILE
 
+//`define OPT_HAVE_STAGE_REGISTER_READ
+
 //`ifdef OPT_NEW_PIPELINE
 //`define OPT_HAVE_STAGE_INSTR_FETCH
 //

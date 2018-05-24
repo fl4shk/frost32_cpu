@@ -3,22 +3,6 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
-`ifdef OPT_HAVE_STAGE_REGISTER_READ
-`define MULTI_STAGE_DATA_AFTER_INSTR_DECODE \
-	__multi_stage_data_register_read
-`define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
-	__stage_register_read_input_data
-//`define LOCALS_CONDITION_ALWAYS_BLOCK_TYPE always @ (posedge clk)
-//`define LOCALS_CONDITION_ASSIGNMENT_TYPE <=
-`else
-`define MULTI_STAGE_DATA_AFTER_INSTR_DECODE \
-	__multi_stage_data_execute
-`define STAGE_AFTER_INSTR_DECODE_INPUT_DATA \
-	__stage_execute_input_data
-//`define LOCALS_CONDITION_ALWAYS_BLOCK_TYPE always_comb
-//`define LOCALS_CONDITION_ASSIGNMENT_TYPE =
-`endif
-
 module Frost32Cpu(input logic clk,
 	input PkgFrost32Cpu::PortIn_Frost32Cpu in,
 	output PkgFrost32Cpu::PortOut_Frost32Cpu out);
@@ -32,12 +16,13 @@ module Frost32Cpu(input logic clk,
 	parameter __REG_LR_INDEX = 13;
 	parameter __REG_SP_INDEX = 15;
 
-	parameter __STALL_COUNTER_RELATIVE_BRANCH = 3;
-	parameter __STALL_COUNTER_JUMP_OR_CALL = 3;
-	parameter __STALL_COUNTER_MEM_ACCESS = 3;
-	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
+	parameter __STALL_COUNTER_RELATIVE_BRANCH = 4;
+	//parameter __STALL_COUNTER_RELATIVE_BRANCH = 3;
+	parameter __STALL_COUNTER_JUMP_OR_CALL = 4;
+	parameter __STALL_COUNTER_MEM_ACCESS = 5;
+	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 4;
 	//parameter __STALL_COUNTER_MULTIPLY = 4;
-	parameter __STALL_COUNTER_EEK = 3;
+	parameter __STALL_COUNTER_EEK = 4;
 	parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 1;
 
 
@@ -66,6 +51,7 @@ module Frost32Cpu(input logic clk,
 
 	} __stage_instr_decode_data;
 
+
 	// Data input to the execute stage
 	struct packed
 	{
@@ -76,14 +62,16 @@ module Frost32Cpu(input logic clk,
 
 		//logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc;
 	}
+		__stage_register_read_input_data,
 		__stage_execute_input_data;
 
-	`ifdef OPT_HAVE_STAGE_REGISTER_READ
 	struct packed
 	{
+		logic [`MSB_POS__REG_FILE_DATA:0] rfile_ra_data, rfile_rb_data,
+			rfile_rc_data;
 		logic [`MSB_POS__REG_FILE_SEL:0] prev_written_reg_index;
 	} __stage_register_read_output_data;
-	`endif		// OPT_HAVE_STAGE_REGISTER_READ
+
 
 	struct packed
 	{
@@ -159,12 +147,38 @@ module Frost32Cpu(input logic clk,
 
 	PkgFrost32Cpu::MultiStageData 
 		__multi_stage_data_instr_decode, 
-		`ifdef OPT_HAVE_STAGE_REGISTER_READ
 		__multi_stage_data_register_read,
-		`endif		// OPT_HAVE_STAGE_REGISTER_READ
 		__multi_stage_data_execute;
 
 
+
+
+
+	// Module instantiations
+	logic [`MSB_POS__INSTRUCTION:0] __in_instr_decoder;
+	PkgInstrDecoder::PortOut_InstrDecoder __out_instr_decoder;
+	InstrDecoder __inst_instr_decoder(.in(__in_instr_decoder), 
+		.out(__out_instr_decoder));
+
+	//parameter __ARR_SIZE__NUM_REGISTERS = 16;
+	//parameter __LAST_INDEX__NUM_REGISTERS 
+	//	= `ARR_SIZE_TO_LAST_INDEX(__ARR_SIZE__NUM_REGISTERS);
+
+	//`ifdef ICARUS
+	//logic [`MSB_POS__REG_FILE_DATA:0]
+	//	__regfile[0 : __LAST_INDEX__NUM_REGISTERS];
+	//`else
+	//bit [`MSB_POS__REG_FILE_DATA:0]
+	//	__regfile[0 : __LAST_INDEX__NUM_REGISTERS];
+	//`endif		// ICARUS
+
+	//initial
+	//begin
+	//	for (int i=0; i<__ARR_SIZE__NUM_REGISTERS; ++i)
+	//	begin
+	//		__regfile[i] = 0;
+	//	end
+	//end
 
 	`ifdef OPT_DEBUG_REGISTER_FILE
 	logic [`MSB_POS__REG_FILE_DATA:0] 
@@ -176,17 +190,53 @@ module Frost32Cpu(input logic clk,
 		__out_debug_reg_u9, __out_debug_reg_u10, 
 		__out_debug_reg_temp, __out_debug_reg_lr,
 		__out_debug_reg_fp, __out_debug_reg_sp;
+	
+	//assign __out_debug_reg_zero = __regfile[0];
+	//assign __out_debug_reg_u0 = __regfile[1];
+	//assign __out_debug_reg_u1 = __regfile[2];
+	//assign __out_debug_reg_u2 = __regfile[3];
+	//assign __out_debug_reg_u3 = __regfile[4];
+	//assign __out_debug_reg_u4 = __regfile[5];
+	//assign __out_debug_reg_u5 = __regfile[6];
+	//assign __out_debug_reg_u6 = __regfile[7];
+	//assign __out_debug_reg_u7 = __regfile[8];
+	//assign __out_debug_reg_u8 = __regfile[9];
+	//assign __out_debug_reg_u9 = __regfile[10];
+	//assign __out_debug_reg_u10 = __regfile[11];
+	//assign __out_debug_reg_temp = __regfile[12];
+	//assign __out_debug_reg_lr = __regfile[13];
+	//assign __out_debug_reg_fp = __regfile[14];
+	//assign __out_debug_reg_sp = __regfile[15];
 	`endif
 
 
-	// Module instantiations
-	logic [`MSB_POS__INSTRUCTION:0] __in_instr_decoder;
-	PkgInstrDecoder::PortOut_InstrDecoder __out_instr_decoder;
-	InstrDecoder __inst_instr_decoder(.in(__in_instr_decoder), 
-		.out(__out_instr_decoder));
-
 	PkgRegisterFile::PortIn_RegFile __in_reg_file;
 	PkgRegisterFile::PortOut_RegFile __out_reg_file;
+	//assign __out_reg_file.read_data_ra
+	//	= __regfile[__in_reg_file.read_sel_ra];
+	//assign __out_reg_file.read_data_rb
+	//	= __regfile[__in_reg_file.read_sel_rb];
+	//assign __out_reg_file.read_data_rc
+	//	= __regfile[__in_reg_file.read_sel_rc];
+	//always_ff @ (posedge clk)
+	//begin
+	//	__out_reg_file.read_data_ra
+	//		<= __regfile[__in_reg_file.read_sel_ra];
+	//	__out_reg_file.read_data_rb
+	//		<= __regfile[__in_reg_file.read_sel_rb];
+	//	__out_reg_file.read_data_rc
+	//		<= __regfile[__in_reg_file.read_sel_rc];
+	//	$display("__in_reg_file.read_sel_ra, __regfile:  %h, %h",
+	//		__in_reg_file.read_sel_ra,
+	//		__regfile[__in_reg_file.read_sel_ra]);
+	//	$display("__in_reg_file.read_sel_rb, __regfile:  %h, %h",
+	//		__in_reg_file.read_sel_rb,
+	//		__regfile[__in_reg_file.read_sel_rb]);
+	//	$display("__in_reg_file.read_sel_rc, __regfile:  %h, %h",
+	//		__in_reg_file.read_sel_rc,
+	//		__regfile[__in_reg_file.read_sel_rc]);
+	//end
+
 	RegisterFile __inst_reg_file(.clk(clk), .in(__in_reg_file),
 		.out(__out_reg_file)
 		`ifdef OPT_DEBUG_REGISTER_FILE
@@ -275,18 +325,11 @@ module Frost32Cpu(input logic clk,
 		$display("Frost32Cpu stall_counter, stall_state:  %h, %h",
 			__stage_instr_decode_data.stall_counter,
 			__stage_instr_decode_data.stall_state);
-		`ifdef OPT_HAVE_STAGE_REGISTER_READ
 		$display("Frost32Cpu pc's:  %h %h %h %h", 
 			__locals.pc,
 			__multi_stage_data_instr_decode.pc_val, 
 			__multi_stage_data_register_read.pc_val,
 			__multi_stage_data_execute.pc_val);
-		`else
-		$display("Frost32Cpu pc's:  %h %h %h", 
-			__locals.pc,
-			__multi_stage_data_instr_decode.pc_val, 
-			__multi_stage_data_execute.pc_val);
-		`endif		// OPT_HAVE_STAGE_REGISTER_READ
 		`ifdef OPT_DEBUG_REGISTER_FILE
 		$display("Frost32Cpu special purpose regs:  %h %h %h",
 			__locals.ireta, __locals.idsta, __locals.ie);
@@ -334,7 +377,7 @@ module Frost32Cpu(input logic clk,
 		if (in_stall())
 		begin
 			__in_instr_decoder
-				= __multi_stage_data_execute.raw_instruction;
+				= __multi_stage_data_register_read.raw_instruction;
 		end
 
 		else
@@ -342,29 +385,34 @@ module Frost32Cpu(input logic clk,
 			__in_instr_decoder = in.data;
 		end
 	end
+	//always_comb
+	//begin
+	//	__in_instr_decoder
+	//		= __multi_stage_data_instr_decode.raw_instruction;
+	//end
 
 	always_comb
 	begin
 		__in_reg_file.read_sel_ra 
 			= __multi_stage_data_instr_decode.instr_ra_index;
-		$display("__in_reg_file.read_sel_ra:  %h",
-			__in_reg_file.read_sel_ra);
+		//$display("__in_reg_file.read_sel_ra:  %h",
+		//	__in_reg_file.read_sel_ra);
 	end
 
 	always_comb
 	begin
 		__in_reg_file.read_sel_rb 
 			= __multi_stage_data_instr_decode.instr_rb_index;
-		$display("__in_reg_file.read_sel_rb:  %h",
-			__in_reg_file.read_sel_rb);
+		//$display("__in_reg_file.read_sel_rb:  %h",
+		//	__in_reg_file.read_sel_rb);
 	end
 
 	always_comb
 	begin
 		__in_reg_file.read_sel_rc 
 			= __multi_stage_data_instr_decode.instr_rc_index;
-		$display("__in_reg_file.read_sel_rc:  %h",
-			__in_reg_file.read_sel_rc);
+		//$display("__in_reg_file.read_sel_rc:  %h",
+		//	__in_reg_file.read_sel_rc);
 	end
 
 	always_comb __multi_stage_data_instr_decode.raw_instruction 
@@ -430,6 +478,12 @@ module Frost32Cpu(input logic clk,
 			&& (__stage_execute_output_data.prev_written_reg_index != 0))
 			? __stage_execute_output_data.n_reg_data
 			: __out_reg_file.read_data_ra;
+		//__stage_execute_input_data.rfile_ra_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_ra_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_execute_output_data.n_reg_data
+		//	: __stage_register_read_output_data.rfile_ra_data;
 	end
 	always_comb
 	begin
@@ -445,6 +499,12 @@ module Frost32Cpu(input logic clk,
 			&& (__stage_execute_output_data.prev_written_reg_index != 0))
 			? __stage_execute_output_data.n_reg_data
 			: __out_reg_file.read_data_rb;
+		//__stage_execute_input_data.rfile_rb_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_rb_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_execute_output_data.n_reg_data
+		//	: __stage_register_read_output_data.rfile_rb_data;
 	end
 	always_comb
 	begin
@@ -460,26 +520,38 @@ module Frost32Cpu(input logic clk,
 			&& (__stage_execute_output_data.prev_written_reg_index != 0))
 			? __stage_execute_output_data.n_reg_data
 			: __out_reg_file.read_data_rc;
+		//__stage_execute_input_data.rfile_rc_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_rc_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_execute_output_data.n_reg_data
+		//	: __stage_register_read_output_data.rfile_rc_data;
 	end
 
 	//always_comb
 	//begin
+	//	//__stage_execute_input_data.rfile_ra_data
+	//	//	= __out_reg_file.read_data_ra;
 	//	__stage_execute_input_data.rfile_ra_data
-	//		= __out_reg_file.read_data_ra;
-	//	//$display("__stage_execute_input_data.rfile_ra_data:  %h",
-	//	//	__stage_execute_input_data.rfile_ra_data);
-	//	//$display("__locals.cpyhi_data:  %h",
-	//	//	__locals.cpyhi_data);
+	//		= __regfile[__multi_stage_data_execute.instr_ra_index];
+	//	$display("__stage_execute_input_data.rfile_ra_data:  %h",
+	//		__stage_execute_input_data.rfile_ra_data);
+	//	$display("__locals.cpyhi_data:  %h",
+	//		__locals.cpyhi_data);
 	//end
 	//always_comb
 	//begin
+	//	//__stage_execute_input_data.rfile_rb_data
+	//	//	= __out_reg_file.read_data_rb;
 	//	__stage_execute_input_data.rfile_rb_data
-	//		= __out_reg_file.read_data_rb;
+	//		= __regfile[__multi_stage_data_execute.instr_rb_index];
 	//end
 	//always_comb
 	//begin
+	//	//__stage_execute_input_data.rfile_rc_data
+	//	//	= __out_reg_file.read_data_rc;
 	//	__stage_execute_input_data.rfile_rc_data
-	//		= __out_reg_file.read_data_rc;
+	//		= __regfile[__multi_stage_data_execute.instr_rc_index];
 	//end
 
 	// Just some copies for use in the decode stage.
@@ -487,14 +559,20 @@ module Frost32Cpu(input logic clk,
 	// Possibly adjust these later to use values either forwarded from the
 	// execute stage or read asynchronously from the register file.
 	always_comb
+	begin
 		__stage_instr_decode_data.from_stage_execute_rfile_ra_data
 			= __stage_execute_input_data.rfile_ra_data;
+	end
 	always_comb
+	begin
 		__stage_instr_decode_data.from_stage_execute_rfile_rb_data
 			= __stage_execute_input_data.rfile_rb_data;
+	end
 	always_comb
+	begin
 		__stage_instr_decode_data.from_stage_execute_rfile_rc_data
 			= __stage_execute_input_data.rfile_rc_data;
+	end
 
 	// Conditions
 	always_comb
@@ -613,9 +691,9 @@ module Frost32Cpu(input logic clk,
 		//	__multi_stage_data_execute.instr_imm_val};
 
 		__locals.branch_adder_b
-			= {{16{`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_imm_val
+			= {{16{__multi_stage_data_execute.instr_imm_val
 			[15]}}, 
-			`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_imm_val};
+			__multi_stage_data_execute.instr_imm_val};
 	end
 
 	//always_comb
@@ -627,32 +705,39 @@ module Frost32Cpu(input logic clk,
 	always_comb
 	//always @ (posedge clk)
 	begin
-		__locals.ldst_adder_a = __stage_execute_input_data.rfile_rb_data;
-		//__locals.ldst_adder_a <= __stage_instr_decode_data
-		//	.from_stage_register_read_rfile_cond_rb_data;
+		if (__stage_instr_decode_data.stall_counter == 3)
+		begin
+			__locals.ldst_adder_a 
+				= __stage_execute_input_data.rfile_rb_data;
+			//__locals.ldst_adder_a <= __stage_instr_decode_data
+			//	.from_stage_register_read_rfile_cond_rb_data;
+		end
 	end
 
 	always_comb
 	begin
-		// Immediate-indexed loads and stores have
-		// (__multi_stage_data_execute.instr_opcode[3] == 1)
-		if (__multi_stage_data_execute.instr_opcode[3])
+		if (__stage_instr_decode_data.stall_counter == 3)
 		begin
-			// memory address computation:  rB + sign-extended
-			// immediate (actually sign extended twice since
-			// the instruction decoder **also** performed a
-			// sign extend, from 12-bit to 16-bit)
-			__locals.ldst_adder_b 
-				= {{16{__multi_stage_data_execute.instr_imm_val
-				[15]}},
-				__multi_stage_data_execute.instr_imm_val};
-		end
+			// Immediate-indexed loads and stores have
+			// (__multi_stage_data_execute.instr_opcode[3] == 1)
+			if (__multi_stage_data_execute.instr_opcode[3])
+			begin
+				// memory address computation:  rB + sign-extended
+				// immediate (actually sign extended twice since
+				// the instruction decoder **also** performed a
+				// sign extend, from 12-bit to 16-bit)
+				__locals.ldst_adder_b 
+					= {{16{__multi_stage_data_execute.instr_imm_val
+					[15]}},
+					__multi_stage_data_execute.instr_imm_val};
+			end
 
-		else
-		begin
-			// memory address computation:  rB + rC
-			__locals.ldst_adder_b 
-				= __stage_execute_input_data.rfile_rc_data;
+			else
+			begin
+				// memory address computation:  rB + rC
+				__locals.ldst_adder_b 
+					= __stage_execute_input_data.rfile_rc_data;
+			end
 		end
 	end
 
@@ -732,6 +817,21 @@ module Frost32Cpu(input logic clk,
 		out.req_mem_access <= 0;
 	endtask
 
+
+	//task prep_reg_wb;
+	//	input [`MSB_POS__REG_FILE_SEL:0] s_sel;
+	//	input [`MSB_POS__REG_FILE_DATA:0] s_data;
+
+	//	__stage_execute_output_data.prev_written_reg_index <= s_sel;
+	//	__stage_execute_output_data.n_reg_data <= s_data;
+	//endtask
+
+	//task prep_ra_wb;
+	//	input [`MSB_POS__REG_FILE_DATA:0] s_data;
+
+	//	prep_reg_wb(__multi_stage_data_execute.instr_ra_index, s_data);
+	//endtask
+
 	task prep_reg_write;
 		input [`MSB_POS__REG_FILE_SEL:0] s_sel;
 		input [`MSB_POS__REG_FILE_DATA:0] s_data;
@@ -739,6 +839,15 @@ module Frost32Cpu(input logic clk,
 		__in_reg_file.write_sel <= s_sel;
 		__in_reg_file.write_data <= s_data;
 		__in_reg_file.write_en <= 1;
+
+		//if (s_sel != 0)
+		//begin
+		//	__regfile[s_sel] <= s_data;
+		//end
+		//else
+		//begin
+		//	__regfile[s_sel] <= 0;
+		//end
 
 		__stage_execute_output_data.prev_written_reg_index <= s_sel;
 		__stage_execute_output_data.n_reg_data <= s_data;
@@ -756,26 +865,34 @@ module Frost32Cpu(input logic clk,
 		$display("prep_ra_write:  %h %h",
 			__multi_stage_data_execute.instr_ra_index, s_data);
 		prep_reg_write(__multi_stage_data_execute.instr_ra_index, s_data);
+
+		//$display("prep_ra_write:  %h %h",
+		//	__multi_stage_data_write_back.instr_ra_index, s_data);
+		//prep_reg_write(__multi_stage_data_write_back.instr_ra_index, 
+		//	s_data);
 	endtask
 
 
-
-	task stop_reg_write;
-		__in_reg_file.write_en <= 0;
+	task stop_operand_forwarding;
+		__stage_execute_output_data.prev_written_reg_index <= 0;
 	endtask
+
+	//task stop_reg_write;
+	//	__in_reg_file.write_en <= 0;
+	//endtask
 
 	task send_instr_through;
 		// We only send a non-bubble instruction to
 		// `MULTI_STAGE_DATA_AFTER_INSTR_DECODE when there's a
 		// new instruction that is NOT "ei" or "di"
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
+		__multi_stage_data_register_read 
 			<= __multi_stage_data_instr_decode;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE 
-			<= __multi_stage_data_instr_decode;
+		//__multi_stage_data_register_read 
+		//	<= __multi_stage_data_instr_decode;
 
-		`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.ireta_data 
+		__stage_register_read_input_data.ireta_data 
 			<= __locals.ireta;
-		`STAGE_AFTER_INSTR_DECODE_INPUT_DATA.idsta_data 
+		__stage_register_read_input_data.idsta_data 
 			<= __locals.idsta;
 
 		//// Use all three register file read ports.
@@ -796,16 +913,16 @@ module Frost32Cpu(input logic clk,
 		//__in_reg_file.read_sel_rb <= 0;
 		//__in_reg_file.read_sel_rc <= 0;
 
-		//`MULTI_STAGE_DATA_AFTER_INSTR_DECODE <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_ra_index <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_rb_index <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_rc_index <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_group <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_opcode <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_ldst_type <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_causes_stall <= 0;
-		`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.instr_condition_type <= 0;
-		//`MULTI_STAGE_DATA_AFTER_INSTR_DECODE.nop <= 1'b1;
+		//__multi_stage_data_register_read <= 0;
+		__multi_stage_data_register_read.instr_ra_index <= 0;
+		__multi_stage_data_register_read.instr_rb_index <= 0;
+		__multi_stage_data_register_read.instr_rc_index <= 0;
+		__multi_stage_data_register_read.instr_group <= 0;
+		__multi_stage_data_register_read.instr_opcode <= 0;
+		__multi_stage_data_register_read.instr_ldst_type <= 0;
+		__multi_stage_data_register_read.instr_causes_stall <= 0;
+		__multi_stage_data_register_read.instr_condition_type <= 0;
+		//__multi_stage_data_register_read.nop <= 1'b1;
 
 	endtask
 
@@ -888,9 +1005,12 @@ module Frost32Cpu(input logic clk,
 	initial
 	begin
 		// Put NOPs into the stages after decode
+		__multi_stage_data_register_read = 0;
 		__multi_stage_data_execute = 0;
 
 		__stage_instr_decode_data = 0;
+		__stage_register_read_output_data = 0;
+		__stage_execute_output_data = 0;
 		//__stage_execute_output_data = 0;
 		//__stage_write_back_input_data = 0;
 		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
@@ -957,38 +1077,32 @@ module Frost32Cpu(input logic clk,
 						begin
 							// Execute handles the store to the register
 							$display("Ld32:  %h", 
-								__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b);
-							prep_mem_read((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+								__locals.ldst_address);
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias32);
 						end
 						PkgInstrDecoder::LdU16:
 						begin
 							// Execute handles the store to the register
-							prep_mem_read((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias16);
 						end
 						PkgInstrDecoder::LdS16:
 						begin
 							// Execute handles the store to the register
-							prep_mem_read((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias16);
 						end
 						PkgInstrDecoder::LdU8:
 						begin
 							// Execute handles the store to the register
-							prep_mem_read((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias8);
 						end
 						PkgInstrDecoder::LdS8:
 						begin
 							// Execute handles the store to the register
-							prep_mem_read((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+							prep_mem_read(__locals.ldst_address,
 								PkgFrost32Cpu::Dias8);
 						end
 						PkgInstrDecoder::St32:
@@ -996,26 +1110,23 @@ module Frost32Cpu(input logic clk,
 							$display("Storing %h to address %h",
 								__stage_execute_input_data.rfile_ra_data,
 								__locals.ldst_address);
-							$display("Storing %h to address %h",
-								__stage_execute_input_data.rfile_ra_data,
-								(__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b));
-							prep_mem_write((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+							//$display("Storing %h to address %h",
+							//	__stage_execute_input_data.rfile_ra_data,
+							//	(__locals.ldst_adder_a 
+							//	+ __locals.ldst_adder_b));
+							prep_mem_write(__locals.ldst_address,
 								PkgFrost32Cpu::Dias32,
 								__stage_execute_input_data.rfile_ra_data);
 						end
 						PkgInstrDecoder::St16:
 						begin
-							prep_mem_write((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+							prep_mem_write(__locals.ldst_address,
 								PkgFrost32Cpu::Dias16,
 								__stage_execute_input_data.rfile_ra_data);
 						end
 						PkgInstrDecoder::St8:
 						begin
-							prep_mem_write((__locals.ldst_adder_a 
-								+ __locals.ldst_adder_b),
+							prep_mem_write(__locals.ldst_address,
 								PkgFrost32Cpu::Dias8,
 								__stage_execute_input_data.rfile_ra_data);
 						end
@@ -1120,13 +1231,6 @@ module Frost32Cpu(input logic clk,
 								//__locals.dest_of_ctrl_flow_if_condition
 								//	<= __following_pc;
 
-								//`ifdef OPT_HAVE_STAGE_REGISTER_READ
-								//prep_load_instruction
-								//	(__following_pc_branch);
-								//`else
-								//prep_load_instruction
-								//	(__following_pc);
-								//`endif
 								$display("branch eek!");
 								prep_load_instruction
 									(__following_pc_stage_execute);
@@ -1254,9 +1358,21 @@ module Frost32Cpu(input logic clk,
 		begin
 			if (!__locals.should_service_interrupt_if_not_in_stall)
 			begin
-				//prep_load_instruction(__locals.pc);
-				prep_load_instruction(__locals.pc + 4);
-				//__locals.pc <= __locals.pc + 4;
+				if (__multi_stage_data_instr_decode.instr_causes_stall)
+				begin
+					//__multi_stage_data_instr_decode.raw_instruction
+					//	<= in.data;
+				end
+
+				else // if (!__multi_stage_data_instr_decode
+					// .instr_causes_stall)
+				begin
+					//prep_load_instruction(__locals.pc);
+					prep_load_instruction(__locals.pc + 4);
+					//__locals.pc <= __locals.pc + 4;
+					__multi_stage_data_instr_decode.raw_instruction
+						<= in.data;
+				end
 			end
 
 			else // if (__locals.should_service_interrupt_if_not_in_stall)
@@ -1483,8 +1599,31 @@ module Frost32Cpu(input logic clk,
 
 	end
 
+	// Stage 2:  Register read
+	always @ (posedge clk)
+	begin
+	if (!in.wait_for_mem)
+	begin
+		//__stage_register_read_output_data.rfile_ra_data
+		//	<= __regfile[__multi_stage_data_register_read.instr_ra_index];
+		//__stage_register_read_output_data.rfile_rb_data
+		//	<= __regfile[__multi_stage_data_register_read.instr_rb_index];
+		//__stage_register_read_output_data.rfile_rc_data
+		//	<= __regfile[__multi_stage_data_register_read.instr_rc_index];
 
-	// Stage 2:  Execute 
+		__stage_execute_input_data.ireta_data
+			<= __stage_register_read_input_data.ireta_data;
+		__stage_execute_input_data.idsta_data
+			<= __stage_register_read_input_data.idsta_data;
+
+		//$display("Register read:  Sending opcode through:  %h",
+		//	__multi_stage_data_register_read.instr_opcode);
+		__multi_stage_data_execute <= __multi_stage_data_register_read;
+	end
+	end
+
+
+	// Stage 3:  Execute 
 	always @ (posedge clk)
 	begin
 	if (!in.wait_for_mem)
@@ -1507,13 +1646,15 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Bad0_Iog0:
 					begin
 						// Eek!
-						stop_reg_write();
+						//stop_reg_write();
+						stop_operand_forwarding();
 					end
 
 					PkgInstrDecoder::Bad1_Iog0:
 					begin
 						// Eek!
-						stop_reg_write();
+						//stop_reg_write();
+						stop_operand_forwarding();
 					end
 
 					default:
@@ -1532,6 +1673,8 @@ module Frost32Cpu(input logic clk,
 			begin
 				// Imply to synthesis tools that we want a decoder to be
 				// formed.
+				$display("Execute stage opcode:  %h",
+					__multi_stage_data_execute.instr_opcode);
 				case (__multi_stage_data_execute.instr_opcode)
 					PkgInstrDecoder::Cpyhi_OneRegOneImm:
 					begin
@@ -1569,65 +1712,80 @@ module Frost32Cpu(input logic clk,
 
 			end
 
-			// Group 4:  Calls
+			4'd2:
+			begin
+				stop_operand_forwarding();
+			end
+
+			4'd3:
+			begin
+				stop_operand_forwarding();
+			end
+
 			4'd4:
 			begin
-				case (__multi_stage_data_execute.instr_condition_type)
-					PkgInstrDecoder::CtNe:
-					begin
-						handle_call_in_execute_stage(__locals.cond_ne);
-					end
-
-					PkgInstrDecoder::CtEq:
-					begin
-						handle_call_in_execute_stage(__locals.cond_eq);
-					end
-
-					PkgInstrDecoder::CtLtu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_ltu);
-					end
-					PkgInstrDecoder::CtGeu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_geu);
-					end
-
-					PkgInstrDecoder::CtLeu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_leu);
-					end
-					PkgInstrDecoder::CtGtu:
-					begin
-						handle_call_in_execute_stage(__locals.cond_gtu);
-					end
-
-					PkgInstrDecoder::CtLts:
-					begin
-						handle_call_in_execute_stage(__locals.cond_lts);
-					end
-					PkgInstrDecoder::CtGes:
-					begin
-						handle_call_in_execute_stage(__locals.cond_ges);
-					end
-
-					PkgInstrDecoder::CtLes:
-					begin
-						handle_call_in_execute_stage(__locals.cond_les);
-					end
-					PkgInstrDecoder::CtGts:
-					begin
-						handle_call_in_execute_stage(__locals.cond_gts);
-					end
-
-					default:
-					begin
-						//// Prevent "lr" write back for bad opcodes
-						//__stage_write_back_input_data.do_write_lr <= 0;
-					end
-				endcase
-
-
+				stop_operand_forwarding();
 			end
+
+			//// Group 4:  Calls
+			//4'd4:
+			//begin
+			//	case (__multi_stage_data_execute.instr_condition_type)
+			//		PkgInstrDecoder::CtNe:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_ne);
+			//		end
+
+			//		PkgInstrDecoder::CtEq:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_eq);
+			//		end
+
+			//		PkgInstrDecoder::CtLtu:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_ltu);
+			//		end
+			//		PkgInstrDecoder::CtGeu:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_geu);
+			//		end
+
+			//		PkgInstrDecoder::CtLeu:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_leu);
+			//		end
+			//		PkgInstrDecoder::CtGtu:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_gtu);
+			//		end
+
+			//		PkgInstrDecoder::CtLts:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_lts);
+			//		end
+			//		PkgInstrDecoder::CtGes:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_ges);
+			//		end
+
+			//		PkgInstrDecoder::CtLes:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_les);
+			//		end
+			//		PkgInstrDecoder::CtGts:
+			//		begin
+			//			handle_call_in_execute_stage(__locals.cond_gts);
+			//		end
+
+			//		default:
+			//		begin
+			//			//// Prevent "lr" write back for bad opcodes
+			//			//__stage_write_back_input_data.do_write_lr <= 0;
+			//		end
+			//	endcase
+
+
+			//end
 
 
 			// Group 5:  Loads and stores
@@ -1643,6 +1801,7 @@ module Frost32Cpu(input logic clk,
 				// 
 				// This prevents the need for an extra if statement, and
 				// thus should increase my maximum clock rate a little bit.
+
 				case (__multi_stage_data_execute.instr_ldst_type)
 					PkgInstrDecoder::Ld32:
 					begin
@@ -1680,7 +1839,7 @@ module Frost32Cpu(input logic clk,
 
 					default:
 					begin
-						
+						stop_operand_forwarding();
 					end
 				endcase
 
@@ -1708,6 +1867,7 @@ module Frost32Cpu(input logic clk,
 
 					default:
 					begin
+						stop_operand_forwarding();
 					end
 				endcase
 			end
@@ -1715,6 +1875,7 @@ module Frost32Cpu(input logic clk,
 	//end
 	end
 	end
+
 
 
 
@@ -1804,8 +1965,8 @@ module Frost32Cpu(input logic clk,
 					end
 				endcase
 
-				//$display("group 1 immediate stuff:  %h %h %h",
-				//	__in_alu.a, __in_alu.b, __in_alu.oper);
+				$display("group 1 immediate stuff:  %h %h %h",
+					__in_alu.a, __in_alu.b, __in_alu.oper);
 			end
 
 
