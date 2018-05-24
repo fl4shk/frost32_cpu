@@ -1370,8 +1370,8 @@ module Frost32Cpu(input logic clk,
 					//prep_load_instruction(__locals.pc);
 					prep_load_instruction(__locals.pc + 4);
 					//__locals.pc <= __locals.pc + 4;
-					__multi_stage_data_instr_decode.raw_instruction
-						<= in.data;
+					//__multi_stage_data_instr_decode.raw_instruction
+					//	<= in.data;
 				end
 			end
 
