@@ -267,6 +267,9 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
+		$display("RegisterFile inputs:  %h %h %h", 
+			__in_reg_file.write_en, __in_reg_file.write_sel, 
+			__in_reg_file.write_data);
 		$display("Frost32Cpu stall_counter, stall_state:  %h, %h",
 			__stage_instr_decode_data.stall_counter,
 			__stage_instr_decode_data.stall_state);
@@ -486,6 +489,12 @@ module Frost32Cpu(input logic clk,
 		__locals.cond_eq
 			= (__stage_instr_decode_data.from_stage_execute_rfile_ra_data
 			== __stage_instr_decode_data.from_stage_execute_rfile_rb_data);
+		$display("__locals.cond_eq stuff:  %h %h %h",
+			__locals.cond_eq,
+			__stage_instr_decode_data
+			.from_stage_execute_rfile_ra_data,
+			__stage_instr_decode_data
+			.from_stage_execute_rfile_rb_data);
 	end
 
 
@@ -1009,56 +1018,72 @@ module Frost32Cpu(input logic clk,
 							.instr_condition_type)
 							PkgInstrDecoder::CtNe:
 							begin
+								$display("bne");
 								handle_branch_in_fetch_stage
 									(__locals.cond_ne);
 							end
 
 							PkgInstrDecoder::CtEq:
 							begin
+								$display("beq stuff:  %h %h %h",
+									__locals.cond_eq,
+									__stage_instr_decode_data
+									.from_stage_execute_rfile_ra_data,
+									__stage_instr_decode_data
+									.from_stage_execute_rfile_rb_data);
+
 								handle_branch_in_fetch_stage
 									(__locals.cond_eq);
 							end
 
 							PkgInstrDecoder::CtLtu:
 							begin
+								$display("bltu");
 								handle_branch_in_fetch_stage
 									(__locals.cond_ltu);
 							end
 							PkgInstrDecoder::CtGeu:
 							begin
+								$display("bgeu");
 								handle_branch_in_fetch_stage
 									(__locals.cond_geu);
 							end
 
 							PkgInstrDecoder::CtLeu:
 							begin
+								$display("bleu");
 								handle_branch_in_fetch_stage
 									(__locals.cond_leu);
 							end
 							PkgInstrDecoder::CtGtu:
 							begin
+								$display("bgtu");
 								handle_branch_in_fetch_stage
 									(__locals.cond_gtu);
 							end
 
 							PkgInstrDecoder::CtLts:
 							begin
+								$display("blts");
 								handle_branch_in_fetch_stage
 									(__locals.cond_lts);
 							end
 							PkgInstrDecoder::CtGes:
 							begin
+								$display("bges");
 								handle_branch_in_fetch_stage
 									(__locals.cond_ges);
 							end
 
 							PkgInstrDecoder::CtLes:
 							begin
+								$display("bles");
 								handle_branch_in_fetch_stage
 									(__locals.cond_les);
 							end
 							PkgInstrDecoder::CtGts:
 							begin
+								$display("bgts");
 								handle_branch_in_fetch_stage
 									(__locals.cond_gts);
 							end
@@ -1079,6 +1104,7 @@ module Frost32Cpu(input logic clk,
 								//prep_load_instruction
 								//	(__following_pc);
 								//`endif
+								$display("branch eek!");
 								prep_load_instruction
 									(__following_pc_stage_execute);
 							end
@@ -1239,6 +1265,11 @@ module Frost32Cpu(input logic clk,
 			// Decrement the stall counter
 			__stage_instr_decode_data.stall_counter
 				<= __stage_instr_decode_data.stall_counter - 1;
+
+			if (__stage_instr_decode_data.stall_counter == 1)
+			begin
+				make_bubble();
+			end
 
 			//if (__stage_instr_decode_data.stall_counter == 1)
 			//begin
@@ -1458,11 +1489,13 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Bad0_Iog0:
 					begin
 						// Eek!
+						stop_reg_write();
 					end
 
 					PkgInstrDecoder::Bad1_Iog0:
 					begin
 						// Eek!
+						stop_reg_write();
 					end
 
 					default:

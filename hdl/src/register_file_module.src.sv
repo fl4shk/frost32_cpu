@@ -119,16 +119,16 @@ module RegisterFile(input logic clk,
 			__regfile[in.write_sel] <= in.write_data;
 		end
 
-		////$display("RegisterFile:  inputs:  %h %h %h", 
-		////	in.write_en, in.write_sel, in.write_data);
+		//$display("RegisterFile:  inputs:  %h %h %h", 
+		//	in.write_en, in.write_sel, in.write_data);
 		//$display("RegisterFile (0 to 3):  %h %h %h %h",
 		//	__regfile[0], __regfile[1], __regfile[2], __regfile[3]);
 		//$display("RegisterFile (4 to 7):  %h %h %h %h",
 		//	__regfile[4], __regfile[5], __regfile[6], __regfile[7]);
-		////$display("RegisterFile (8 to 11):  %h %h %h %h",
-		////	__regfile[8], __regfile[9], __regfile[10], __regfile[11]);
-		////$display("RegisterFile (12 to 15):  %h %h %h %h",
-		////	__regfile[12], __regfile[13], __regfile[14], __regfile[15]);
+		//$display("RegisterFile (8 to 11):  %h %h %h %h",
+		//	__regfile[8], __regfile[9], __regfile[10], __regfile[11]);
+		//$display("RegisterFile (12 to 15):  %h %h %h %h",
+		//	__regfile[12], __regfile[13], __regfile[14], __regfile[15]);
 
 		//$display();
 	end

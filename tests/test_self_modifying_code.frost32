@@ -12,14 +12,18 @@ main:
 	; Try some self-modifying code
 	;addsi lr, pc, 8
 	;bra modify_subroutine
-	cpyi lr, modify_subroutine		; 0x14
-	call lr							; 0x18
+	;cpyi lr, modify_subroutine		; 0x14
+	;call lr							; 0x18
+	addsi lr, pc, 8
+	bra modify_subroutine
 
 	;; Branch to subroutine
 	;addsi lr, pc, 8
 	;bra to_modify
-	cpyi lr, to_modify				; 0x1c
-	call lr							; 0x20
+	;cpyi lr, to_modify				; 0x1c
+	;call lr							; 0x20
+	addsi lr, pc, 8
+	bra to_modify
 
 
 done:
@@ -55,8 +59,8 @@ modify_subroutine:
 
 data_for_modify_subroutine:
 {
-	;add u7, u0, u1
-	mul u7, u0, u1
+	add u7, u0, u1
+	;mul u7, u0, u1
 }
 
 .org 0x4000
