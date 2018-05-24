@@ -472,18 +472,39 @@ module Frost32Cpu(input logic clk,
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_write_back_input_data.n_reg_data
 		//	: __out_reg_file.read_data_ra;
-		__stage_execute_input_data.rfile_ra_data
-			= ((__stage_execute_output_data.prev_written_reg_index
-			== __multi_stage_data_execute.instr_ra_index)
-			&& (__stage_execute_output_data.prev_written_reg_index != 0))
-			? __stage_execute_output_data.n_reg_data
-			: __out_reg_file.read_data_ra;
+		//__stage_execute_input_data.rfile_ra_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_ra_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_execute_output_data.n_reg_data
+		//	: __out_reg_file.read_data_ra;
+
+		if (__multi_stage_data_execute.instr_ra_index == 0)
+		begin
+			__stage_execute_input_data.rfile_ra_data = 0;
+		end
+
+		else
+		begin
+			__stage_execute_input_data.rfile_ra_data
+				= (__stage_execute_output_data.prev_written_reg_index
+				== __multi_stage_data_execute.instr_ra_index)
+				? __stage_execute_output_data.n_reg_data
+				: __out_reg_file.read_data_ra;
+		end
 		//__stage_execute_input_data.rfile_ra_data
 		//	= ((__stage_execute_output_data.prev_written_reg_index
 		//	== __multi_stage_data_execute.instr_ra_index)
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_execute_output_data.n_reg_data
 		//	: __stage_register_read_output_data.rfile_ra_data;
+
+		//$display("(Maybe) operand forwarding (_ra):  %h %h %h %h %h",
+		//	__stage_execute_input_data.rfile_ra_data,
+		//	__stage_execute_output_data.prev_written_reg_index,
+		//	__multi_stage_data_execute.instr_ra_index,
+		//	__stage_execute_output_data.n_reg_data,
+		//	__out_reg_file.read_data_ra);
 	end
 	always_comb
 	begin
@@ -493,12 +514,26 @@ module Frost32Cpu(input logic clk,
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_write_back_input_data.n_reg_data
 		//	: __out_reg_file.read_data_rb;
-		__stage_execute_input_data.rfile_rb_data
-			= ((__stage_execute_output_data.prev_written_reg_index
-			== __multi_stage_data_execute.instr_rb_index)
-			&& (__stage_execute_output_data.prev_written_reg_index != 0))
-			? __stage_execute_output_data.n_reg_data
-			: __out_reg_file.read_data_rb;
+		//__stage_execute_input_data.rfile_rb_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_rb_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_execute_output_data.n_reg_data
+		//	: __out_reg_file.read_data_rb;
+
+		if (__multi_stage_data_execute.instr_rb_index == 0)
+		begin
+			__stage_execute_input_data.rfile_rb_data = 0;
+		end
+
+		else
+		begin
+			__stage_execute_input_data.rfile_rb_data
+				= (__stage_execute_output_data.prev_written_reg_index
+				== __multi_stage_data_execute.instr_rb_index)
+				? __stage_execute_output_data.n_reg_data
+				: __out_reg_file.read_data_rb;
+		end
 		//__stage_execute_input_data.rfile_rb_data
 		//	= ((__stage_execute_output_data.prev_written_reg_index
 		//	== __multi_stage_data_execute.instr_rb_index)
@@ -521,18 +556,39 @@ module Frost32Cpu(input logic clk,
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_write_back_input_data.n_reg_data
 		//	: __out_reg_file.read_data_rc;
-		__stage_execute_input_data.rfile_rc_data
-			= ((__stage_execute_output_data.prev_written_reg_index
-			== __multi_stage_data_execute.instr_rc_index)
-			&& (__stage_execute_output_data.prev_written_reg_index != 0))
-			? __stage_execute_output_data.n_reg_data
-			: __out_reg_file.read_data_rc;
+		//__stage_execute_input_data.rfile_rc_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_rc_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_execute_output_data.n_reg_data
+		//	: __out_reg_file.read_data_rc;
+
+		if (__multi_stage_data_execute.instr_rc_index == 0)
+		begin
+			__stage_execute_input_data.rfile_rc_data = 0;
+		end
+
+		else
+		begin
+			__stage_execute_input_data.rfile_rc_data
+				= (__stage_execute_output_data.prev_written_reg_index
+				== __multi_stage_data_execute.instr_rc_index)
+				? __stage_execute_output_data.n_reg_data
+				: __out_reg_file.read_data_rc;
+		end
 		//__stage_execute_input_data.rfile_rc_data
 		//	= ((__stage_execute_output_data.prev_written_reg_index
 		//	== __multi_stage_data_execute.instr_rc_index)
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_execute_output_data.n_reg_data
 		//	: __stage_register_read_output_data.rfile_rc_data;
+
+		//$display("(Maybe) operand forwarding (_rc):  %h %h %h %h %h",
+		//	__stage_execute_input_data.rfile_rc_data,
+		//	__stage_execute_output_data.prev_written_reg_index,
+		//	__multi_stage_data_execute.instr_rc_index,
+		//	__stage_execute_output_data.n_reg_data,
+		//	__out_reg_file.read_data_rc);
 	end
 
 	//always_comb
@@ -1813,47 +1869,54 @@ module Frost32Cpu(input logic clk,
 				// This prevents the need for an extra if statement, and
 				// thus should increase my maximum clock rate a little bit.
 
-				case (__multi_stage_data_execute.instr_ldst_type)
-					PkgInstrDecoder::Ld32:
-					begin
-						$display("Load into r%d:  %h", 
-							__multi_stage_data_execute.instr_ra_index,
-							in.data);
-						prep_ra_write(in.data);
-					end
+				if (__stage_instr_decode_data.stall_counter == 1)
+				begin
+					case (__multi_stage_data_execute.instr_ldst_type)
+						PkgInstrDecoder::Ld32:
+						begin
+							$display("Load into r%d:  %h", 
+								__multi_stage_data_execute.instr_ra_index,
+								in.data);
+							prep_ra_write(in.data);
+						end
 
-					PkgInstrDecoder::Ldh_ThreeRegsLdst:
-					begin
-						// Zero extend
-						prep_ra_write({16'h0000, in.data[15:0]});
-					end
+						PkgInstrDecoder::Ldh_ThreeRegsLdst:
+						begin
+							// Zero extend
+							prep_ra_write({16'h0000, in.data[15:0]});
+						end
 
-					PkgInstrDecoder::Ldsh_ThreeRegsLdst:
-					begin
-						// Sign extend with the funky SystemVerilog feature
-						// for replicating bits.
-						prep_ra_write({{16{in.data[15]}}, in.data[15:0]});
-					end
+						PkgInstrDecoder::Ldsh_ThreeRegsLdst:
+						begin
+							// Sign extend with the funky SystemVerilog feature
+							// for replicating bits.
+							prep_ra_write({{16{in.data[15]}}, in.data[15:0]});
+						end
 
-					PkgInstrDecoder::Ldb_ThreeRegsLdst:
-					begin
-						// Zero extend
-						prep_ra_write({24'h000000, in.data[7:0]});
-					end
+						PkgInstrDecoder::Ldb_ThreeRegsLdst:
+						begin
+							// Zero extend
+							prep_ra_write({24'h000000, in.data[7:0]});
+						end
 
-					PkgInstrDecoder::Ldsb_ThreeRegsLdst:
-					begin
-						// Sign extend with the funky SystemVerilog feature
-						// for replicating bits.
-						prep_ra_write({{24{in.data[7]}}, in.data[7:0]});
-					end
+						PkgInstrDecoder::Ldsb_ThreeRegsLdst:
+						begin
+							// Sign extend with the funky SystemVerilog feature
+							// for replicating bits.
+							prep_ra_write({{24{in.data[7]}}, in.data[7:0]});
+						end
 
-					default:
-					begin
-						stop_operand_forwarding();
-					end
-				endcase
+						default:
+						begin
+							stop_operand_forwarding();
+						end
+					endcase
+				end
 
+				else
+				begin
+					stop_operand_forwarding();
+				end
 			end
 
 			// Group 6:  Interrupts stuff
