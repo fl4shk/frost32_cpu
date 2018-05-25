@@ -6,17 +6,17 @@
 		if (in.write_en && (in.write_sel == in.read_sel_name) \
 			&& (in.write_sel != 0)) \
 		begin \
-			//$display("RegisterFile:  Reading written data:  %h %h %h %h", \
-			//	in.read_sel_name, in.read_sel_name, in.write_data, \
-			//	__regfile[in.read_sel_name]); \
+			$display("RegisterFile:  Reading written data:  %h %h %h %h", \
+				in.read_sel_name, in.read_sel_name, in.write_data, \
+				__regfile[in.read_sel_name]); \
 			out.read_data_name <= in.write_data; \
 		end \
 \
 		else \
 		begin \
-			//$display("RegisterFile:  Reading existing data:  %h %h %h %h", \
-			//	in.read_sel_name, in.read_sel_name, in.write_data, \
-			//	__regfile[in.read_sel_name]); \
+			$display("RegisterFile:  Reading existing data:  %h %h %h %h", \
+				in.read_sel_name, in.read_sel_name, in.write_data, \
+				__regfile[in.read_sel_name]); \
 			out.read_data_name <= __regfile[in.read_sel_name]; \
 		end \
 	end
