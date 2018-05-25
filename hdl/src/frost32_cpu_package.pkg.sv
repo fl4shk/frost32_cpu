@@ -11,11 +11,10 @@ typedef enum logic [`MSB_POS__FROST32_CPU_STATE:0]
 	StReti,
 	StOther,
 	//StMul,
-	//StDiv,
+	StDiv,
 	StCtrlFlowBranch,
 	StCtrlFlowJumpCall,
 	StCpyRaToInterruptsRelatedAddr,
-	//StReti,
 	StMemAccess
 } StallState;
 

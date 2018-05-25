@@ -159,8 +159,10 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 
 	Lsr_ThreeRegs,
 	Asr_ThreeRegs,
-	Bad0_Iog0,
-	Bad1_Iog0
+	//Bad0_Iog0,
+	//Bad1_Iog0
+	Udiv_ThreeRegs,
+	Sdiv_ThreeRegs
 } Iog0Oper;
 
 typedef enum logic [`MSB_POS__INSTR_OPER:0]

@@ -32,6 +32,8 @@ module Frost32Cpu(input logic clk,
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 
+	parameter __STALL_COUNTER_DIVIDE = 38;
+
 
 	// Data output by or used by the Instruction Decode stage
 	struct packed
@@ -50,6 +52,7 @@ module Frost32Cpu(input logic clk,
 			stall_counter;
 
 		logic [`MSB_POS__FROST32_CPU_STATE:0] stall_state;
+		//PkgFrost32Cpu::StallState stall_state;
 
 		logic [`MSB_POS__REG_FILE_DATA:0] 
 			from_stage_execute_rfile_ra_data,
@@ -199,6 +202,32 @@ module Frost32Cpu(input logic clk,
 	PkgInstrDecoder::PortOut_InstrDecoder __out_instr_decoder;
 	InstrDecoder __inst_instr_decoder(.in(__in_instr_decoder), 
 		.out(__out_instr_decoder));
+
+	struct packed
+	{
+		logic enable, unsgn_or_sgn;
+		logic [`MSB_POS__REG_FILE_DATA:0] num, denom;
+	} __in_div;
+
+	struct packed
+	{
+		logic [`MSB_POS__REG_FILE_DATA:0] quot, rem;
+		logic can_accept_cmd, data_ready;
+	} __out_div;
+
+	NonRestoringDivider #(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
+		//.NUM_ITERATIONS_PER_CYCLE(4))
+		//.NUM_ITERATIONS_PER_CYCLE(2))
+		.NUM_ITERATIONS_PER_CYCLE(1))
+		__inst_div(.clk(clk), 
+		.in_enable(__in_div.enable),
+		.in_unsgn_or_sgn(__in_div.unsgn_or_sgn),
+		.in_num(__in_div.num),
+		.in_denom(__in_div.denom),
+		.out_quot(__out_div.quot),
+		.out_rem(__out_div.rem),
+		.out_can_accept_cmd(__out_div.can_accept_cmd),
+		.out_data_ready(__out_div.data_ready));
 
 	//parameter __ARR_SIZE__NUM_REGISTERS = 16;
 	//parameter __LAST_INDEX__NUM_REGISTERS 
@@ -423,6 +452,8 @@ module Frost32Cpu(input logic clk,
 	end
 
 	always_comb
+	//always @ (__multi_stage_data_execute,
+	//	__stage_instr_decode_data.stall_counter)
 	begin
 		// Keep old instruction whenever we're in a stall, which prevents
 		// new instructions from coming into the decode stage.
@@ -432,13 +463,19 @@ module Frost32Cpu(input logic clk,
 			//	= __multi_stage_data_register_read.raw_instruction;
 			__in_instr_decoder
 				= __multi_stage_data_execute.raw_instruction;
+			//$display("Keep old instruction:  %h", __in_instr_decoder);
 		end
 
 		else
 		begin
 			__in_instr_decoder = in.data;
+			//$display("Use new instruction:  %h", __in_instr_decoder);
 		end
 	end
+
+	//assign __in_instr_decoder = in.data;
+
+
 	//always_comb
 	//begin
 	//	__in_instr_decoder
@@ -1435,6 +1472,47 @@ module Frost32Cpu(input logic clk,
 		//end
 	endtask
 
+	task ctrl_divide;
+		input n_unsgn_or_sgn;
+		$display("ctrl_divide:  %h %h\t\t%h %h", __in_div.enable,
+			__in_div.unsgn_or_sgn, 
+			__out_div.can_accept_cmd, __out_div.data_ready);
+
+		if (__stage_instr_decode_data.stall_counter 
+			== __STALL_COUNTER_DIVIDE)
+		begin
+			//if (__out_div.can_accept_cmd)
+			begin
+				__in_div.enable <= 1;
+				//__in_div.unsgn_or_sgn <= 0;
+				__in_div.unsgn_or_sgn <= n_unsgn_or_sgn;
+				__in_div.num <= __stage_execute_input_data.rfile_rb_data;
+				__in_div.denom <= __stage_execute_input_data.rfile_rc_data;
+
+				stop_operand_forwarding_or_write_back();
+			end
+		end
+
+		else
+		begin
+			__in_div.enable <= 0;
+			stop_operand_forwarding_or_write_back();
+		end
+
+		if (__out_div.data_ready)
+		begin
+			if (__in_div.denom != 0)
+			begin
+				prep_ra_wb(__out_div.quot);
+			end
+
+			else
+			begin
+				prep_ra_wb(0);
+			end
+		end
+	endtask
+
 
 
 
@@ -1452,6 +1530,8 @@ module Frost32Cpu(input logic clk,
 		//__stage_instr_decode_data.state = PkgFrost32Cpu::StInit;
 
 		__locals = 0;
+
+		__in_div = 0;
 
 		// Prepare a read from memory
 		out.data = 0;
@@ -1475,6 +1555,9 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
+		//$display("Instruction fetch StDiv stuff:  %h, %h",
+		//	__stage_instr_decode_data.stall_state == PkgFrost32Cpu::StDiv,
+		//	__stage_instr_decode_data.stall_counter);
 		if (in_stall())
 		begin
 			// We just always do this when the stall_counter is 1
@@ -1797,7 +1880,6 @@ module Frost32Cpu(input logic clk,
 					end
 				endcase
 			end
-				
 			PkgFrost32Cpu::StRespondToInterrupt:
 			begin
 				$display("StRespondToInterrupt");
@@ -1809,6 +1891,19 @@ module Frost32Cpu(input logic clk,
 				//		
 				//	end
 				//endcase
+			end
+
+			PkgFrost32Cpu::StDiv:
+			begin
+				$display("StDiv stall_counter:  %h",
+					__stage_instr_decode_data.stall_counter);
+				case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						prep_load_instruction
+							(__following_pc_stage_execute);
+					end
+				endcase
 			end
 			endcase
 		end
@@ -1822,6 +1917,7 @@ module Frost32Cpu(input logic clk,
 				begin
 					//__multi_stage_data_instr_decode.raw_instruction
 					//	<= in.data;
+					$display("!in_stall(), instr causes stall");
 				end
 
 				else // if (!__multi_stage_data_instr_decode
@@ -1859,8 +1955,29 @@ module Frost32Cpu(input logic clk,
 		if (in_stall())
 		begin
 			// Decrement the stall counter
-			__stage_instr_decode_data.stall_counter
-				<= __stage_instr_decode_data.stall_counter - 1;
+
+			//if (__stage_instr_decode_data.stall_state 
+			//	== PkgFrost32Cpu::StDiv)
+			//begin
+			//$display("StDiv: maybe decr stall_counter:  %h\t\t%h %h\t\t%h",
+			//		__in_div.enable,
+			//		__out_div.can_accept_cmd, __out_div.data_ready,
+			//		__stage_instr_decode_data.stall_counter);
+			//	//if (__out_div.can_accept_cmd || __out_div.data_ready)
+			//	if (__out_div.data_ready)
+			//	begin
+			//		__stage_instr_decode_data.stall_counter
+			//			<= __stage_instr_decode_data.stall_counter - 1;
+			//	end
+			//end
+
+			//else
+			begin
+				//$display("Decrementing stall_counter:  %h",
+				//	__stage_instr_decode_data.stall_counter);
+				__stage_instr_decode_data.stall_counter
+					<= __stage_instr_decode_data.stall_counter - 1;
+			end
 
 			// Make a bubble while we wait for memory
 			if (__stage_instr_decode_data.stall_counter == 1)
@@ -1921,9 +2038,27 @@ module Frost32Cpu(input logic clk,
 			begin
 				if (__multi_stage_data_instr_decode.instr_causes_stall)
 				begin
+					// Multiply or divide
 					case (__multi_stage_data_instr_decode.instr_group)
+					0:
+					begin
+						$display("Stalling instruction from group 0");
+						if (__multi_stage_data_instr_decode.instr_opcode
+							== PkgInstrDecoder::Mul_ThreeRegs)
+						begin
+						end
+
+						else // if (udiv or sdiv)
+						begin
+							$display("udiv or sdiv");
+							__stage_instr_decode_data.stall_state
+								<= PkgFrost32Cpu::StDiv;
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_DIVIDE;
+						end
+					end
+
 					// Conditional branch 
-					//if (__multi_stage_data_instr_decode.instr_group == 2)
 					2:
 					begin
 						$display("Stage 1:  conditional branch:  %h",
@@ -1938,10 +2073,6 @@ module Frost32Cpu(input logic clk,
 					end
 
 					// Conditional jump or conditional call
-					//else if ((__multi_stage_data_instr_decode.instr_group 
-					//	== 3)
-					//	|| (__multi_stage_data_instr_decode.instr_group 
-					//	== 4))
 					3:
 					begin
 						__stage_instr_decode_data.stall_state
@@ -1962,13 +2093,7 @@ module Frost32Cpu(input logic clk,
 							<= __STALL_COUNTER_JUMP_OR_CALL;
 					end
 
-					// All loads and stores are in group 5, and they take
-					// three cycles each to complete (find out that there's
-					// a memory access instruction, prep mem access for
-					// instruction itself, prep mem read of next
-					// instruction)
-					//else if (__multi_stage_data_instr_decode.instr_group 
-					//	== 5)
+					// All loads and stores are in group 5
 					5:
 					begin
 						__stage_instr_decode_data.stall_state 
@@ -1980,8 +2105,6 @@ module Frost32Cpu(input logic clk,
 					// "cpy ireta, rA"
 					// "cpy idsta, rA"
 					// "reti"
-					//else if (__multi_stage_data_instr_decode.instr_group 
-					//	== 6)
 					6:
 					begin
 						if (__multi_stage_data_instr_decode.instr_opcode
@@ -2117,20 +2240,31 @@ module Frost32Cpu(input logic clk,
 							+ __locals.mul_partial_result_x0_y0);
 					end
 
-					PkgInstrDecoder::Bad0_Iog0:
+					//PkgInstrDecoder::Bad0_Iog0:
+					//begin
+					//	// Eek!
+					//	//stop_reg_write();
+					//	stop_operand_forwarding_or_write_back();
+					//	//stop_register_read_operand_forwarding();
+					//end
+
+					//PkgInstrDecoder::Bad1_Iog0:
+					//begin
+					//	// Eek!
+					//	//stop_reg_write();
+					//	stop_operand_forwarding_or_write_back();
+					//	//stop_register_read_operand_forwarding();
+					//end
+					PkgInstrDecoder::Udiv_ThreeRegs:
 					begin
-						// Eek!
-						//stop_reg_write();
-						stop_operand_forwarding_or_write_back();
-						//stop_register_read_operand_forwarding();
+						//$display("execute stage:  udiv");
+						ctrl_divide(0);
 					end
 
-					PkgInstrDecoder::Bad1_Iog0:
+					PkgInstrDecoder::Sdiv_ThreeRegs:
 					begin
-						// Eek!
-						//stop_reg_write();
-						stop_operand_forwarding_or_write_back();
-						//stop_register_read_operand_forwarding();
+						//$display("execute stage:  sdiv");
+						ctrl_divide(1);
 					end
 
 					default:

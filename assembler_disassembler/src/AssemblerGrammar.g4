@@ -53,7 +53,8 @@ instrOpGrp0ThreeRegs:
 	| TokInstrNameMul | TokInstrNameAnd 
 	| TokInstrNameOrr | TokInstrNameXor
 	| TokInstrNameNor | TokInstrNameLsl 
-	| TokInstrNameLsr | TokInstrNameAsr)
+	| TokInstrNameLsr | TokInstrNameAsr
+	| TokInstrNameUdiv | TokInstrNameSdiv)
 	TokReg TokComma TokReg TokComma TokReg
 	;
 
@@ -249,7 +250,8 @@ pseudoInstrOpAluOpTwoReg:
 	| TokInstrNameMul | TokInstrNameAnd 
 	| TokInstrNameOrr | TokInstrNameXor
 	| TokInstrNameNor | TokInstrNameLsl 
-	| TokInstrNameLsr | TokInstrNameAsr)
+	| TokInstrNameLsr | TokInstrNameAsr
+	| TokInstrNameUdiv | TokInstrNameSdiv)
 	TokReg TokComma TokReg
 	;
 pseudoInstrOpAluOpOneRegOneImm:
@@ -371,6 +373,8 @@ instrName:
 	| TokInstrNameLsl
 	| TokInstrNameLsr
 	| TokInstrNameAsr
+	| TokInstrNameUdiv
+	| TokInstrNameSdiv
 
 	| TokInstrNameAddi
 	| TokInstrNameSubi
@@ -504,6 +508,8 @@ TokInstrNameNor: 'nor' ;
 TokInstrNameLsl: 'lsl' ;
 TokInstrNameLsr: 'lsr' ;
 TokInstrNameAsr: 'asr' ;
+TokInstrNameUdiv: 'udiv' ;
+TokInstrNameSdiv: 'sdiv' ;
 
 TokInstrNameAddi: 'addi' ;
 TokInstrNameSubi: 'subi' ;

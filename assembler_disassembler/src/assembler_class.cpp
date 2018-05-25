@@ -384,6 +384,8 @@ antlrcpp::Any Assembler::visitInstrOpGrp0ThreeRegs
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsl ())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsr())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameUdiv())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSdiv())
 	else
 	{
 		err(ctx, "visitInstrOpGrp0ThreeRegs():  Eek!");
@@ -1131,6 +1133,8 @@ antlrcpp::Any Assembler::visitPseudoInstrOpAluOpTwoReg
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsl())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsr())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameUdiv())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSdiv())
 	else
 	{
 		err(ctx, "visitPseudoInstrOpAluOpTwoReg():  Eek!");
@@ -1607,6 +1611,8 @@ antlrcpp::Any Assembler::visitInstrName
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsl())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameLsr())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAsr())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameUdiv())
+	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSdiv())
 
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameAddi())
 	else ANY_PUSH_TOK_IF(ctx->TokInstrNameSubi())

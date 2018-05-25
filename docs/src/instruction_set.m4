@@ -77,10 +77,10 @@ NEWLINE()NEWLINE()
 			* OPCODE(0xc)
 		* BOLD(asr) rA, rB, rC
 			* OPCODE(0xd)
-		dnl * BOLD(add) rA, pc, rB
-		dnl 	* OPCODE(0xe)
-		dnl * BOLD(cpyh) rA, rB
-		dnl 	* OPCODE(0xf)
+		* BOLD(udiv) rA, rB, rC
+			* OPCODE(0xe)
+		* BOLD(sdiv) rA, rB, rC
+			* OPCODE(0xf)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0001)
 	* Encoding:  MDCODE(0001 aaaa bbbb oooo  iiii iiii iiii iiii)
@@ -213,6 +213,7 @@ NEWLINE()NEWLINE()
 		* MDCODE(c):  rC
 		* MDCODE(i):  sign-extended 12-bit immediate
 		* MDCODE(o):  opcode
+dnl 	* Note:  Loads and stores that use cached values
 	* Instructions:
 		* BOLD(ldr) rA, [rB, rC]
 			* OPCODE(0b0000)
@@ -246,6 +247,48 @@ NEWLINE()NEWLINE()
 			* OPCODE(0b1110)
 		* BOLD(stbi) rA, [rB, simm12]
 			* OPCODE(0b1111)
+dnl NEWLINE()NEWLINE()
+dnl * OPCODE_GROUP(0b0110)
+dnl 	* Encoding:  MDCODE(0102 aaaa bbbb cccc  iiii iiii iiii oooo)
+dnl 		* MDCODE(a):  rA
+dnl 		* MDCODE(b):  rB
+dnl 		* MDCODE(c):  rC
+dnl 		* MDCODE(i):  sign-extended 12-bit immediate
+dnl 		* MDCODE(o):  opcode
+dnl 	* Note:  Loads and stores that touch memory directly
+dnl 	* Instructions:
+dnl 		* BOLD(ldr_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0000)
+dnl 		* BOLD(ldh_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0001)
+dnl 		* BOLD(ldsh_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0010)
+dnl 		* BOLD(ldb_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0011)
+dnl 		* BOLD(ldsb_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0100)
+dnl 		* BOLD(str_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0101)
+dnl 		* BOLD(sth_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0110)
+dnl 		* BOLD(stb_nc) rA, [rB, rC]
+dnl 			* OPCODE(0b0111)
+dnl 		* BOLD(ldri_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1000)
+dnl 		* BOLD(ldhi_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1001)
+dnl 		* BOLD(ldshi_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1010)
+dnl 		* BOLD(ldbi_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1011)
+dnl 		* BOLD(ldsbi_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1100)
+dnl 		* BOLD(stri_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1101)
+dnl 		* BOLD(sthi_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1110)
+dnl 		* BOLD(stbi_nc) rA, [rB, simm12]
+dnl 			* OPCODE(0b1111)
 NEWLINE()NEWLINE()
 * OPCODE_GROUP(0b0110)
 NEWLINE()NEWLINE()

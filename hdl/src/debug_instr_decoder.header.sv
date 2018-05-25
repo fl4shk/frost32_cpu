@@ -109,13 +109,27 @@
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.rc_index);
 				end
-				PkgInstrDecoder::Bad0_Iog0:
+				//PkgInstrDecoder::Bad0_Iog0:
+				//begin
+				//	$display("bad0_iog0");
+				//end
+				//PkgInstrDecoder::Bad1_Iog0:
+				//begin
+				//	$display("bad1_iog0");
+				//end
+				PkgInstrDecoder::Udiv_ThreeRegs:
 				begin
-					$display("bad0_iog0");
+					$display("udiv r%d, r%d, r%d", 
+						__out_instr_decoder.ra_index,
+						__out_instr_decoder.rb_index, 
+						__out_instr_decoder.rc_index);
 				end
-				PkgInstrDecoder::Bad1_Iog0:
+				PkgInstrDecoder::Sdiv_ThreeRegs:
 				begin
-					$display("bad1_iog0");
+					$display("sdiv r%d, r%d, r%d", 
+						__out_instr_decoder.ra_index,
+						__out_instr_decoder.rb_index, 
+						__out_instr_decoder.rc_index);
 				end
 			endcase
 		end

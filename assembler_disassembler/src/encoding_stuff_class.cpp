@@ -51,6 +51,8 @@ EncodingStuff::EncodingStuff()
 	__iog0_three_regs_map[cstm_strdup("lsl")] = temp++;
 	__iog0_three_regs_map[cstm_strdup("lsr")] = temp++;
 	__iog0_three_regs_map[cstm_strdup("asr")] = temp++;
+	__iog0_three_regs_map[cstm_strdup("udiv")] = temp++;
+	__iog0_three_regs_map[cstm_strdup("sdiv")] = temp++;
 
 	// Instruction Opcode Group 1
 	temp = 0;

@@ -29,6 +29,9 @@ main:
 	; For calling the subroutine
 	cpyi u5, change_var
 
+	; Store a sub here
+	str u3, [u2, zero]
+
 
 
 
@@ -47,13 +50,13 @@ interrupt_handler:
 	stri lr, [sp, 4]
 
 
-	; Switch to an addi
+	; Switch to an add
 	str u4, [u2, zero]
 
 	; Change the variable
 	call u5
 
-	; Switch back to a subi
+	; Switch back to a sub
 	str u3, [u2, zero]
 
 
@@ -78,7 +81,7 @@ change_var:
 	subi sp, __change_var_sp_addsub_amount
 	stri u8, [sp, __change_var_preserve_u8_amount]
 	stri u9, [sp, __change_var_preserve_u9_amount]
-	stri lr, [sp, __change_var_preserve_lr_amount]
+	;stri lr, [sp, __change_var_preserve_lr_amount]
 
 	cpyi u8, var
 	ldr u9, [u8, zero]
@@ -88,7 +91,7 @@ code_to_modify:
 	;subi u1, 20
 	;add zero, zero, zero
 	;subi u1, u9, 20
-	subi u7, u9, 20
+	;subi u7, u9, 20
 
 	;cpy u7, u1
 
@@ -96,7 +99,7 @@ code_to_modify:
 
 	ldri u8, [sp, __change_var_preserve_u8_amount]
 	ldri u9, [sp, __change_var_preserve_u9_amount]
-	ldri lr, [sp, __change_var_preserve_lr_amount]
+	;ldri lr, [sp, __change_var_preserve_lr_amount]
 	addi sp, __change_var_sp_addsub_amount
 
 	jmp lr
@@ -139,7 +142,8 @@ __change_var_preserve_u9_amount:
 .org 12
 __change_var_preserve_lr_amount:
 
-.org 12
+;.org 12
+.org 8
 __change_var_sp_addsub_amount:
 
 

@@ -67,7 +67,11 @@
 			* Opcode:  0xc
 		* <b>asr</b> rA, rB, rC
 			* Opcode:  0xd
-								<br><br>
+		* <b>udiv</b> rA, rB, rC
+			* Opcode:  0xe
+		* <b>sdiv</b> rA, rB, rC
+			* Opcode:  0xf
+<br><br>
 * Opcode Group:  0b0001
 	* Encoding:  `0001 aaaa bbbb oooo  iiii iiii iiii iiii`
 		* `a`:  rA

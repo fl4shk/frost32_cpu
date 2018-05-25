@@ -18,7 +18,7 @@ syn match frost32_comment	"//.*"
 syn match frost32_comment	";.*"
 
 " Instructions
-syn keyword frost32_iog0_instr	add sub sltu slts sgtu sgts mul and orr xor nor lsl lsr asr
+syn keyword frost32_iog0_instr	add sub sltu slts sgtu sgts mul and orr xor nor lsl lsr asr udiv sdiv
 syn keyword frost32_iog1_instr	addi subi sltui sltsi sgtui sgtsi muli andi orri xori nori lsli lsri asri addsi cpyhi
 syn keyword frost32_iog2_instr	bne beq bltu bgeu bleu bgtu blts bges bles bgts
 syn keyword frost32_iog3_instr	jne jeq jltu jgeu jleu jgtu jlts jges jles jgts
