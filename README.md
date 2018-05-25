@@ -1,65 +1,35 @@
 # Frost32 CPU
 My first attempt at a pipelined CPU, being implemented in SystemVerilog.
 
-There's either a three-stage or a four-stage pipeline:  
-* Three-stage pipeline:
-    Instruction Decode -> Execute -> Write Back
-* Four-stage pipeline:
-    Instruction Decode -> Register Read -> Execute -> Write Back
+There's a four-stage pipeline:
+    Instruction fetch -> Instruction decode -> Execute -> Write Back
 
-The four-stage pipeline is intended for use at higher clock rates, and the
-three-stage pipeline is intended for use at lower clock rates and less FPGA
-usage.
-
-With the three-stage pipeline, for simplicity, multiplications are single
-cycle because many FPGAs contain embedded multipliers.
-
-Also, in that case, then for a little extra speed, the 32-bit by 32-bit ->
-32-bit multiplications are constructed out of three 16-bit multiplications
-and some additions.
-
-
-The four-stage pipeline does not yet have multiplications implemented, but
-once they are, they will have to take more than one cycle (probably will be
-implemented using 8-bit multipliers, again because many FPGAs contain
-built-in multipliers)
-
-The four-stage pipeline allows somewhat higher clock rates than the
-three-stage pipeline.
-
-The original design was just the three stage pipeline.
+The processor reaches nearly 100 MHz in the worst case temperature in my
+Cyclone IV FPGA.
 
 ## Instructions that take more than one cycle
-* When there's a three-stage pipeline:
-    * Relative branches take two cycles, and jumps and calls take three
-    cycles.  (Note:  `reti` takes only one cycle).
-    * Conditions are resolved in the instruction decode stage, and the
-    instruction decode stage **also** handles all memory access.
-    * Loads and stores take three cycles each.
+    * Relative branches take three cycles, and jumps and calls take four
+    cycles.  
+    * `reti` takes two cycles.
+    * `cpy`ing a register
+    * Loads and stores take four cycles each.
 
-* When there's a four-stage pipeline:
-    * Relative branches still take two cycles, but jumps and calls take
-    four cycles.  (Note:  `reti` still takes only one cycle).
-    * Loads and stores take four cycles, but this may be changed to three
-    cycles later (there will need to be changes to the stalling logic to
-    allow for this).
-    * Multiplications (once implemented) will take more than one cycle, but
-    it is not yet known exactly how many cycles they will take.
 
 ## Interrupts
 Right now there is only one interrupt pin.
 
 The destination to jump to upon an interrupt happening has a special
-register.
+register:  `idsta`.  The destination to return to upon an interrupt
+happening also has a special register:  `ireta`.
 
 When the processor starts, interrupts are disabled.
 
 A second set of registers is being considered to be added for faster
 interrupt processing.
 
-Interrupts do not get serviced unless the processor is not stalling, which
-is perhaps a downside, but as of right now it won't 
-
+Responding to an interrupt takes two cycles due to synchronous reads from
+memory, and also the processor will not respond to interrupts when it is in
+a stalling instruction.
 
 ## Cycle timings
 Conditional branches were intended to take very few cycles without the need
