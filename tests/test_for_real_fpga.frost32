@@ -89,7 +89,7 @@ change_var:
 code_to_modify:
 	;dec u1
 	;subi u1, 20
-	;add zero, zero, zero
+	add zero, zero, zero
 	;subi u1, u9, 20
 	;subi u7, u9, 20
 
@@ -110,7 +110,8 @@ data_for_subtract_from_u1:
 {
 	;dec u1
 	;subi u1, 20
-	subi u7, u9, 20
+	;subi u7, u9, 20
+	udiv u7, zero, zero
 	;dec u1
 }
 

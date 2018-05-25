@@ -32,7 +32,12 @@ module Frost32Cpu(input logic clk,
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 
-	parameter __STALL_COUNTER_DIVIDE = 38;
+
+	`ifdef OPT_FAST_DIV
+	parameter __STALL_COUNTER_DIVIDE_32 = 21;
+	`else
+	parameter __STALL_COUNTER_DIVIDE_32 = 38;
+	`endif		// OPT_FAST_DIV
 
 
 	// Data output by or used by the Instruction Decode stage
@@ -217,8 +222,11 @@ module Frost32Cpu(input logic clk,
 
 	NonRestoringDivider #(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
 		//.NUM_ITERATIONS_PER_CYCLE(4))
-		//.NUM_ITERATIONS_PER_CYCLE(2))
+		`ifdef OPT_FAST_DIV
+		.NUM_ITERATIONS_PER_CYCLE(2))
+		`else
 		.NUM_ITERATIONS_PER_CYCLE(1))
+		`endif		// OPT_FAST_DIV
 		__inst_div(.clk(clk), 
 		.in_enable(__in_div.enable),
 		.in_unsgn_or_sgn(__in_div.unsgn_or_sgn),
@@ -1474,12 +1482,12 @@ module Frost32Cpu(input logic clk,
 
 	task ctrl_divide;
 		input n_unsgn_or_sgn;
-		$display("ctrl_divide:  %h %h\t\t%h %h", __in_div.enable,
-			__in_div.unsgn_or_sgn, 
-			__out_div.can_accept_cmd, __out_div.data_ready);
+		//$display("ctrl_divide:  %h %h\t\t%h %h", __in_div.enable,
+		//	__in_div.unsgn_or_sgn, 
+		//	__out_div.can_accept_cmd, __out_div.data_ready);
 
 		if (__stage_instr_decode_data.stall_counter 
-			== __STALL_COUNTER_DIVIDE)
+			== __STALL_COUNTER_DIVIDE_32)
 		begin
 			//if (__out_div.can_accept_cmd)
 			begin
@@ -2054,7 +2062,7 @@ module Frost32Cpu(input logic clk,
 							__stage_instr_decode_data.stall_state
 								<= PkgFrost32Cpu::StDiv;
 							__stage_instr_decode_data.stall_counter
-								<= __STALL_COUNTER_DIVIDE;
+								<= __STALL_COUNTER_DIVIDE_32;
 						end
 					end
 
