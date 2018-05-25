@@ -24,9 +24,13 @@ module Frost32Cpu(input logic clk,
 	// Memory access is unfortunately going to have to be a little slower.
 	parameter __STALL_COUNTER_MEM_ACCESS = 3;
 	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
+	//parameter __STALL_COUNTER_RETI = 2;
+	parameter __STALL_COUNTER_RETI = 3;
 	//parameter __STALL_COUNTER_MULTIPLY = 4;
 	parameter __STALL_COUNTER_EEK = 3;
 	parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 1;
+	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
+	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 
 
 	// Data output by or used by the Instruction Decode stage
@@ -367,14 +371,18 @@ module Frost32Cpu(input logic clk,
 		$display("Frost32Cpu stall_counter, stall_state:  %h, %h",
 			__stage_instr_decode_data.stall_counter,
 			__stage_instr_decode_data.stall_state);
-		$display("Frost32Cpu pc's:  %h %h %h", 
+		$display("Frost32Cpu pc's:  %h %h %h %h", 
 			__locals.pc,
 			__multi_stage_data_instr_decode.pc_val, 
 			//__multi_stage_data_register_read.pc_val,
-			__multi_stage_data_execute.pc_val);
+			__multi_stage_data_execute.pc_val,
+			__multi_stage_data_write_back.pc_val);
 		`ifdef OPT_DEBUG_REGISTER_FILE
-		$display("Frost32Cpu special purpose regs:  %h %h %h",
-			__locals.ireta, __locals.idsta, __locals.ie);
+		//$display("Frost32Cpu special purpose regs:  %h %h %h",
+		//	__locals.ireta, __locals.idsta, __locals.ie);
+		$display("Frost32Cpu ireta:  %h", __locals.ireta);
+		$display("Frost32Cpu idsta:  %h", __locals.idsta);
+		$display("Frost32Cpu ie:  %h", __locals.ie);
 
 		$display("Frost32Cpu regs (0 to 3):  %h %h %h %h",
 			__out_debug_reg_zero, __out_debug_reg_u0, 
@@ -467,15 +475,15 @@ module Frost32Cpu(input logic clk,
 		//	__in_reg_file.read_sel_rc);
 	end
 
-	always_comb
-	begin
-		$display("__in_reg_file.read_sel_ra:  %h",
-			__in_reg_file.read_sel_ra);
-		$display("__in_reg_file.read_sel_rb:  %h",
-			__in_reg_file.read_sel_rb);
-		$display("__in_reg_file.read_sel_rc:  %h",
-			__in_reg_file.read_sel_rc);
-	end
+	//always_comb
+	//begin
+	//	$display("__in_reg_file.read_sel_ra:  %h",
+	//		__in_reg_file.read_sel_ra);
+	//	$display("__in_reg_file.read_sel_rb:  %h",
+	//		__in_reg_file.read_sel_rb);
+	//	$display("__in_reg_file.read_sel_rc:  %h",
+	//		__in_reg_file.read_sel_rc);
+	//end
 
 	always_comb __multi_stage_data_instr_decode.raw_instruction 
 		= __in_instr_decoder;
@@ -535,10 +543,10 @@ module Frost32Cpu(input logic clk,
 		//	? __stage_write_back_input_data.n_reg_data
 		//	: __out_reg_file.read_data_ra;
 
-		$display("_ra:  %h %h %h",
-			__multi_stage_data_execute.instr_ra_index,
-			__stage_execute_output_data.prev_written_reg_index,
-			__stage_write_back_output_data.prev_written_reg_index);
+		//$display("_ra:  %h %h %h",
+		//	__multi_stage_data_execute.instr_ra_index,
+		//	__stage_execute_output_data.prev_written_reg_index,
+		//	__stage_write_back_output_data.prev_written_reg_index);
 
 		// No forwarding
 		if (__multi_stage_data_execute.instr_ra_index == 0)
@@ -552,8 +560,8 @@ module Frost32Cpu(input logic clk,
 		begin
 			__stage_execute_input_data.rfile_ra_data
 				= __stage_execute_output_data.n_reg_data;
-			$display("_ra:  forwarding from execute stage:  %h",
-				__stage_execute_input_data.rfile_ra_data);
+			//$display("_ra:  forwarding from execute stage:  %h",
+			//	__stage_execute_input_data.rfile_ra_data);
 		end
 
 		// Forward from two instructions ago
@@ -562,8 +570,8 @@ module Frost32Cpu(input logic clk,
 		begin
 			__stage_execute_input_data.rfile_ra_data
 				= __stage_write_back_output_data.n_reg_data;
-			$display("_ra:  forwarding from write back stage:  %h",
-				__stage_execute_input_data.rfile_ra_data);
+			//$display("_ra:  forwarding from write back stage:  %h",
+			//	__stage_execute_input_data.rfile_ra_data);
 		end
 
 		//// Forward from three instructions ago
@@ -581,8 +589,8 @@ module Frost32Cpu(input logic clk,
 		begin
 			__stage_execute_input_data.rfile_ra_data
 				= __out_reg_file.read_data_ra;
-			$display("_ra:  no forwarding:  Read from register file:  %h",
-				__stage_execute_input_data.rfile_ra_data);
+			//$display("_ra:  no forwarding:  Read from register file:  %h",
+			//	__stage_execute_input_data.rfile_ra_data);
 		end
 
 
@@ -1783,6 +1791,8 @@ module Frost32Cpu(input logic clk,
 				case (__stage_instr_decode_data.stall_counter)
 					2:
 					begin
+						//__locals.ie <= 1;
+						//$display("StReti:  %h", __locals.ireta);
 						prep_load_instruction(__locals.ireta);
 					end
 				endcase
@@ -1790,8 +1800,15 @@ module Frost32Cpu(input logic clk,
 				
 			PkgFrost32Cpu::StRespondToInterrupt:
 			begin
+				$display("StRespondToInterrupt");
 				//prep_load_instruction(__locals.pc + 4);
 				//prep_load_following_instruction();
+				//case (__stage_instr_decode_data.stall_counter)
+				//	2:
+				//	begin
+				//		
+				//	end
+				//endcase
 			end
 			endcase
 		end
@@ -1821,6 +1838,8 @@ module Frost32Cpu(input logic clk,
 			else // if (__locals.should_service_interrupt_if_not_in_stall)
 			begin
 				//__locals.pc <= __locals.idsta;
+				$display("fetch stage:  Servicing interrupt:  %h",
+					__locals.idsta);
 				prep_load_instruction(__locals.idsta);
 			end
 		end
@@ -1843,6 +1862,7 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data.stall_counter
 				<= __stage_instr_decode_data.stall_counter - 1;
 
+			// Make a bubble while we wait for memory
 			if (__stage_instr_decode_data.stall_counter == 1)
 			begin
 				make_bubble();
@@ -1970,16 +1990,21 @@ module Frost32Cpu(input logic clk,
 							__stage_instr_decode_data.stall_state
 								<= PkgFrost32Cpu
 								::StCpyRaToInterruptsRelatedAddr;
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_INTERRUPTS_STUFF;
 						end
 
 						else
 						begin
 							__stage_instr_decode_data.stall_state
 								<= PkgFrost32Cpu::StReti;
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_RETI;
+							__locals.ie <= 1;
+							$display("StReti:  %h %h", __locals.ireta,
+								__out_debug_reg_sp);
 						end
 
-						__stage_instr_decode_data.stall_counter
-							<= __STALL_COUNTER_INTERRUPTS_STUFF;
 					end
 
 					// Eek!
@@ -2022,12 +2047,13 @@ module Frost32Cpu(input logic clk,
 				//// Send a bubble through 
 				//make_bubble();
 				$display("Interrupt happened:  %h %h %h",
+					//__locals.pc,
+					__multi_stage_data_instr_decode.pc_val,
 					__locals.idsta,
-					__locals.pc,
 					__locals.ireta);
 
-				//__locals.ireta <= __multi_stage_data_instr_decode.pc_val;
-				__locals.ireta <= __locals.pc;
+				__locals.ireta <= __multi_stage_data_instr_decode.pc_val;
+				//__locals.ireta <= __locals.pc;
 				__locals.ie <= 0;
 
 				__stage_instr_decode_data.stall_state
@@ -2067,12 +2093,13 @@ module Frost32Cpu(input logic clk,
 	//end
 
 
-	// Stage 3:  Execute
+	// Stage 2:  Execute
 
 	always @ (posedge clk)
 	begin
 	if (!in.wait_for_mem)
 	begin
+		__multi_stage_data_write_back <= __multi_stage_data_execute;
 		case (__multi_stage_data_execute.instr_group)
 			// Group 0:  Three register ALU operations
 			4'd0:
@@ -2373,7 +2400,7 @@ module Frost32Cpu(input logic clk,
 	end
 
 
-	// Stage 4:  Write Back
+	// Stage 3:  Write Back
 	always @ (posedge clk)
 	begin
 	if (!in.wait_for_mem)

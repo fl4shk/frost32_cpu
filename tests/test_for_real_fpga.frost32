@@ -39,8 +39,14 @@ main:
 
 
 
+;.org 0x1000
 interrupt_handler:
 {
+	; Preserve lr because it gets overwritten by "call u5"
+	subi sp, 4
+	stri lr, [sp, 4]
+
+
 	; Switch to an addi
 	str u4, [u2, zero]
 
@@ -50,10 +56,15 @@ interrupt_handler:
 	; Switch back to a subi
 	str u3, [u2, zero]
 
+
+	ldri lr, [sp, 4]
+	addi sp, 4
+
 	reti
 }
 
 
+;.org 0x1800
 wait_for_interrupt:
 {
 	; The high 8 bits of u7 are shown on the LEDs of my FPGA 
@@ -61,26 +72,33 @@ wait_for_interrupt:
 	bra wait_for_interrupt
 }
 
-change_var:
-	subi sp, 8
-	stri u0, [sp, 4]
-	stri u1, [sp, 8]
 
-	cpyi u0, var
-	ldr u1, [u0, zero]
+;.org 0x2000
+change_var:
+	subi sp, __change_var_sp_addsub_amount
+	stri u8, [sp, __change_var_preserve_u8_amount]
+	stri u9, [sp, __change_var_preserve_u9_amount]
+	stri lr, [sp, __change_var_preserve_lr_amount]
+
+	cpyi u8, var
+	ldr u9, [u8, zero]
 
 code_to_modify:
 	;dec u1
-	subi u1, 20
+	;subi u1, 20
 	;add zero, zero, zero
+	;subi u1, u9, 20
+	subi u7, u9, 20
 
-	cpy u7, u1
+	;cpy u7, u1
 
-	str u1, [u0, zero]
+	str u7, [u0, zero]
 
-	ldri u0, [sp, 4]
-	ldri u1, [sp, 8]
-	addi sp, 8
+	ldri u8, [sp, __change_var_preserve_u8_amount]
+	ldri u9, [sp, __change_var_preserve_u9_amount]
+	ldri lr, [sp, __change_var_preserve_lr_amount]
+	addi sp, __change_var_sp_addsub_amount
+
 	jmp lr
 
 
@@ -88,13 +106,15 @@ code_to_modify:
 data_for_subtract_from_u1:
 {
 	;dec u1
-	subi u1, 20
+	;subi u1, 20
+	subi u7, u9, 20
 	;dec u1
 }
 
 data_for_add_to_u1:
 {
-	addi u1, 20
+	;addi u1, 20
+	addi u7, u9, 20
 	;muli u1, u5, 20
 }
 
@@ -107,3 +127,19 @@ var:
 ;.org 0x9000
 ;; Write to this address to trigger the interrupt
 ;trigger_an_interrupt:
+
+
+; Silly way of getting named constants from my not-very-fancy assembler
+.org 4
+__change_var_preserve_u8_amount:
+
+.org 8
+__change_var_preserve_u9_amount:
+
+.org 12
+__change_var_preserve_lr_amount:
+
+.org 12
+__change_var_sp_addsub_amount:
+
+

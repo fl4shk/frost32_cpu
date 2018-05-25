@@ -4,36 +4,52 @@ My first attempt at a pipelined CPU, being implemented in SystemVerilog.
 There's a four-stage pipeline:
     Instruction fetch -> Instruction decode -> Execute -> Write Back
 
-The processor reaches nearly 100 MHz in the worst case temperature in my
-Cyclone IV FPGA.
+The processor reaches about 93 MHz in the worst case temperature (85
+degrees C) in my Cyclone IV FPGA, but can potentially run more quickly than
+that if the FPGA isn't at a high temperature. 
 
-## Instructions that take more than one cycle
+
+## Stuff that takes more than one cycle
     * Relative branches take three cycles, and jumps and calls take four
-    cycles.  
+    cycles.  All relative branches, jumps, and calls are conditional.
     * `reti` takes two cycles.
-    * `cpy`ing a register
-    * Loads and stores take four cycles each.
+    * `cpy`ing a register into `ireta` or `idsta`
+    * Loads and stores take four cycles each (this is something I wish to
+    possibly change since loads and stores don't change the program
+    counter.   Hence, I can at least *fetch* the instruction following the
+    load or store, at the risk of making self modifying code take slightly
+    more effort to figure out whether or not it will work).
 
 
 ## Interrupts
 Right now there is only one interrupt pin.
 
 The destination to jump to upon an interrupt happening has a special
-register:  `idsta`.  The destination to return to upon an interrupt
-happening also has a special register:  `ireta`.
+register:  `idsta`.
+The destination to return to upon an interrupt happening also has a special
+register:  `ireta`.
+These registers may be copied to/from registers in the register file such
+that nested interrupts may be performed, or if interrupts aren't needed,
+`idsta` and `ireta` can be used for extra storage space.
 
-When the processor starts, interrupts are disabled.
+When the processor starts, interrupts are disabled, and can be enabled with
+the `ei` instruction.  Interrupts can be disabled with the `di`
+instruction.  
+Also, upon responding to an interrupt, interrupts become
+disabled.
+`reti`, the return from interrupt instruction, enables
+interrupts again.
 
 A second set of registers is being considered to be added for faster
-interrupt processing.
+interrupt processing.t
 
 Responding to an interrupt takes two cycles due to synchronous reads from
-memory, and also the processor will not respond to interrupts when it is in
-a stalling instruction.
+memory, and also the processor will not respond to interrupts when it is
+in the middle of performing an instruction that stalls.
 
 ## Cycle timings
 Conditional branches were intended to take very few cycles without the need
-for a branch predictor of any sort, and they only take two cycles.
+for a branch predictor of any sort, and they only take three cycles.
 
 In general, an individual instruction is intended to take a static number
 of cycles to facilitate easy clock cycle counting algorithms like the
@@ -48,22 +64,6 @@ but dynamic branch prediction is most likely not happening.
 
 
 ## Plans
-It's planned for an optional five-stage pipeline to be usable in the
-future, with an instruction fetch stage to be added.  This extra stage
-would add one cycle of latency to conditional branches, jumps, and calls,
-but perhaps not to loads and stores.
-
-It's planned for loads and stores at the very least to be able to take only
-three cycles even with the four-stage pipeline, which requires a change to
-the stalling logic.  It's planned for loads and stores to also take only three
-cycles in the five stage pipeline as well.
-
-The stalling logic currently prevents even just fetching new instructions,
-which could be changed for loads and stores in particular.
-
-Integer division is being considered as I've written some modules for that
-previously that I could easily include, though it would be preferable to 
-
 Due to the bus architecture, if a cache is added (quite likely), it will
 probably be shared instruction and data cache.  It would likely have
 asynchronous reads because doing so would permit not needing an instruction
@@ -71,6 +71,7 @@ fetch stage in the pipeline.
 If a cache is added, special load and store instructions that bypass cache
 (access memory directly) will be added so that memory mapped input and
 output could still be used.
+
 
 ## Buses
 This is essentially a pure von Neumann architecture, with the caveat that
