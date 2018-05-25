@@ -32,12 +32,19 @@ module Frost32Cpu(input logic clk,
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 
+	parameter __STALL_COUNTER_MULTIPLY_32 = 4;
 
+
+	`ifdef OPT_VERY_FAST_DIV
+	parameter __STALL_COUNTER_DIVIDE_32 = 13;
+	`else
 	`ifdef OPT_FAST_DIV
+	// Hardcoded, though not the cleanest.
 	parameter __STALL_COUNTER_DIVIDE_32 = 21;
 	`else
-	parameter __STALL_COUNTER_DIVIDE_32 = 38;
+	parameter __STALL_COUNTER_DIVIDE_32 = 37;
 	`endif		// OPT_FAST_DIV
+	`endif		// OPT_VERY_FAST_DIV
 
 
 	// Data output by or used by the Instruction Decode stage
@@ -220,13 +227,16 @@ module Frost32Cpu(input logic clk,
 		logic can_accept_cmd, data_ready;
 	} __out_div;
 
-	NonRestoringDivider #(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
-		//.NUM_ITERATIONS_PER_CYCLE(4))
+	LongDivider #(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
+		`ifdef OPT_VERY_FAST_DIV
+		.NUM_ITERATIONS_PER_CYCLE(4))
+		`else
 		`ifdef OPT_FAST_DIV
 		.NUM_ITERATIONS_PER_CYCLE(2))
 		`else
 		.NUM_ITERATIONS_PER_CYCLE(1))
 		`endif		// OPT_FAST_DIV
+		`endif		// OPT_VERY_FAST_DIV
 		__inst_div(.clk(clk), 
 		.in_enable(__in_div.enable),
 		.in_unsgn_or_sgn(__in_div.unsgn_or_sgn),
@@ -1504,21 +1514,31 @@ module Frost32Cpu(input logic clk,
 		else
 		begin
 			__in_div.enable <= 0;
-			stop_operand_forwarding_or_write_back();
-		end
 
-		if (__out_div.data_ready)
-		begin
-			if (__in_div.denom != 0)
+			if (__stage_instr_decode_data.stall_counter 
+				!= __STALL_COUNTER_DIVIDE_32 - 1)
 			begin
-				prep_ra_wb(__out_div.quot);
-			end
+				//stop_operand_forwarding_or_write_back();
+				if (__out_div.data_ready)
+				begin
+					if (__in_div.denom != 0)
+					begin
+						prep_ra_wb(__out_div.quot);
+					end
 
+					else
+					begin
+						prep_ra_wb(0);
+					end
+				end
+			end
 			else
 			begin
-				prep_ra_wb(0);
+				stop_operand_forwarding_or_write_back();
 			end
 		end
+
+
 	endtask
 
 
@@ -1925,7 +1945,7 @@ module Frost32Cpu(input logic clk,
 				begin
 					//__multi_stage_data_instr_decode.raw_instruction
 					//	<= in.data;
-					$display("!in_stall(), instr causes stall");
+					//$display("!in_stall(), instr causes stall");
 				end
 
 				else // if (!__multi_stage_data_instr_decode
@@ -2050,15 +2070,19 @@ module Frost32Cpu(input logic clk,
 					case (__multi_stage_data_instr_decode.instr_group)
 					0:
 					begin
-						$display("Stalling instruction from group 0");
+						//$display("Stalling instruction from group 0");
 						if (__multi_stage_data_instr_decode.instr_opcode
 							== PkgInstrDecoder::Mul_ThreeRegs)
 						begin
+							//__stage_instr_decode_data.stall_state
+							//	<= PkgFrost32Cpu::StMul;
+							//__stage_instr_decode_data.stall_counter
+							//	<= __STALL_COUNTER_MULTIPLY_32;
 						end
 
 						else // if (udiv or sdiv)
 						begin
-							$display("udiv or sdiv");
+							//$display("udiv or sdiv");
 							__stage_instr_decode_data.stall_state
 								<= PkgFrost32Cpu::StDiv;
 							__stage_instr_decode_data.stall_counter
@@ -2241,11 +2265,23 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Mul_ThreeRegs:
 					begin
 						//use_ra_for_stage_execute_generated_data
-						prep_ra_wb
-							({(__locals.mul_partial_result_x1_y0
-							+ __locals.mul_partial_result_x0_y1),
-							16'h0000}
-							+ __locals.mul_partial_result_x0_y0);
+						//prep_ra_wb
+						//	({(__locals.mul_partial_result_x1_y0
+						//	+ __locals.mul_partial_result_x0_y1),
+						//	16'h0000}
+						//	+ __locals.mul_partial_result_x0_y0);
+						if (__stage_instr_decode_data.stall_counter == 1)
+						begin
+							prep_ra_wb(({(__locals.mul_partial_result_x1_y0
+								+ __locals.mul_partial_result_x0_y1),
+								16'h0000})
+								+ __locals.mul_partial_result_x0_y0);
+						end
+
+						else
+						begin
+							stop_operand_forwarding_or_write_back();
+						end
 					end
 
 					//PkgInstrDecoder::Bad0_Iog0:
@@ -2326,10 +2362,19 @@ module Frost32Cpu(input logic clk,
 
 					PkgInstrDecoder::Muli_TwoRegsOneImm:
 					begin
-						prep_ra_wb(({(__locals.mul_partial_result_x1_y0
-							+ __locals.mul_partial_result_x0_y1),
-							16'h0000})
-							+ __locals.mul_partial_result_x0_y0);
+						if (__stage_instr_decode_data.stall_counter == 1)
+						begin
+							prep_ra_wb(({(__locals.mul_partial_result_x1_y0
+								+ __locals.mul_partial_result_x0_y1),
+								16'h0000})
+								+ __locals.mul_partial_result_x0_y0);
+						end
+
+						else
+						begin
+							stop_operand_forwarding_or_write_back();
+						end
+
 						//use_ra_for_stage_execute_generated_data
 						//	(({(__locals.mul_partial_result_x1_y0
 						//	+ __locals.mul_partial_result_x0_y1),

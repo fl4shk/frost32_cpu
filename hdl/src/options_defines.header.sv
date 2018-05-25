@@ -11,7 +11,8 @@
 // Temporary
 `define OPT_DEBUG_REGISTER_FILE
 
-`define OPT_FAST_DIV
+//`define OPT_FAST_DIV
+`define OPT_VERY_FAST_DIV
 
 //`define OPT_HAVE_STAGE_REGISTER_READ
 
