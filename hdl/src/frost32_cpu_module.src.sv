@@ -655,19 +655,28 @@ module Frost32Cpu(input logic clk,
 
 	always_comb
 	begin
-		$display("_ra register read forwarding stuff:  %h %h:  ",
-			__multi_stage_data_register_read.instr_ra_index,
-			__stage_execute_generated_data.to_write_reg_index,
-			__multi_stage_data_register_read.instr_ra_index
-			== __stage_execute_generated_data.to_write_reg_index);
 		if ((__multi_stage_data_register_read.instr_ra_index
 			== __stage_execute_generated_data.to_write_reg_index)
 			&& __stage_execute_generated_data.to_write_reg_index)
 		begin
+			// Forwarding from execute stage
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_ra_data
 				= __stage_execute_generated_data.n_reg_data;
-			$display("register read operand forwarding:  forward _ra:  %h",
+			$display("register read operand forwarding:  forward _ra (exec):  %h",
+				__stage_instr_decode_data
+				.from_stage_register_read_rfile_ra_data);
+		end
+
+		else if ((__multi_stage_data_register_read.instr_ra_index
+			== __stage_execute_output_data.prev_written_reg_index)
+			&& __stage_execute_output_data.prev_written_reg_index)
+		begin
+			// Forwarding from write-back sta
+			__stage_instr_decode_data
+				.from_stage_register_read_rfile_ra_data
+				= __stage_execute_output_data.n_reg_data;
+			$display("register read operand forwarding:  forward _ra (write-back):  %h",
 				__stage_instr_decode_data
 				.from_stage_register_read_rfile_ra_data);
 		end
@@ -686,19 +695,28 @@ module Frost32Cpu(input logic clk,
 
 	always_comb
 	begin
-		$display("_rb register read forwarding stuff:  %h %h:  ",
-			__multi_stage_data_register_read.instr_rb_index,
-			__stage_execute_generated_data.to_write_reg_index,
-			__multi_stage_data_register_read.instr_rb_index
-			== __stage_execute_generated_data.to_write_reg_index);
 		if ((__multi_stage_data_register_read.instr_rb_index
 			== __stage_execute_generated_data.to_write_reg_index)
 			&& __stage_execute_generated_data.to_write_reg_index)
 		begin
+			// Forwarding from execute stage
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_rb_data
 				= __stage_execute_generated_data.n_reg_data;
-			$display("register read operand forwarding:  forward _rb:  %h",
+			$display("register read operand forwarding:  forward _rb (exec):  %h",
+				__stage_instr_decode_data
+				.from_stage_register_read_rfile_rb_data);
+		end
+
+		else if ((__multi_stage_data_register_read.instr_rb_index
+			== __stage_execute_output_data.prev_written_reg_index)
+			&& __stage_execute_output_data.prev_written_reg_index)
+		begin
+			// Forwarding from write-back sta
+			__stage_instr_decode_data
+				.from_stage_register_read_rfile_rb_data
+				= __stage_execute_output_data.n_reg_data;
+			$display("register read operand forwarding:  forward _rb (write-back):  %h",
 				__stage_instr_decode_data
 				.from_stage_register_read_rfile_rb_data);
 		end
