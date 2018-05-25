@@ -22,7 +22,7 @@ module Frost32Cpu(input logic clk,
 	parameter __STALL_COUNTER_JUMP_OR_CALL = 3;
 
 	// Memory access is unfortunately going to have to be a little slower.
-	parameter __STALL_COUNTER_MEM_ACCESS = 4;
+	parameter __STALL_COUNTER_MEM_ACCESS = 3;
 	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
 	//parameter __STALL_COUNTER_MULTIPLY = 4;
 	parameter __STALL_COUNTER_EEK = 3;
@@ -111,7 +111,9 @@ module Frost32Cpu(input logic clk,
 		//logic do_write_lr;
 
 		//logic perform_operand_forwarding;
-	} __stage_execute_output_data;
+	}
+		__stage_execute_output_data,
+		__stage_write_back_output_data;
 
 
 	struct packed
@@ -349,13 +351,19 @@ module Frost32Cpu(input logic clk,
 	`endif
 
 	`ifdef OPT_DEBUG
-	always @ (posedge clk)
-	begin
-	if (!in.wait_for_mem)
+	always_comb
 	begin
 		$display("RegisterFile inputs:  %h %h %h", 
 			__in_reg_file.write_en, __in_reg_file.write_sel, 
 			__in_reg_file.write_data);
+	end
+	always @ (posedge clk)
+	begin
+	if (!in.wait_for_mem)
+	begin
+		//$display("RegisterFile inputs:  %h %h %h", 
+		//	__in_reg_file.write_en, __in_reg_file.write_sel, 
+		//	__in_reg_file.write_data);
 		$display("Frost32Cpu stall_counter, stall_state:  %h, %h",
 			__stage_instr_decode_data.stall_counter,
 			__stage_instr_decode_data.stall_state);
@@ -433,6 +441,8 @@ module Frost32Cpu(input logic clk,
 	begin
 		__in_reg_file.read_sel_ra 
 			= __multi_stage_data_instr_decode.instr_ra_index;
+		//__in_reg_file.read_sel_ra 
+		//	= __multi_stage_data_execute.instr_ra_index;
 		//$display("__in_reg_file.read_sel_ra:  %h",
 		//	__in_reg_file.read_sel_ra);
 	end
@@ -441,6 +451,8 @@ module Frost32Cpu(input logic clk,
 	begin
 		__in_reg_file.read_sel_rb 
 			= __multi_stage_data_instr_decode.instr_rb_index;
+		//__in_reg_file.read_sel_rb 
+		//	= __multi_stage_data_execute.instr_rb_index;
 		//$display("__in_reg_file.read_sel_rb:  %h",
 		//	__in_reg_file.read_sel_rb);
 	end
@@ -449,6 +461,8 @@ module Frost32Cpu(input logic clk,
 	begin
 		__in_reg_file.read_sel_rc 
 			= __multi_stage_data_instr_decode.instr_rc_index;
+		//__in_reg_file.read_sel_rb 
+		//	= __multi_stage_data_execute.instr_rc_index;
 		//$display("__in_reg_file.read_sel_rc:  %h",
 		//	__in_reg_file.read_sel_rc);
 	end
@@ -520,6 +534,37 @@ module Frost32Cpu(input logic clk,
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_write_back_input_data.n_reg_data
 		//	: __out_reg_file.read_data_ra;
+
+		// No forwarding
+		if (__multi_stage_data_execute.instr_ra_index == 0)
+		begin
+			__stage_execute_input_data.rfile_ra_data = 0;
+		end
+
+		// Forward from last instruction 
+		else if (__multi_stage_data_execute.instr_ra_index
+			== __stage_execute_output_data.prev_written_reg_index)
+		begin
+			__stage_execute_input_data.rfile_ra_data
+				= __stage_execute_output_data.n_reg_data;
+		end
+
+		// Forward from two instructions ago
+		else if (__multi_stage_data_execute.instr_ra_index
+			== __stage_write_back_output_data.prev_written_reg_index)
+		begin
+			__stage_execute_input_data.rfile_ra_data
+				= __stage_write_back_output_data.n_reg_data;
+		end
+
+		// No forwarding
+		else
+		begin
+			__stage_execute_input_data.rfile_ra_data
+				= __out_reg_file.read_data_ra;
+		end
+
+
 		//__stage_execute_input_data.rfile_ra_data
 		//	= ((__stage_execute_output_data.prev_written_reg_index
 		//	== __multi_stage_data_execute.instr_ra_index)
@@ -527,25 +572,12 @@ module Frost32Cpu(input logic clk,
 		//	? __stage_execute_output_data.n_reg_data
 		//	: __out_reg_file.read_data_ra;
 
-		if (__multi_stage_data_execute.instr_ra_index == 0)
-		begin
-			__stage_execute_input_data.rfile_ra_data = 0;
-		end
-
-		else
-		begin
-			__stage_execute_input_data.rfile_ra_data
-				= (__stage_execute_output_data.prev_written_reg_index
-				== __multi_stage_data_execute.instr_ra_index)
-				? __stage_execute_output_data.n_reg_data
-				: __out_reg_file.read_data_ra;
-		end
-		$display("(Maybe) operand forwarding (_ra):  %h %h %h %h %h",
-			__stage_execute_input_data.rfile_ra_data,
-			__stage_execute_output_data.prev_written_reg_index,
-			__multi_stage_data_execute.instr_ra_index,
-			__stage_execute_output_data.n_reg_data,
-			__out_reg_file.read_data_ra);
+		//$display("(Maybe) operand forwarding (_ra):  %h %h %h %h %h",
+		//	__stage_execute_input_data.rfile_ra_data,
+		//	__stage_execute_output_data.prev_written_reg_index,
+		//	__multi_stage_data_execute.instr_ra_index,
+		//	__stage_execute_output_data.n_reg_data,
+		//	__out_reg_file.read_data_ra);
 	end
 	always_comb
 	begin
@@ -555,32 +587,50 @@ module Frost32Cpu(input logic clk,
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_write_back_input_data.n_reg_data
 		//	: __out_reg_file.read_data_rb;
-		//__stage_execute_input_data.rfile_rb_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_rb_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_execute_output_data.n_reg_data
-		//	: __out_reg_file.read_data_rb;
 
+		// No forwarding
 		if (__multi_stage_data_execute.instr_rb_index == 0)
 		begin
 			__stage_execute_input_data.rfile_rb_data = 0;
 		end
 
+		// Forward from last instruction 
+		else if (__multi_stage_data_execute.instr_rb_index
+			== __stage_execute_output_data.prev_written_reg_index)
+		begin
+			__stage_execute_input_data.rfile_rb_data
+				= __stage_execute_output_data.n_reg_data;
+		end
+
+		// Forward from two instructions ago
+		else if (__multi_stage_data_execute.instr_rb_index
+			== __stage_write_back_output_data.prev_written_reg_index)
+		begin
+			__stage_execute_input_data.rfile_rb_data
+				= __stage_write_back_output_data.n_reg_data;
+		end
+
+		// No forwarding
 		else
 		begin
 			__stage_execute_input_data.rfile_rb_data
-				= (__stage_execute_output_data.prev_written_reg_index
-				== __multi_stage_data_execute.instr_rb_index)
-				? __stage_execute_output_data.n_reg_data
-				: __out_reg_file.read_data_rb;
+				= __out_reg_file.read_data_rb;
 		end
-		$display("(Maybe) operand forwarding (_rb):  %h %h %h %h %h",
-			__stage_execute_input_data.rfile_rb_data,
-			__stage_execute_output_data.prev_written_reg_index,
-			__multi_stage_data_execute.instr_rb_index,
-			__stage_execute_output_data.n_reg_data,
-			__out_reg_file.read_data_rb);
+
+
+		//__stage_execute_input_data.rfile_rb_data
+		//	= ((__stage_execute_output_data.prev_written_reg_index
+		//	== __multi_stage_data_execute.instr_rb_index)
+		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
+		//	? __stage_execute_output_data.n_reg_data
+		//	: __out_reg_file.read_data_rb;
+
+		//$display("(Maybe) operand forwarding (_rb):  %h %h %h %h %h",
+		//	__stage_execute_input_data.rfile_rb_data,
+		//	__stage_execute_output_data.prev_written_reg_index,
+		//	__multi_stage_data_execute.instr_rb_index,
+		//	__stage_execute_output_data.n_reg_data,
+		//	__out_reg_file.read_data_rb);
 	end
 	always_comb
 	begin
@@ -590,32 +640,43 @@ module Frost32Cpu(input logic clk,
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_write_back_input_data.n_reg_data
 		//	: __out_reg_file.read_data_rc;
+
+		// No forwarding
+		if (__multi_stage_data_execute.instr_rc_index == 0)
+		begin
+			__stage_execute_input_data.rfile_rc_data = 0;
+		end
+
+		// Forward from last instruction 
+		else if (__multi_stage_data_execute.instr_rc_index
+			== __stage_execute_output_data.prev_written_reg_index)
+		begin
+			__stage_execute_input_data.rfile_rc_data
+				= __stage_execute_output_data.n_reg_data;
+		end
+
+		// Forward from two instructions ago
+		else if (__multi_stage_data_execute.instr_rc_index
+			== __stage_write_back_output_data.prev_written_reg_index)
+		begin
+			__stage_execute_input_data.rfile_rc_data
+				= __stage_write_back_output_data.n_reg_data;
+		end
+
+		// No forwarding
+		else
+		begin
+			__stage_execute_input_data.rfile_rc_data
+				= __out_reg_file.read_data_rc;
+		end
+
+
 		//__stage_execute_input_data.rfile_rc_data
 		//	= ((__stage_execute_output_data.prev_written_reg_index
 		//	== __multi_stage_data_execute.instr_rc_index)
 		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
 		//	? __stage_execute_output_data.n_reg_data
 		//	: __out_reg_file.read_data_rc;
-
-		if (__multi_stage_data_execute.instr_rc_index == 0)
-		begin
-			__stage_execute_input_data.rfile_rc_data = 0;
-		end
-
-		else
-		begin
-			__stage_execute_input_data.rfile_rc_data
-				= (__stage_execute_output_data.prev_written_reg_index
-				== __multi_stage_data_execute.instr_rc_index)
-				? __stage_execute_output_data.n_reg_data
-				: __out_reg_file.read_data_rc;
-		end
-		//__stage_execute_input_data.rfile_rc_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_rc_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_execute_output_data.n_reg_data
-		//	: __stage_register_read_output_data.rfile_rc_data;
 
 		//$display("(Maybe) operand forwarding (_rc):  %h %h %h %h %h",
 		//	__stage_execute_input_data.rfile_rc_data,
@@ -1152,6 +1213,8 @@ module Frost32Cpu(input logic clk,
 
 		//__stage_execute_output_data.prev_written_reg_index <= n_sel;
 		//__stage_execute_output_data.n_reg_data <= n_data;
+		__stage_write_back_output_data.prev_written_reg_index <= n_sel;
+		__stage_write_back_output_data.n_reg_data <= n_data;
 	endtask
 
 	//task prep_ra_write;
@@ -1221,14 +1284,18 @@ module Frost32Cpu(input logic clk,
 		__stage_execute_input_data.idsta_data 
 			<= __locals.idsta;
 
-		////// Use all three register file read ports.
-		////// Do this whenever we're not in a stall.
+		//// Use all three register file read ports.
+		//// Do this whenever we're not in a stall.
 		//__in_reg_file.read_sel_ra 
 		//	<= __multi_stage_data_instr_decode.instr_ra_index;
 		//__in_reg_file.read_sel_rb 
 		//	<= __multi_stage_data_instr_decode.instr_rb_index;
 		//__in_reg_file.read_sel_rc 
 		//	<= __multi_stage_data_instr_decode.instr_rc_index;
+		$display("Sending instruction through:  %h %h %h",
+			__multi_stage_data_instr_decode.instr_ra_index,
+			__multi_stage_data_instr_decode.instr_rb_index,
+			__multi_stage_data_instr_decode.instr_rc_index);
 	endtask
 
 	task make_bubble;
