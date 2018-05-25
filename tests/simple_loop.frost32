@@ -12,6 +12,12 @@ main:
 
 	;cpyi u3, loop
 
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+	;add zero, zero, zero
+
 
 loop:
 	;inc u1				; 0xc
@@ -23,7 +29,7 @@ loop:
 	;add zero, zero, zero
 	;add zero, zero, zero
 
-	;bges u0, u2, loop	; 0x14
+	bges u0, u2, loop	; 0x14
 
 	;slts temp, u0, u2
 	;beq temp, zero, loop

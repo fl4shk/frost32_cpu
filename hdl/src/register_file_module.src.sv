@@ -20,6 +20,20 @@
 //			out.read_data_name <= __regfile[in.read_sel_name]; \
 //		end \
 //	end
+`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
+	always_ff @ (posedge clk) \
+	begin \
+		if (in.write_en && (in.write_sel == in.read_sel_name) \
+			&& (in.write_sel != 0)) \
+		begin \
+			out.read_data_name <= in.write_data; \
+		end \
+\
+		else \
+		begin \
+			out.read_data_name <= __regfile[in.read_sel_name]; \
+		end \
+	end
 //`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
 //	always_ff @ (posedge clk) \
 //	begin \
@@ -32,39 +46,26 @@
 //	begin \
 //		out.read_data_name <= __regfile[in.read_sel_name]; \
 //	end
-`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
-	always_ff @ (posedge clk) \
-	begin \
-		if (in.read_sel_name == 0) \
-		begin \
-			out.read_data_name <= 0; \
-		end \
-\
-		else \
-		begin \
-			out.read_data_name <= __regfile[in.read_sel_name]; \
-		end \
-	end
-//`define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \
-//	always_comb \
+//`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
+//	always_ff @ (posedge clk) \
 //	begin \
-//		if (in.write_en && (in.write_sel == in.read_sel_name) \
-//			&& (in.write_sel != 0)) \
+//		if (in.read_sel_name == 0) \
 //		begin \
-//			out.read_data_name = in.write_data; \
+//			out.read_data_name <= 0; \
 //		end \
 //\
 //		else \
 //		begin \
-//			out.read_data_name = __regfile[in.read_sel_name]; \
+//			out.read_data_name <= __regfile[in.read_sel_name]; \
 //		end \
 //	end
 `define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \
 	always_comb \
 	begin \
-		if (in.read_sel_name == 0) \
+		if (in.write_en && (in.write_sel == in.read_sel_name) \
+			&& (in.write_sel != 0)) \
 		begin \
-			out.read_data_name = 0; \
+			out.read_data_name = in.write_data; \
 		end \
 \
 		else \
@@ -72,6 +73,19 @@
 			out.read_data_name = __regfile[in.read_sel_name]; \
 		end \
 	end
+//`define GEN_REG_FILE_READ_ASYNCHRONOUS(read_sel_name, read_data_name) \
+//	always_comb \
+//	begin \
+//		if (in.read_sel_name == 0) \
+//		begin \
+//			out.read_data_name = 0; \
+//		end \
+//\
+//		else \
+//		begin \
+//			out.read_data_name = __regfile[in.read_sel_name]; \
+//		end \
+//	end
 
 //`ifdef OPT_HAVE_STAGE_REGISTER_READ
 `define GEN_REG_FILE_READ(read_sel_name, read_data_name) \

@@ -655,6 +655,11 @@ module Frost32Cpu(input logic clk,
 
 	always_comb
 	begin
+		$display("_ra register read forwarding stuff:  %h %h:  ",
+			__multi_stage_data_register_read.instr_ra_index,
+			__stage_execute_generated_data.to_write_reg_index,
+			__multi_stage_data_register_read.instr_ra_index
+			== __stage_execute_generated_data.to_write_reg_index);
 		if ((__multi_stage_data_register_read.instr_ra_index
 			== __stage_execute_generated_data.to_write_reg_index)
 			&& __stage_execute_generated_data.to_write_reg_index)
@@ -673,7 +678,7 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_ra_data
 				= __out_reg_file.read_data_cond_ra;
-			$display("register read operand forwarding:  don't forward _ra:  %h",
+	$display("register read operand forwarding:  don't forward _ra:  %h",
 				__stage_instr_decode_data
 				.from_stage_register_read_rfile_ra_data);
 		end
@@ -681,6 +686,11 @@ module Frost32Cpu(input logic clk,
 
 	always_comb
 	begin
+		$display("_rb register read forwarding stuff:  %h %h:  ",
+			__multi_stage_data_register_read.instr_rb_index,
+			__stage_execute_generated_data.to_write_reg_index,
+			__multi_stage_data_register_read.instr_rb_index
+			== __stage_execute_generated_data.to_write_reg_index);
 		if ((__multi_stage_data_register_read.instr_rb_index
 			== __stage_execute_generated_data.to_write_reg_index)
 			&& __stage_execute_generated_data.to_write_reg_index)
@@ -699,7 +709,7 @@ module Frost32Cpu(input logic clk,
 			__stage_instr_decode_data
 				.from_stage_register_read_rfile_rb_data
 				= __out_reg_file.read_data_cond_rb;
-			$display("register read operand forwarding:  don't forward _rb:  %h",
+	$display("register read operand forwarding:  don't forward _rb:  %h",
 				__stage_instr_decode_data
 				.from_stage_register_read_rfile_rb_data);
 		end
