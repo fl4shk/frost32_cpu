@@ -31,7 +31,9 @@ module Frost32Cpu(input logic clk,
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 
-	parameter __STALL_COUNTER_MULTIPLY_32 = 2;
+	//parameter __STALL_COUNTER_MULTIPLY_32 = 3;
+	//parameter __STALL_COUNTER_MULTIPLY_32 = 4;
+	parameter __STALL_COUNTER_MULTIPLY_32 = 5;
 
 
 	// Only useful at low clock rates!
@@ -104,12 +106,12 @@ module Frost32Cpu(input logic clk,
 
 	// Combinational logic based operand forwarding to the register read
 	// stage, and also for preparing write back
-	struct packed
-	{
-		logic [`MSB_POS__REG_FILE_SEL:0] to_write_reg_index;
+	//struct packed
+	//{
+	//	logic [`MSB_POS__REG_FILE_SEL:0] to_write_reg_index;
 
-		logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
-	} __stage_execute_generated_data;
+	//	logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
+	//} __stage_execute_generated_data;
 
 	//assign __stage_register_read_output_data.prev_written_reg_index
 	//	= __stage_execute_generated_data.prev_written_reg_index;
@@ -156,12 +158,14 @@ module Frost32Cpu(input logic clk,
 		//// Split up 32-bit by 32-bit multiplications into three 16-bit by
 		//// 16-bit multiplications (which I believe can be synthesized into
 		//// combinational logic) and some adds.
-		//logic [`MSB_POS__ALU_INOUT:0] mul_partial_result_x0_y0,
-		//	mul_partial_result_x1_y0, mul_partial_result_x0_y1;
+		//logic [`MSB_POS__MUL32_INOUT:0] 
+		//	mul32_result,
+		//	mul32_partial_result_x0_y0, mul32_partial_result_x1_y0, 
+		//	mul32_partial_result_x0_y1;
 
-		logic [`MSB_POS__MUL_OUT:0] 
-			mul_partial_result_0, mul_partial_result_1, 
-			mul_partial_result_2, mul_partial_result_3;
+		//logic [`MSB_POS__MUL32_INOUT:0] 
+		//	mul32_partial_result_0, mul32_partial_result_1, 
+		//	mul32_partial_result_2, mul32_partial_result_3;
 
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] 
 			branch_adder_a, branch_adder_b;
@@ -219,19 +223,27 @@ module Frost32Cpu(input logic clk,
 	InstrDecoder __inst_instr_decoder(.in(__in_instr_decoder), 
 		.out(__out_instr_decoder));
 
+
+	PkgAlu::PortIn_Multiplier32 __in_mul_32;
+	PkgAlu::PortOut_Multiplier32 __out_mul_32;
+	Multiplier32 __inst_mul_32(.clk(clk), .in(__in_mul_32),
+		.out(__out_mul_32));
+
 	struct packed
 	{
 		logic enable, unsgn_or_sgn;
 		logic [`MSB_POS__REG_FILE_DATA:0] num, denom;
-	} __in_div;
+	} __in_div_32;
 
 	struct packed
 	{
-		logic [`MSB_POS__REG_FILE_DATA:0] quot, rem;
 		logic can_accept_cmd, data_ready;
-	} __out_div;
+		logic [`MSB_POS__REG_FILE_DATA:0] quot, rem;
+	} __out_div_32;
 
-	LongDivider #(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
+	// NonRestoringDivider was determined to allow higher clock rates than
+	// LongDivider, so we use that module here.
+	NonRestoringDivider #(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
 		`ifdef OPT_VERY_FAST_DIV
 		.NUM_ITERATIONS_PER_CYCLE(4))
 		`else
@@ -242,14 +254,14 @@ module Frost32Cpu(input logic clk,
 		`endif		// OPT_FAST_DIV
 		`endif		// OPT_VERY_FAST_DIV
 		__inst_div(.clk(clk), 
-		.in_enable(__in_div.enable),
-		.in_unsgn_or_sgn(__in_div.unsgn_or_sgn),
-		.in_num(__in_div.num),
-		.in_denom(__in_div.denom),
-		.out_quot(__out_div.quot),
-		.out_rem(__out_div.rem),
-		.out_can_accept_cmd(__out_div.can_accept_cmd),
-		.out_data_ready(__out_div.data_ready));
+		.in_enable(__in_div_32.enable),
+		.in_unsgn_or_sgn(__in_div_32.unsgn_or_sgn),
+		.in_num(__in_div_32.num),
+		.in_denom(__in_div_32.denom),
+		.out_quot(__out_div_32.quot),
+		.out_rem(__out_div_32.rem),
+		.out_can_accept_cmd(__out_div_32.can_accept_cmd),
+		.out_data_ready(__out_div_32.data_ready));
 
 	//parameter __ARR_SIZE__NUM_REGISTERS = 16;
 	//parameter __LAST_INDEX__NUM_REGISTERS 
@@ -1494,22 +1506,102 @@ module Frost32Cpu(input logic clk,
 		//end
 	endtask
 
-	task ctrl_divide;
+	//task perform_multiply_32;
+	//	input [`MSB_POS__MUL32_INOUT:0] x, y;
+
+	//	//case (__stage_instr_decode_data.stall_counter)
+	//	//case (__stage_instr_decode_data.stall_counter[2:0])
+	//	case (__stage_instr_decode_data.stall_counter[1:0])
+	//		//0:
+	//		//begin
+	//		//	
+	//		//end
+
+	//		//if (__stage_instr_decode_data.stall_counter == 1)
+	//		1:
+	//		begin
+	//			prep_ra_wb(__locals.mul32_result);
+	//		end
+
+	//		//else if (__stage_instr_decode_data.stall_counter == 2)
+	//		2:
+	//		begin
+	//			__locals.mul32_result
+	//				<= {(__locals.mul32_partial_result_x1_y0
+	//				+ __locals.mul32_partial_result_x0_y1), 16'h0000}
+	//				+ __locals.mul32_partial_result_x0_y0;
+	//		end
+
+	//		////else if (__stage_instr_decode_data.stall_counter == 3)
+	//		//3:
+	//		//begin
+	//		//	__locals.mul32_result
+	//		//		<= ;
+	//		//end
+
+	//		//else
+	//		//4:
+	//		default:
+	//		begin
+	//			__locals.mul32_partial_result_x0_y0 <= x[15:0] * y[15:0];
+	//			__locals.mul32_partial_result_x0_y1 <= x[15:0] * y[31:16];
+	//			__locals.mul32_partial_result_x1_y0 <= x[31:16] * y[15:0];
+	//		end
+
+	//		//default:
+	//		//begin
+	//		//end
+	//	endcase
+
+	//endtask
+
+	task ctrl_multiply_32;
+		input [`MSB_POS__MUL32_INOUT:0] x, y;
+
+		if (__stage_instr_decode_data.stall_counter
+			== __STALL_COUNTER_MULTIPLY_32)
+		begin
+			__in_mul_32.enable <= 1;
+			__in_mul_32.x <= x;
+			__in_mul_32.y <= y;
+			stop_operand_forwarding_or_write_back();
+		end
+
+		else
+		begin
+			__in_mul_32.enable <= 0;
+			//$display("ctrl_multiply_32:  stuff 1");
+
+			if (__stage_instr_decode_data.stall_counter
+				!= __STALL_COUNTER_MULTIPLY_32 - 1)
+			begin
+			//$display("ctrl_multiply_32:  stuff 2");
+				if (__out_mul_32.data_ready)
+				begin
+			//$display("ctrl_multiply_32:  stuff 3");
+					prep_ra_wb(__out_mul_32.prod);
+				end
+			end
+		end
+		
+	endtask
+
+	task ctrl_divide_32;
 		input n_unsgn_or_sgn;
-		//$display("ctrl_divide:  %h %h\t\t%h %h", __in_div.enable,
-		//	__in_div.unsgn_or_sgn, 
-		//	__out_div.can_accept_cmd, __out_div.data_ready);
+		//$display("ctrl_divide_32:  %h %h\t\t%h %h", __in_div_32.enable,
+		//	__in_div_32.unsgn_or_sgn, 
+		//	__out_div_32.can_accept_cmd, __out_div_32.data_ready);
 
 		if (__stage_instr_decode_data.stall_counter 
 			== __STALL_COUNTER_DIVIDE_32)
 		begin
-			//if (__out_div.can_accept_cmd)
+			//if (__out_div_32.can_accept_cmd)
 			begin
-				__in_div.enable <= 1;
-				//__in_div.unsgn_or_sgn <= 0;
-				__in_div.unsgn_or_sgn <= n_unsgn_or_sgn;
-				__in_div.num <= __stage_execute_input_data.rfile_rb_data;
-				__in_div.denom <= __stage_execute_input_data.rfile_rc_data;
+				__in_div_32.enable <= 1;
+				//__in_div_32.unsgn_or_sgn <= 0;
+				__in_div_32.unsgn_or_sgn <= n_unsgn_or_sgn;
+				__in_div_32.num <= __stage_execute_input_data.rfile_rb_data;
+				__in_div_32.denom <= __stage_execute_input_data.rfile_rc_data;
 
 				stop_operand_forwarding_or_write_back();
 			end
@@ -1517,17 +1609,17 @@ module Frost32Cpu(input logic clk,
 
 		else
 		begin
-			__in_div.enable <= 0;
+			__in_div_32.enable <= 0;
 
 			if (__stage_instr_decode_data.stall_counter 
 				!= __STALL_COUNTER_DIVIDE_32 - 1)
 			begin
 				//stop_operand_forwarding_or_write_back();
-				if (__out_div.data_ready)
+				if (__out_div_32.data_ready)
 				begin
-					if (__in_div.denom != 0)
+					if (__in_div_32.denom != 0)
 					begin
-						prep_ra_wb(__out_div.quot);
+						prep_ra_wb(__out_div_32.quot);
 					end
 
 					else
@@ -1563,7 +1655,7 @@ module Frost32Cpu(input logic clk,
 
 		__locals = 0;
 
-		__in_div = 0;
+		__in_div_32 = 0;
 
 		// Prepare a read from memory
 		out.data = 0;
@@ -2149,8 +2241,8 @@ module Frost32Cpu(input logic clk,
 							__stage_instr_decode_data.stall_counter
 								<= __STALL_COUNTER_RETI;
 							__locals.ie <= 1;
-							$display("StReti:  %h %h", __locals.ireta,
-								__out_debug_reg_sp);
+							//$display("StReti:  %h %h", __locals.ireta,
+							//	__out_debug_reg_sp);
 						end
 
 					end
@@ -2257,45 +2349,9 @@ module Frost32Cpu(input logic clk,
 				case (__multi_stage_data_execute.instr_opcode)
 					PkgInstrDecoder::Mul_ThreeRegs:
 					begin
-						//use_ra_for_stage_execute_generated_data
-						//prep_ra_wb
-						//	({(__locals.mul_partial_result_x1_y0
-						//	+ __locals.mul_partial_result_x0_y1),
-						//	16'h0000}
-						//	+ __locals.mul_partial_result_x0_y0);
-						if (__stage_instr_decode_data.stall_counter == 1)
-						begin
-							//prep_ra_wb(({(__locals.mul_partial_result_x1_y0
-							//	+ __locals.mul_partial_result_x0_y1),
-							//	16'h0000})
-							//	+ __locals.mul_partial_result_x0_y0);
-							prep_ra_wb(__locals.mul_partial_result_0
-								+ (__locals.mul_partial_result_1 << 8)
-								+ (__locals.mul_partial_result_2 << 16)
-								+ (__locals.mul_partial_result_3 << 24));
-						end
-
-						else // if (__stage_instr_decode_data.stall_counter 
-							// == 2)
-						begin
-							__locals.mul_partial_result_0
-								<= __stage_execute_input_data.rfile_rb_data
-								* __stage_execute_input_data
-								.rfile_rc_data[7:0];
-							__locals.mul_partial_result_1
-								<= __stage_execute_input_data.rfile_rb_data
-								* __stage_execute_input_data
-								.rfile_rc_data[15:8];
-							__locals.mul_partial_result_2
-								<= __stage_execute_input_data.rfile_rb_data
-								* __stage_execute_input_data
-								.rfile_rc_data[23:16];
-							__locals.mul_partial_result_3
-								<= __stage_execute_input_data.rfile_rb_data
-								* __stage_execute_input_data
-								.rfile_rc_data[31:24];
-							stop_operand_forwarding_or_write_back();
-						end
+						ctrl_multiply_32
+							(__stage_execute_input_data.rfile_rb_data,
+							__stage_execute_input_data.rfile_rc_data);
 					end
 
 					//PkgInstrDecoder::Bad0_Iog0:
@@ -2316,13 +2372,13 @@ module Frost32Cpu(input logic clk,
 					PkgInstrDecoder::Udiv_ThreeRegs:
 					begin
 						//$display("execute stage:  udiv");
-						ctrl_divide(0);
+						ctrl_divide_32(0);
 					end
 
 					PkgInstrDecoder::Sdiv_ThreeRegs:
 					begin
 						//$display("execute stage:  sdiv");
-						ctrl_divide(1);
+						ctrl_divide_32(1);
 					end
 
 					default:
@@ -2376,39 +2432,9 @@ module Frost32Cpu(input logic clk,
 
 					PkgInstrDecoder::Muli_TwoRegsOneImm:
 					begin
-						if (__stage_instr_decode_data.stall_counter == 1)
-						begin
-							//prep_ra_wb(({(__locals.mul_partial_result_x1_y0
-							//	+ __locals.mul_partial_result_x0_y1),
-							//	16'h0000})
-							//	+ __locals.mul_partial_result_x0_y0);
-							prep_ra_wb(__locals.mul_partial_result_0
-								+ (__locals.mul_partial_result_1 << 8)
-								+ (__locals.mul_partial_result_2 << 16)
-								+ (__locals.mul_partial_result_3 << 24));
-						end
-
-						else // if (__stage_instr_decode_data.stall_counter 
-							// == 2)
-						begin
-							__locals.mul_partial_result_0
-								<= __stage_execute_input_data.rfile_rb_data
-								* __multi_stage_data_execute
-								.instr_imm_val[7:0];
-							__locals.mul_partial_result_1
-								<= __stage_execute_input_data.rfile_rb_data
-								* __multi_stage_data_execute
-								.instr_imm_val[15:8];
-							__locals.mul_partial_result_2 <= 0;
-							__locals.mul_partial_result_3 <= 0;
-							stop_operand_forwarding_or_write_back();
-						end
-
-						//use_ra_for_stage_execute_generated_data
-						//	(({(__locals.mul_partial_result_x1_y0
-						//	+ __locals.mul_partial_result_x0_y1),
-						//	16'h0000})
-						//	+ __locals.mul_partial_result_x0_y0);
+						ctrl_multiply_32
+							(__stage_execute_input_data.rfile_rb_data,
+							__multi_stage_data_execute.instr_imm_val);
 					end
 
 					// All group 1 instructions opcodes are for valid
@@ -2644,28 +2670,9 @@ module Frost32Cpu(input logic clk,
 				// instruction for group 0 instructions.
 				__in_alu.b = __stage_execute_input_data.rfile_rc_data;
 				__in_alu.oper = __multi_stage_data_execute.instr_opcode;
-				//__in_alu.oper = __multi_stage_data_execute.instr_opcode;
-
-				//// We just always perform the temporary multiplications
-				//`ifdef OPT_HAVE_SINGLE_CYCLE_MULTIPLY
-				//__locals.mul_partial_result_x0_y0
-				//	= __stage_execute_input_data.rfile_rb_data[15:0]
-				//	* __stage_execute_input_data.rfile_rc_data[15:0];
-				//__locals.mul_partial_result_x0_y1 
-				//	= __stage_execute_input_data.rfile_rb_data[15:0]
-				//	* __stage_execute_input_data.rfile_rc_data[31:16];
-				//__locals.mul_partial_result_x1_y0
-				//	= __stage_execute_input_data.rfile_rb_data[31:16]
-				//	* __stage_execute_input_data.rfile_rc_data[15:0];
-				//`endif		// OPT_HAVE_SINGLE_CYCLE_MULTIPLY
 
 				//$display("group 0 ALU stuff:  %h %h %h",
 				//	__in_alu.a, __in_alu.b, __in_alu.oper);
-				//if (__in_alu.oper == PkgInstrDecoder::Slts_ThreeRegs)
-				//begin
-				//	$display("group 0 ALU stuff (slts):  %h %h %h",
-				//		__in_alu.a, __in_alu.b, __in_alu.oper);
-				//end
 			end
 
 			// Group 1:  Immediates
@@ -2674,19 +2681,6 @@ module Frost32Cpu(input logic clk,
 				__in_alu.a = __stage_execute_input_data.rfile_rb_data;
 				__in_alu.oper = __multi_stage_data_execute.instr_opcode;
 				//__in_alu.oper = __multi_stage_data_execute.instr_opcode;
-
-				//// We just always perform the temporary multiplications
-				//`ifdef OPT_HAVE_SINGLE_CYCLE_MULTIPLY
-				//__locals.mul_partial_result_x0_y0
-				//	= __stage_execute_input_data.rfile_rb_data[15:0]
-				//	* __multi_stage_data_execute.instr_imm_val;
-				//__locals.mul_partial_result_x0_y1 
-				//	= __stage_execute_input_data.rfile_rb_data[15:0]
-				//	* 16'h0000;
-				//__locals.mul_partial_result_x1_y0
-				//	= __stage_execute_input_data.rfile_rb_data[31:16]
-				//	* __multi_stage_data_execute.instr_imm_val;
-				//`endif		// OPT_HAVE_SINGLE_CYCLE_MULTIPLY
 
 				case (__multi_stage_data_execute.instr_opcode)
 					PkgInstrDecoder::Sltsi_TwoRegsOneSimm:
@@ -2723,8 +2717,8 @@ module Frost32Cpu(input logic clk,
 					end
 				endcase
 
-				$display("group 1 immediate stuff:  %h %h %h",
-					__in_alu.a, __in_alu.b, __in_alu.oper);
+				//$display("group 1 immediate stuff:  %h %h %h",
+				//	__in_alu.a, __in_alu.b, __in_alu.oper);
 			end
 
 

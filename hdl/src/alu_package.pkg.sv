@@ -23,6 +23,18 @@ typedef struct packed
 	logic gtu, gts;
 } PortOut_Compare;
 
+typedef struct packed
+{
+	logic enable;
+	logic [`MSB_POS__MUL32_INOUT:0] x, y;
+} PortIn_Multiplier32;
+
+typedef struct packed
+{
+	logic can_accept_cmd, data_ready;
+	logic [`MSB_POS__MUL32_INOUT:0] prod;
+} PortOut_Multiplier32;
+
 typedef enum logic [`MSB_POS__ALU_OPER:0]
 {
 	Add,

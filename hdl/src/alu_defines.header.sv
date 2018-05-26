@@ -12,7 +12,7 @@
 `define WIDTH__ALU_OPER 4
 `define MSB_POS__ALU_OPER `WIDTH_TO_MSB_POS(`WIDTH__ALU_OPER)
 
-`define WIDTH__MUL_OUT 64
-`define MSB_POS__MUL_OUT `WIDTH_TO_MSB_POS(`WIDTH__MUL_OUT)
+`define WIDTH__MUL32_INOUT 32
+`define MSB_POS__MUL32_INOUT `WIDTH_TO_MSB_POS(`WIDTH__MUL32_INOUT)
 
 `endif		// src__slash__alu_defines_header_sv

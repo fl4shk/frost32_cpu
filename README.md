@@ -14,15 +14,38 @@ at 100 MHz).
   * Relative branches take three cycles, and jumps and calls take four
   cycles.  All relative branches, jumps, and calls are conditional.
   * `reti` takes two cycles.
-  * `cpy`ing a register into `ireta` or `idsta`
+  * `cpy`ing a register into `ireta` or `idsta` takes three cycles
   * Loads and stores take four cycles each (this is something I wish to
   possibly change since loads and stores don't change the program
   counter.   Hence, I can at least *fetch* the instruction following the
   load or store, at the risk of making self modifying code take slightly
   more effort to figure out whether or not it will work).
+  * Multiplication:  32-bit by 32-bit -> 32-bit results, 5 cycles.  (Need
+  to add in 32-bit by 32-bit -> 64-bit results multiply)
+  * Division:  32-bit by 32-bit -> 32-bit results
+    * Note that there is both unsigned and signed division, computed by the
+    same division module.  There is not an integer remainder instruction,
+    but a multiplication can be performed to get the remainder.
+    * Of note is that division by zero will simply return zero.  Software
+    will need to check if division by zero is going to occur. 
+    * Number of cycles:
+      * When 32-bit division is *very* fast (four bits computed per cycle,
+      at the expense of lowered clock rate and increased logic usage):
+      13 cycles
+      * When 32-bit division is fast (two bits computed per cycle, the
+      default):  21
+      cycles
+      * When 32-bit division is slow (one bit computed per cycle):  37 
+      cycles
 
 
 ## Interrupts
+Responding to an interrupt takes two cycles due to synchronous reads from
+memory, and also the processor will not respond to interrupts when it is
+in the middle of performing an instruction that stalls.  This may become an
+option later; it would be feasible to just force the processor to flush the
+pipeline when an interrupt happens.
+
 Right now there is only one interrupt pin.
 
 The destination to jump to upon an interrupt happening has a special
@@ -44,9 +67,6 @@ interrupts again.
 A second set of registers is being considered to be added for faster
 interrupt processing.t
 
-Responding to an interrupt takes two cycles due to synchronous reads from
-memory, and also the processor will not respond to interrupts when it is
-in the middle of performing an instruction that stalls.
 
 ## Cycle timings
 Conditional branches were intended to take very few cycles without the need
