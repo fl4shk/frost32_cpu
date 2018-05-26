@@ -4,9 +4,10 @@ My first attempt at a pipelined CPU, being implemented in SystemVerilog.
 There's a four-stage pipeline:
     Instruction fetch -> Instruction decode -> Execute -> Write Back
 
-The processor reaches about 93 MHz in the worst case temperature (85
+The processor reaches about 96 MHz in the worst case temperature (85
 degrees C) in my Cyclone IV FPGA, but can potentially run more quickly than
-that if the FPGA isn't at a high temperature. 
+that if the FPGA isn't at a high temperature (in practice it seems to work
+at 100 MHz).
 
 
 ## Stuff that takes more than one cycle
