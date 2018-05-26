@@ -106,12 +106,12 @@ module Frost32Cpu(input logic clk,
 
 	// Combinational logic based operand forwarding to the register read
 	// stage, and also for preparing write back
-	//struct packed
-	//{
-	//	logic [`MSB_POS__REG_FILE_SEL:0] to_write_reg_index;
+	struct packed
+	{
+		logic [`MSB_POS__REG_FILE_SEL:0] to_write_reg_index;
 
-	//	logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
-	//} __stage_execute_generated_data;
+		logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
+	} __stage_execute_generated_data;
 
 	//assign __stage_register_read_output_data.prev_written_reg_index
 	//	= __stage_execute_generated_data.prev_written_reg_index;
@@ -2717,8 +2717,8 @@ module Frost32Cpu(input logic clk,
 					end
 				endcase
 
-				//$display("group 1 immediate stuff:  %h %h %h",
-				//	__in_alu.a, __in_alu.b, __in_alu.oper);
+				$display("group 1 immediate stuff:  %h %h %h",
+					__in_alu.a, __in_alu.b, __in_alu.oper);
 			end
 
 
