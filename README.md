@@ -65,13 +65,16 @@ but dynamic branch prediction is most likely not happening.
 
 
 ## Plans
-Due to the bus architecture, if a cache is added (quite likely), it will
-probably be shared instruction and data cache.  It would likely have
-asynchronous reads because doing so would permit not needing an instruction
-fetch stage in the pipeline.
-If a cache is added, special load and store instructions that bypass cache
-(access memory directly) will be added so that memory mapped input and
-output could still be used.
+Split instruction cache and data cache are of interest to be added.  These
+caches would be direct-mapped, and the data cache would likely be
+write-through.
+
+Also, to facilitate self-modifying code, writes to memory would actually
+affect the instruction cache if the write affects an data that is in
+instruction cache.
+
+Additionally, support of 64-bit by 64-bit -> 64-bit divides is a possible
+addition as well.
 
 
 ## Buses

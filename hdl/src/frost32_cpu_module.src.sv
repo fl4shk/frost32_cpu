@@ -26,15 +26,15 @@ module Frost32Cpu(input logic clk,
 	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
 	//parameter __STALL_COUNTER_RETI = 2;
 	parameter __STALL_COUNTER_RETI = 3;
-	//parameter __STALL_COUNTER_MULTIPLY = 4;
 	parameter __STALL_COUNTER_EEK = 3;
 	parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 1;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 
-	parameter __STALL_COUNTER_MULTIPLY_32 = 4;
+	parameter __STALL_COUNTER_MULTIPLY_32 = 2;
 
 
+	// Only useful at low clock rates!
 	`ifdef OPT_VERY_FAST_DIV
 	parameter __STALL_COUNTER_DIVIDE_32 = 13;
 	`else
@@ -153,11 +153,15 @@ module Frost32Cpu(input logic clk,
 		// Interrupt enable
 		logic ie;
 
-		// Split up 32-bit by 32-bit multiplications into three 16-bit by
-		// 16-bit multiplications (which I believe can be synthesized into
-		// combinational logic) and some adds.
-		logic [`MSB_POS__ALU_INOUT:0] mul_partial_result_x0_y0,
-			mul_partial_result_x1_y0, mul_partial_result_x0_y1;
+		//// Split up 32-bit by 32-bit multiplications into three 16-bit by
+		//// 16-bit multiplications (which I believe can be synthesized into
+		//// combinational logic) and some adds.
+		//logic [`MSB_POS__ALU_INOUT:0] mul_partial_result_x0_y0,
+		//	mul_partial_result_x1_y0, mul_partial_result_x0_y1;
+
+		logic [`MSB_POS__MUL_OUT:0] 
+			mul_partial_result_0, mul_partial_result_1, 
+			mul_partial_result_2, mul_partial_result_3;
 
 		logic [`MSB_POS__FROST32_CPU_ADDR:0] 
 			branch_adder_a, branch_adder_b;
@@ -1583,9 +1587,6 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
-		//$display("Instruction fetch StDiv stuff:  %h, %h",
-		//	__stage_instr_decode_data.stall_state == PkgFrost32Cpu::StDiv,
-		//	__stage_instr_decode_data.stall_counter);
 		if (in_stall())
 		begin
 			// We just always do this when the stall_counter is 1
@@ -1921,9 +1922,13 @@ module Frost32Cpu(input logic clk,
 				//endcase
 			end
 
-			PkgFrost32Cpu::StDiv:
+			//PkgFrost32Cpu::StMul:
+			//begin
+			//	
+			//end
+			PkgFrost32Cpu::StMulDiv:
 			begin
-				$display("StDiv stall_counter:  %h",
+				$display("StMulDiv stall_counter:  %h",
 					__stage_instr_decode_data.stall_counter);
 				case (__stage_instr_decode_data.stall_counter)
 					2:
@@ -1983,29 +1988,8 @@ module Frost32Cpu(input logic clk,
 		if (in_stall())
 		begin
 			// Decrement the stall counter
-
-			//if (__stage_instr_decode_data.stall_state 
-			//	== PkgFrost32Cpu::StDiv)
-			//begin
-			//$display("StDiv: maybe decr stall_counter:  %h\t\t%h %h\t\t%h",
-			//		__in_div.enable,
-			//		__out_div.can_accept_cmd, __out_div.data_ready,
-			//		__stage_instr_decode_data.stall_counter);
-			//	//if (__out_div.can_accept_cmd || __out_div.data_ready)
-			//	if (__out_div.data_ready)
-			//	begin
-			//		__stage_instr_decode_data.stall_counter
-			//			<= __stage_instr_decode_data.stall_counter - 1;
-			//	end
-			//end
-
-			//else
-			begin
-				//$display("Decrementing stall_counter:  %h",
-				//	__stage_instr_decode_data.stall_counter);
-				__stage_instr_decode_data.stall_counter
-					<= __stage_instr_decode_data.stall_counter - 1;
-			end
+			__stage_instr_decode_data.stall_counter
+				<= __stage_instr_decode_data.stall_counter - 1;
 
 			// Make a bubble while we wait for memory
 			if (__stage_instr_decode_data.stall_counter == 1)
@@ -2076,6 +2060,8 @@ module Frost32Cpu(input logic clk,
 						begin
 							//__stage_instr_decode_data.stall_state
 							//	<= PkgFrost32Cpu::StMul;
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_MULTIPLY_32;
 							//__stage_instr_decode_data.stall_counter
 							//	<= __STALL_COUNTER_MULTIPLY_32;
 						end
@@ -2083,11 +2069,18 @@ module Frost32Cpu(input logic clk,
 						else // if (udiv or sdiv)
 						begin
 							//$display("udiv or sdiv");
-							__stage_instr_decode_data.stall_state
-								<= PkgFrost32Cpu::StDiv;
 							__stage_instr_decode_data.stall_counter
 								<= __STALL_COUNTER_DIVIDE_32;
 						end
+						__stage_instr_decode_data.stall_state
+							<= PkgFrost32Cpu::StMulDiv;
+					end
+
+					// Multiply rB by zero-extended immediate
+					1:
+					begin
+						__stage_instr_decode_data.stall_counter
+							<= __STALL_COUNTER_MULTIPLY_32;
 					end
 
 					// Conditional branch 
@@ -2272,14 +2265,35 @@ module Frost32Cpu(input logic clk,
 						//	+ __locals.mul_partial_result_x0_y0);
 						if (__stage_instr_decode_data.stall_counter == 1)
 						begin
-							prep_ra_wb(({(__locals.mul_partial_result_x1_y0
-								+ __locals.mul_partial_result_x0_y1),
-								16'h0000})
-								+ __locals.mul_partial_result_x0_y0);
+							//prep_ra_wb(({(__locals.mul_partial_result_x1_y0
+							//	+ __locals.mul_partial_result_x0_y1),
+							//	16'h0000})
+							//	+ __locals.mul_partial_result_x0_y0);
+							prep_ra_wb(__locals.mul_partial_result_0
+								+ (__locals.mul_partial_result_1 << 8)
+								+ (__locals.mul_partial_result_2 << 16)
+								+ (__locals.mul_partial_result_3 << 24));
 						end
 
-						else
+						else // if (__stage_instr_decode_data.stall_counter 
+							// == 2)
 						begin
+							__locals.mul_partial_result_0
+								<= __stage_execute_input_data.rfile_rb_data
+								* __stage_execute_input_data
+								.rfile_rc_data[7:0];
+							__locals.mul_partial_result_1
+								<= __stage_execute_input_data.rfile_rb_data
+								* __stage_execute_input_data
+								.rfile_rc_data[15:8];
+							__locals.mul_partial_result_2
+								<= __stage_execute_input_data.rfile_rb_data
+								* __stage_execute_input_data
+								.rfile_rc_data[23:16];
+							__locals.mul_partial_result_3
+								<= __stage_execute_input_data.rfile_rb_data
+								* __stage_execute_input_data
+								.rfile_rc_data[31:24];
 							stop_operand_forwarding_or_write_back();
 						end
 					end
@@ -2364,14 +2378,29 @@ module Frost32Cpu(input logic clk,
 					begin
 						if (__stage_instr_decode_data.stall_counter == 1)
 						begin
-							prep_ra_wb(({(__locals.mul_partial_result_x1_y0
-								+ __locals.mul_partial_result_x0_y1),
-								16'h0000})
-								+ __locals.mul_partial_result_x0_y0);
+							//prep_ra_wb(({(__locals.mul_partial_result_x1_y0
+							//	+ __locals.mul_partial_result_x0_y1),
+							//	16'h0000})
+							//	+ __locals.mul_partial_result_x0_y0);
+							prep_ra_wb(__locals.mul_partial_result_0
+								+ (__locals.mul_partial_result_1 << 8)
+								+ (__locals.mul_partial_result_2 << 16)
+								+ (__locals.mul_partial_result_3 << 24));
 						end
 
-						else
+						else // if (__stage_instr_decode_data.stall_counter 
+							// == 2)
 						begin
+							__locals.mul_partial_result_0
+								<= __stage_execute_input_data.rfile_rb_data
+								* __multi_stage_data_execute
+								.instr_imm_val[7:0];
+							__locals.mul_partial_result_1
+								<= __stage_execute_input_data.rfile_rb_data
+								* __multi_stage_data_execute
+								.instr_imm_val[15:8];
+							__locals.mul_partial_result_2 <= 0;
+							__locals.mul_partial_result_3 <= 0;
 							stop_operand_forwarding_or_write_back();
 						end
 
