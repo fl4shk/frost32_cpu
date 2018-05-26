@@ -3,15 +3,62 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
+	`define in_stall \
+		(__stage_instr_decode_data.stall_counter != 0)
+
+//module Frost32Cpu(input logic clk,
+//	input PkgFrost32Cpu::PortIn_Frost32Cpu in,
+//	output PkgFrost32Cpu::PortOut_Frost32Cpu out);
 module Frost32Cpu(input logic clk,
-	input PkgFrost32Cpu::PortIn_Frost32Cpu in,
-	output PkgFrost32Cpu::PortOut_Frost32Cpu out);
+	input logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] in_data,
+	input logic in_wait_for_mem, in_interrupt,
+
+	output logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] out_data,
+	output logic [`MSB_POS__FROST32_CPU_ADDR:0] out_addr,
+	output logic out_data_inout_access_type,
+	output logic [`MSB_POS__FROST32_CPU_DATA_ACCESS_SIZE:0]
+		out_data_inout_access_size,
+	output logic out_req_mem_access
+	`ifdef OPT_DEBUG_REGISTER_FILE
+	,
+	output logic [`MSB_POS__REG_FILE_DATA:0] 
+		out_debug_reg_zero, out_debug_reg_u0,
+		out_debug_reg_u1, out_debug_reg_u2, 
+		out_debug_reg_u3, out_debug_reg_u4,
+		out_debug_reg_u5, out_debug_reg_u6, 
+		out_debug_reg_u7, out_debug_reg_u8,
+		out_debug_reg_u9, out_debug_reg_u10, 
+		out_debug_reg_temp, out_debug_reg_lr,
+		out_debug_reg_fp, out_debug_reg_sp
+	`endif		// OPT_DEBUG_REGISTER_FILE
+	);
+
 
 
 	import PkgInstrDecoder::*;
 	import PkgAlu::*;
 	import PkgRegisterFile::*;
 	import PkgFrost32Cpu::*;
+
+	PkgFrost32Cpu::PortIn_Frost32Cpu in;
+	PkgFrost32Cpu::PortOut_Frost32Cpu out;
+
+	assign in = {in_data, in_wait_for_mem, in_interrupt};
+
+	assign {out_data, out_addr, out_data_inout_access_type,
+		out_data_inout_access_size, out_req_mem_access
+		`ifdef OPT_DEBUG_REGISTER_FILE
+		,
+		out_debug_reg_zero, out_debug_reg_u0,
+		out_debug_reg_u1, out_debug_reg_u2, 
+		out_debug_reg_u3, out_debug_reg_u4,
+		out_debug_reg_u5, out_debug_reg_u6, 
+		out_debug_reg_u7, out_debug_reg_u8,
+		out_debug_reg_u9, out_debug_reg_u10, 
+		out_debug_reg_temp, out_debug_reg_lr,
+		out_debug_reg_fp, out_debug_reg_sp
+		`endif		// OPT_DEBUG_REGISTER_FILE
+		} = out;
 
 	parameter __REG_LR_INDEX = 13;
 	parameter __REG_SP_INDEX = 15;
@@ -491,7 +538,7 @@ module Frost32Cpu(input logic clk,
 	begin
 		// Keep old instruction whenever we're in a stall, which prevents
 		// new instructions from coming into the decode stage.
-		if (in_stall())
+		if (`in_stall)
 		begin
 			//__in_instr_decoder
 			//	= __multi_stage_data_register_read.raw_instruction;
@@ -580,11 +627,11 @@ module Frost32Cpu(input logic clk,
 
 	//always_comb
 	//begin
-	//	//if (in_stall() || (!in_stall() 
+	//	//if (`in_stall || (!`in_stall 
 	//	//	&& __locals.should_service_interrupt_if_not_in_stall))
 
 	//	// If in a stall, use the execute stage's program counter.
-	//	if (in_stall())
+	//	if (`in_stall)
 	//	begin
 	//		__multi_stage_data_instr_decode.pc_val
 	//			= __multi_stage_data_execute.pc_val;
@@ -1225,10 +1272,10 @@ module Frost32Cpu(input logic clk,
 	end
 
 
-	// Tasks and functions
-	function logic in_stall();
-		return (__stage_instr_decode_data.stall_counter != 0);
-	endfunction
+	//// Tasks and functions
+	//function logic in_stall();
+	//	return (__stage_instr_decode_data.stall_counter != 0);
+	//endfunction
 
 	task prep_mem_read;
 		input [`MSB_POS__FROST32_CPU_ADDR:0] addr;
@@ -1679,7 +1726,7 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
-		if (in_stall())
+		if (`in_stall)
 		begin
 			// We just always do this when the stall_counter is 1
 			if (__stage_instr_decode_data.stall_counter == 1)
@@ -2034,7 +2081,7 @@ module Frost32Cpu(input logic clk,
 		end
 
 		//else // if (__stage_instr_decode_data.stall_counter == 0)
-		else // if (!in_stall())
+		else // if (!`in_stall)
 		begin
 			if (!__locals.should_service_interrupt_if_not_in_stall)
 			begin
@@ -2042,7 +2089,7 @@ module Frost32Cpu(input logic clk,
 				begin
 					//__multi_stage_data_instr_decode.raw_instruction
 					//	<= in.data;
-					//$display("!in_stall(), instr causes stall");
+					//$display("!`in_stall, instr causes stall");
 				end
 
 				else // if (!__multi_stage_data_instr_decode
@@ -2077,7 +2124,7 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
-		if (in_stall())
+		if (`in_stall)
 		begin
 			// Decrement the stall counter
 			__stage_instr_decode_data.stall_counter
@@ -2134,7 +2181,7 @@ module Frost32Cpu(input logic clk,
 		end
 
 		//else // if (__stage_instr_decode_data.stall_counter == 0)
-		else // if (!in_stall())
+		else // if (!`in_stall)
 		begin
 			//if (!(in.interrupt && __locals.ie))
 			//if ((in.interrupt && !__locals.ie) || (!in.interrupt))
