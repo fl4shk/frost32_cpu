@@ -11,15 +11,15 @@ at 100 MHz).
 
 
 ## Stuff that takes more than one cycle
-    * Relative branches take three cycles, and jumps and calls take four
-    cycles.  All relative branches, jumps, and calls are conditional.
-    * `reti` takes two cycles.
-    * `cpy`ing a register into `ireta` or `idsta`
-    * Loads and stores take four cycles each (this is something I wish to
-    possibly change since loads and stores don't change the program
-    counter.   Hence, I can at least *fetch* the instruction following the
-    load or store, at the risk of making self modifying code take slightly
-    more effort to figure out whether or not it will work).
+  * Relative branches take three cycles, and jumps and calls take four
+  cycles.  All relative branches, jumps, and calls are conditional.
+  * `reti` takes two cycles.
+  * `cpy`ing a register into `ireta` or `idsta`
+  * Loads and stores take four cycles each (this is something I wish to
+  possibly change since loads and stores don't change the program
+  counter.   Hence, I can at least *fetch* the instruction following the
+  load or store, at the risk of making self modifying code take slightly
+  more effort to figure out whether or not it will work).
 
 
 ## Interrupts
