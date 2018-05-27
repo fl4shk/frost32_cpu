@@ -558,43 +558,43 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32,
 				// iterate() is a task.  Feel free to try more than one
 				// iteration per clock cycle.
 
-				//for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
-				//begin
-				//	iterate();
-				//end
-				case (NUM_ITERATIONS_PER_CYCLE)
-					1:
-					begin
-						iterate();
-					end
+				for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
+				begin
+					iterate();
+				end
+				//case (NUM_ITERATIONS_PER_CYCLE)
+				//	1:
+				//	begin
+				//		iterate();
+				//	end
 
-					2:
-					begin
-						iterate();
-						iterate();
-					end
+				//	2:
+				//	begin
+				//		iterate();
+				//		iterate();
+				//	end
 
-					3:
-					begin
-						iterate();
-						iterate();
-						iterate();
-					end
+				//	3:
+				//	begin
+				//		iterate();
+				//		iterate();
+				//		iterate();
+				//	end
 
-					4:
-					begin
-						iterate();
-						iterate();
-						iterate();
-						iterate();
-					end
+				//	4:
+				//	begin
+				//		iterate();
+				//		iterate();
+				//		iterate();
+				//		iterate();
+				//	end
 
-					default:
-					begin
-						iterate();
-					end
+				//	default:
+				//	begin
+				//		iterate();
+				//	end
 
-				endcase
+				//endcase
 			end
 		end
 
