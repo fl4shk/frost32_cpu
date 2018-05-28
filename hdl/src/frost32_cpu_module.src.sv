@@ -256,8 +256,9 @@ module Frost32Cpu(input logic clk,
 	//LongDivider 
 	//RestoringDivider
 	NonRestoringDivider
-		#(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
-		.NUM_ITERATIONS_PER_CYCLE(__NUM_ITERATIONS_PER_DIVIDE_32_CYCLE))
+		//#(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
+		//.NUM_ITERATIONS_PER_CYCLE(__NUM_ITERATIONS_PER_DIVIDE_32_CYCLE))
+		#(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA))
 		__inst_div(.clk(clk), 
 		.in_enable(__in_div_32.enable),
 		.in_unsgn_or_sgn(__in_div_32.unsgn_or_sgn),

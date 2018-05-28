@@ -439,8 +439,9 @@ endmodule
 //
 //endmodule
 
-module NonRestoringDivider #(parameter ARGS_WIDTH=32, 
-	parameter NUM_ITERATIONS_PER_CYCLE=1)
+//module NonRestoringDivider #(parameter ARGS_WIDTH=32, 
+//	parameter NUM_ITERATIONS_PER_CYCLE=1)
+module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 	(input logic clk, in_enable, in_unsgn_or_sgn,
 	// Numerator, Denominator
 	input logic [`WIDTH_TO_MSB_POS(ARGS_WIDTH):0] in_num, in_denom,
@@ -546,7 +547,8 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32,
 		else if (__busy)
 		begin
 			//if (!__state_counter[__COUNTER_MSB_POS])
-			if ($signed(__counter) > $signed(-1))
+			//if ($signed(__counter) > $signed(-1))
+			//if (!__counter[__COUNTER_MSB_POS])
 			begin
 				// At some clock rates, some FPGAs may be able to handle
 				// more than one iteration per clock cycle, which is why
@@ -554,10 +556,60 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32,
 				// iteration per clock cycle.
 
 
-				for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
-				begin
-					iterate();
-				end
+				//if (NUM_ITERATIONS_PER_CYCLE > 1)
+				//begin
+				//	for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
+				//	begin
+				//		iterate();
+				//	end
+				//end
+
+				//else
+				//begin
+				//	iterate();
+				//end
+
+				//case (NUM_ITERATIONS_PER_CYCLE)
+				//	1:
+				//	begin
+				//		iterate();
+				//	end
+
+				//	2:
+				//	begin
+				//		iterate();
+				//		iterate();
+				//	end
+
+				//	4:
+				//	begin
+				//		iterate();
+				//		iterate();
+				//		iterate();
+				//		iterate();
+				//	end
+
+				//	default:
+				//	begin
+				//		for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
+				//		begin
+				//			iterate();
+				//		end
+				//	end
+				//endcase
+				`ifdef OPT_VERY_FAST_DIV
+				iterate();
+				iterate();
+				iterate();
+				iterate();
+				`else
+				`ifdef OPT_FAST_DIV
+				iterate();
+				iterate();
+				`else
+				iterate();
+				`endif		// OPT_FAST_DIV
+				`endif		// OPT_VERY_FAST_DIV
 			end
 		end
 
