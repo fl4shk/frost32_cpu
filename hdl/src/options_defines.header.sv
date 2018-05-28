@@ -11,10 +11,10 @@
 // Temporary
 `define OPT_DEBUG_REGISTER_FILE
 
-// This is the default
+// Two bits per clock cycle of divide
 //`define OPT_FAST_DIV
 
-// For low clock rates (such as 50 MHz)
+// For lower clock rates (such as 80 MHz)
 //`define OPT_VERY_FAST_DIV
 
 //`define OPT_HAVE_STAGE_REGISTER_READ

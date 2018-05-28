@@ -3,6 +3,14 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
+//// Operand forwarding thing (keeps that bit out of this
+//module OperandForwarder(input bit clk,
+//	input PkgFrost32Cpu::PortIn_OperandForwarder in,
+//	output PkgFrost32Cpu::PortOut_OperandForwarder out);
+//
+//endmodule
+
+
 module Frost32Cpu(input logic clk,
 	input PkgFrost32Cpu::PortIn_Frost32Cpu in,
 	output PkgFrost32Cpu::PortOut_Frost32Cpu out);
@@ -19,7 +27,7 @@ module Frost32Cpu(input logic clk,
 	//parameter __STALL_COUNTER_RELATIVE_BRANCH = 4;
 	//parameter __STALL_COUNTER_RELATIVE_BRANCH = 3;
 	parameter __STALL_COUNTER_RELATIVE_BRANCH = 2;
-	parameter __STALL_COUNTER_JUMP_OR_CALL = 3;
+	parameter __STALL_COUNTER_JUMP_OR_CALL = 4;
 
 	// Memory access is unfortunately going to have to be a little slower.
 	parameter __STALL_COUNTER_MEM_ACCESS = 3;
@@ -38,15 +46,18 @@ module Frost32Cpu(input logic clk,
 
 	// Only useful at low clock rates!
 	`ifdef OPT_VERY_FAST_DIV
-	parameter __STALL_COUNTER_DIVIDE_32 = 13;
+	parameter __NUM_ITERATIONS_PER_DIVIDE_32_CYCLE = 4;
 	`else
 	`ifdef OPT_FAST_DIV
 	// Hardcoded, though not the cleanest.
-	parameter __STALL_COUNTER_DIVIDE_32 = 21;
+	parameter __NUM_ITERATIONS_PER_DIVIDE_32_CYCLE = 2;
 	`else
-	parameter __STALL_COUNTER_DIVIDE_32 = 37;
+	parameter __NUM_ITERATIONS_PER_DIVIDE_32_CYCLE = 1;
 	`endif		// OPT_FAST_DIV
 	`endif		// OPT_VERY_FAST_DIV
+
+	parameter __STALL_COUNTER_DIVIDE_32 
+		= (32 / __NUM_ITERATIONS_PER_DIVIDE_32_CYCLE) + 5;
 
 
 	// Data output by or used by the Instruction Decode stage
@@ -106,12 +117,12 @@ module Frost32Cpu(input logic clk,
 
 	// Combinational logic based operand forwarding to the register read
 	// stage, and also for preparing write back
-	struct packed
-	{
-		logic [`MSB_POS__REG_FILE_SEL:0] to_write_reg_index;
+	//struct packed
+	//{
+	//	logic [`MSB_POS__REG_FILE_SEL:0] to_write_reg_index;
 
-		logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
-	} __stage_execute_generated_data;
+	//	logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
+	//} __stage_execute_generated_data;
 
 	//assign __stage_register_read_output_data.prev_written_reg_index
 	//	= __stage_execute_generated_data.prev_written_reg_index;
@@ -135,6 +146,7 @@ module Frost32Cpu(input logic clk,
 	}
 		__stage_execute_output_data,
 		__stage_write_back_output_data;
+		//__stage_write_back_prev_output_data;
 
 
 	struct packed
@@ -157,7 +169,7 @@ module Frost32Cpu(input logic clk,
 
 		//// Split up 32-bit by 32-bit multiplications into three 16-bit by
 		//// 16-bit multiplications (which I believe can be synthesized into
-		//// combinational logic) and some adds.
+		//// combinational bit) and some adds.
 		//logic [`MSB_POS__MUL32_INOUT:0] 
 		//	mul32_result,
 		//	mul32_partial_result_x0_y0, mul32_partial_result_x1_y0, 
@@ -241,18 +253,11 @@ module Frost32Cpu(input logic clk,
 		logic [`MSB_POS__REG_FILE_DATA:0] quot, rem;
 	} __out_div_32;
 
-	// NonRestoringDivider was determined to allow higher clock rates than
-	// LongDivider, so we use that module here.
-	NonRestoringDivider #(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
-		`ifdef OPT_VERY_FAST_DIV
-		.NUM_ITERATIONS_PER_CYCLE(4))
-		`else
-		`ifdef OPT_FAST_DIV
-		.NUM_ITERATIONS_PER_CYCLE(2))
-		`else
-		.NUM_ITERATIONS_PER_CYCLE(1))
-		`endif		// OPT_FAST_DIV
-		`endif		// OPT_VERY_FAST_DIV
+	//LongDivider 
+	//RestoringDivider
+	NonRestoringDivider
+		#(.ARGS_WIDTH(`WIDTH__REG_FILE_DATA),
+		.NUM_ITERATIONS_PER_CYCLE(__NUM_ITERATIONS_PER_DIVIDE_32_CYCLE))
 		__inst_div(.clk(clk), 
 		.in_enable(__in_div_32.enable),
 		.in_unsgn_or_sgn(__in_div_32.unsgn_or_sgn),
@@ -271,7 +276,7 @@ module Frost32Cpu(input logic clk,
 	//logic [`MSB_POS__REG_FILE_DATA:0]
 	//	__regfile[0 : __LAST_INDEX__NUM_REGISTERS];
 	//`else
-	//bit [`MSB_POS__REG_FILE_DATA:0]
+	//logic [`MSB_POS__REG_FILE_DATA:0]
 	//	__regfile[0 : __LAST_INDEX__NUM_REGISTERS];
 	//`endif		// ICARUS
 
@@ -605,186 +610,80 @@ module Frost32Cpu(input logic clk,
 	// This is the operand forwarding.  It's so simple!
 	// We only write to one register at a time, so we only need one
 	// multiplexer per rfile_r..._data
-	always_comb
-	begin
-		//__stage_execute_input_data.rfile_ra_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_ra_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_write_back_input_data.n_reg_data
-		//	: __out_reg_file.read_data_ra;
+//	`define perform_operand_forwarding(INDEX) \
+//	always_comb \
+//	begin \
+//		/* Forward from last instruction */ \
+//		if (__multi_stage_data_execute.instr_``INDEX``_index \
+//			== __stage_execute_output_data.prev_written_reg_index \
+//			&& __multi_stage_data_execute.instr_``INDEX``_index) \
+//		begin \
+//			__stage_execute_input_data.rfile_``INDEX``_data \
+//				= __stage_execute_output_data.n_reg_data; \
+//		end \
+//\
+//		/* Forward from two instructions ago */ \
+//		else if (__multi_stage_data_execute.instr_``INDEX``_index \
+//			== __stage_write_back_output_data.prev_written_reg_index \
+//			&& __multi_stage_data_execute.instr_``INDEX``_index) \
+//		begin \
+//			__stage_execute_input_data.rfile_``INDEX``_data \
+//				= __stage_write_back_output_data.n_reg_data; \
+//		end \
+//\
+//		/* Forward from three instructions ago */ \
+//		else if (__multi_stage_data_execute.instr_``INDEX``_index \
+//			== __stage_write_back_prev_output_data \
+//			.prev_written_reg_index \
+//			&& __multi_stage_data_execute.instr_``INDEX``_index) \
+//		begin \
+//			__stage_execute_input_data.rfile_``INDEX``_data \
+//				= __stage_write_back_prev_output_data.n_reg_data; \
+//		end \
+//\
+//		/* No forwarding */ \
+//		else \
+//		begin \
+//			__stage_execute_input_data.rfile_``INDEX``_data \
+//				= __out_reg_file.read_data_``INDEX``; \
+//		end \
+//	end
 
-		//$display("_ra:  %h %h %h",
-		//	__multi_stage_data_execute.instr_ra_index,
-		//	__stage_execute_output_data.prev_written_reg_index,
-		//	__stage_write_back_output_data.prev_written_reg_index);
-
-		// No forwarding
-		if (__multi_stage_data_execute.instr_ra_index == 0)
-		begin
-			__stage_execute_input_data.rfile_ra_data = 0;
-		end
-
-		// Forward from last instruction 
-		else if (__multi_stage_data_execute.instr_ra_index
-			== __stage_execute_output_data.prev_written_reg_index)
-		begin
-			__stage_execute_input_data.rfile_ra_data
-				= __stage_execute_output_data.n_reg_data;
-			//$display("_ra:  forwarding from execute stage:  %h",
-			//	__stage_execute_input_data.rfile_ra_data);
-		end
-
-		// Forward from two instructions ago
-		else if (__multi_stage_data_execute.instr_ra_index
-			== __stage_write_back_output_data.prev_written_reg_index)
-		begin
-			__stage_execute_input_data.rfile_ra_data
-				= __stage_write_back_output_data.n_reg_data;
-			//$display("_ra:  forwarding from write back stage:  %h",
-			//	__stage_execute_input_data.rfile_ra_data);
-		end
-
-		//// Forward from three instructions ago
-		//else if (__multi_stage_data_execute.instr_ra_index
-		//	== __stage_write_back_output_data.prev_prev_written_reg_index)
-		//begin
-		//	__stage_execute_input_data.rfile_ra_data
-		//		= __stage_write_back_output_data.prev_prev_n_reg_data;
-		//	$display("_ra:  forwarding from three instrs ago:  %h",
-		//		__stage_execute_input_data.rfile_ra_data);
-		//end
-
-		// No forwarding
-		else
-		begin
-			__stage_execute_input_data.rfile_ra_data
-				= __out_reg_file.read_data_ra;
-			//$display("_ra:  no forwarding:  Read from register file:  %h",
-			//	__stage_execute_input_data.rfile_ra_data);
-		end
-
-
-		//__stage_execute_input_data.rfile_ra_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_ra_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_execute_output_data.n_reg_data
-		//	: __out_reg_file.read_data_ra;
-
-		//$display("(Maybe) operand forwarding (_ra):  %h %h %h %h %h",
-		//	__stage_execute_input_data.rfile_ra_data,
-		//	__stage_execute_output_data.prev_written_reg_index,
-		//	__multi_stage_data_execute.instr_ra_index,
-		//	__stage_execute_output_data.n_reg_data,
-		//	__out_reg_file.read_data_ra);
+	`define perform_operand_forwarding(INDEX) \
+	always_comb \
+	begin \
+		/* Reading from register called "zero" */ \
+		if (__multi_stage_data_execute.instr_``INDEX``_index == 0) \
+		begin \
+			__stage_execute_input_data.rfile_``INDEX``_data = 0; \
+		end \
+		\
+		/* Forward from last instruction */ \
+		else if (__multi_stage_data_execute.instr_``INDEX``_index \
+			== __stage_execute_output_data.prev_written_reg_index) \
+		begin \
+			__stage_execute_input_data.rfile_``INDEX``_data \
+				= __stage_execute_output_data.n_reg_data; \
+		end \
+		\
+		/* Forward from two instructions ago */ \
+		else if (__multi_stage_data_execute.instr_``INDEX``_index \
+			== __stage_write_back_output_data.prev_written_reg_index) \
+		begin \
+			__stage_execute_input_data.rfile_``INDEX``_data \
+				= __stage_write_back_output_data.n_reg_data; \
+		end \
+		\
+		/* No forwarding */ \
+		else \
+		begin \
+			__stage_execute_input_data.rfile_``INDEX``_data \
+				= __out_reg_file.read_data_``INDEX``; \
+		end \
 	end
-	always_comb
-	begin
-		//__stage_execute_input_data.rfile_rb_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_rb_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_write_back_input_data.n_reg_data
-		//	: __out_reg_file.read_data_rb;
-
-		// No forwarding
-		if (__multi_stage_data_execute.instr_rb_index == 0)
-		begin
-			__stage_execute_input_data.rfile_rb_data = 0;
-		end
-
-		// Forward from last instruction 
-		else if (__multi_stage_data_execute.instr_rb_index
-			== __stage_execute_output_data.prev_written_reg_index)
-		begin
-			__stage_execute_input_data.rfile_rb_data
-				= __stage_execute_output_data.n_reg_data;
-		end
-
-		// Forward from two instructions ago
-		else if (__multi_stage_data_execute.instr_rb_index
-			== __stage_write_back_output_data.prev_written_reg_index)
-		begin
-			__stage_execute_input_data.rfile_rb_data
-				= __stage_write_back_output_data.n_reg_data;
-		end
-
-		// No forwarding
-		else
-		begin
-			__stage_execute_input_data.rfile_rb_data
-				= __out_reg_file.read_data_rb;
-		end
-
-
-		//__stage_execute_input_data.rfile_rb_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_rb_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_execute_output_data.n_reg_data
-		//	: __out_reg_file.read_data_rb;
-
-		//$display("(Maybe) operand forwarding (_rb):  %h %h %h %h %h",
-		//	__stage_execute_input_data.rfile_rb_data,
-		//	__stage_execute_output_data.prev_written_reg_index,
-		//	__multi_stage_data_execute.instr_rb_index,
-		//	__stage_execute_output_data.n_reg_data,
-		//	__out_reg_file.read_data_rb);
-	end
-	always_comb
-	begin
-		//__stage_execute_input_data.rfile_rc_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_rc_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_write_back_input_data.n_reg_data
-		//	: __out_reg_file.read_data_rc;
-
-		// No forwarding
-		if (__multi_stage_data_execute.instr_rc_index == 0)
-		begin
-			__stage_execute_input_data.rfile_rc_data = 0;
-		end
-
-		// Forward from last instruction 
-		else if (__multi_stage_data_execute.instr_rc_index
-			== __stage_execute_output_data.prev_written_reg_index)
-		begin
-			__stage_execute_input_data.rfile_rc_data
-				= __stage_execute_output_data.n_reg_data;
-		end
-
-		// Forward from two instructions ago
-		else if (__multi_stage_data_execute.instr_rc_index
-			== __stage_write_back_output_data.prev_written_reg_index)
-		begin
-			__stage_execute_input_data.rfile_rc_data
-				= __stage_write_back_output_data.n_reg_data;
-		end
-
-		// No forwarding
-		else
-		begin
-			__stage_execute_input_data.rfile_rc_data
-				= __out_reg_file.read_data_rc;
-		end
-
-
-		//__stage_execute_input_data.rfile_rc_data
-		//	= ((__stage_execute_output_data.prev_written_reg_index
-		//	== __multi_stage_data_execute.instr_rc_index)
-		//	&& (__stage_execute_output_data.prev_written_reg_index != 0))
-		//	? __stage_execute_output_data.n_reg_data
-		//	: __out_reg_file.read_data_rc;
-
-		//$display("(Maybe) operand forwarding (_rc):  %h %h %h %h %h",
-		//	__stage_execute_input_data.rfile_rc_data,
-		//	__stage_execute_output_data.prev_written_reg_index,
-		//	__multi_stage_data_execute.instr_rc_index,
-		//	__stage_execute_output_data.n_reg_data,
-		//	__out_reg_file.read_data_rc);
-	end
+	`perform_operand_forwarding(ra)
+	`perform_operand_forwarding(rb)
+	`perform_operand_forwarding(rc)
 
 	//always_comb
 	//begin
@@ -1226,7 +1125,7 @@ module Frost32Cpu(input logic clk,
 
 
 	// Tasks and functions
-	function logic in_stall();
+	function bit in_stall();
 		return (__stage_instr_decode_data.stall_counter != 0);
 	endfunction
 
@@ -1315,6 +1214,9 @@ module Frost32Cpu(input logic clk,
 		//__stage_execute_output_data.n_reg_data <= n_data;
 		__stage_write_back_output_data.prev_written_reg_index <= n_sel;
 		__stage_write_back_output_data.n_reg_data <= n_data;
+
+		//__stage_write_back_prev_output_data
+		//	<= __stage_write_back_output_data;
 	endtask
 
 	//task prep_ra_write;
@@ -1628,10 +1530,10 @@ module Frost32Cpu(input logic clk,
 					end
 				end
 			end
-			else
-			begin
-				stop_operand_forwarding_or_write_back();
-			end
+			//else
+			//begin
+			//	stop_operand_forwarding_or_write_back();
+			//end
 		end
 
 

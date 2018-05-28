@@ -9,8 +9,9 @@ main:
 	cpyi u1, 0x9000
 
 	mul u3, u0, u1
-	udiv u4, u0, u1
-	sdiv u5, u0, u1
+	;udiv u4, u0, u1
+	;sdiv u5, u0, u1
+	sdiv u5, u1, u0
 
 	;addi u4, u3, 0x20
 
@@ -26,12 +27,12 @@ main:
 
 
 loop:
-	inc u1				; 0xc
-	
 	dec u0				; 0x10
-	mul u3, u0, u1
-	udiv u4, u0, u1
-	sdiv u5, u0, u1
+
+	inc u1				; 0xc
+	;mul u3, u0, u1
+	;udiv u4, u0, u1
+	;sdiv u5, u0, u1
 	;dec u0				; 0x10
 	;dec u0				; 0x10
 	;dec u0				; 0x10
@@ -43,29 +44,6 @@ loop:
 	;add zero, zero, zero
 
 	bges u0, u2, loop	; 0x14
-
-	;slts temp, u0, u2
-	;beq temp, zero, loop
-
-	;jges u0, u2, u3
-
-	;calla test_call		; 0x18
-	;addsi lr, pc, 8		; 0x18
-	;bra test_call		; 0x1c
-	;addsi lr, pc, . - test_call + 8
-	;addsi lr, pc, 
-	;;cpyi lr, test_call
-
-	;; Relative call
-	;addsi lr, pc, test_call - .
-	;call lr
-
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
-	add zero, zero, zero
 
 	; Branch to subroutine
 	addsi lr, pc, 8
