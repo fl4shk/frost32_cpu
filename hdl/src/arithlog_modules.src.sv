@@ -1,24 +1,24 @@
 `include "src/alu_defines.header.sv"
 
-module Adder #(parameter DATA_WIDTH=32)
-	(input logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] a, b,
-	output logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] out);
-
-	always_comb
-	begin
-		out = a + b;
-	end
-endmodule
-
-module Subtractor #(parameter DATA_WIDTH=32)
-	(input logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] a, b, 
-	output logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] out);
-
-	always_comb
-	begin
-		out = a - b;
-	end
-endmodule
+//module Adder #(parameter DATA_WIDTH=32)
+//	(input logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] a, b,
+//	output logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] out);
+//
+//	always_comb
+//	begin
+//		out = a + b;
+//	end
+//endmodule
+//
+//module Subtractor #(parameter DATA_WIDTH=32)
+//	(input logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] a, b, 
+//	output logic [`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] out);
+//
+//	always_comb
+//	begin
+//		out = a - b;
+//	end
+//endmodule
 
 module Compare #(parameter DATA_WIDTH=32)
 	(input logic[`WIDTH_TO_MSB_POS(DATA_WIDTH) : 0] a, b,
@@ -75,105 +75,105 @@ module Compare #(parameter DATA_WIDTH=32)
 	end
 endmodule
 
-// Barrel shifters
-module LogicalShiftLeft32(input PkgAlu::PortIn_Shift in, 
-	output PkgAlu::PortOut_Shift out);
-
-	import PkgAlu::*;
-
-	PkgAlu::PortOut_Shift __temp[0 : `ARR_SIZE_TO_LAST_INDEX(4)];
-
-	always_comb
-	begin
-		__temp[0] = in.amount[0] 
-			? {in.data[`MSB_POS__ALU_INOUT - 1:0], {1{1'b0}}}
-			: in.data;
-		__temp[1] = in.amount[1] 
-			? {__temp[0][`MSB_POS__ALU_INOUT - 2:0], {2{1'b0}}}
-			: __temp[0];
-		__temp[2] = in.amount[2] 
-			? {__temp[1][`MSB_POS__ALU_INOUT - 4:0], {4{1'b0}}}
-			: __temp[1];
-		__temp[3] = in.amount[3] 
-			? {__temp[2][`MSB_POS__ALU_INOUT - 8:0], {8{1'b0}}}
-			: __temp[2];
-		out.data = in.amount[4] 
-			? {__temp[3][`MSB_POS__ALU_INOUT - 16:0], {16{1'b0}}}
-			: __temp[3];
-	end
-endmodule
-
-module LogicalShiftRight32(input PkgAlu::PortIn_Shift in,
-	output PkgAlu::PortOut_Shift out);
-
-	import PkgAlu::*;
-
-	PkgAlu::PortOut_Shift __temp[0 : `ARR_SIZE_TO_LAST_INDEX(4)];
-
-	always_comb
-	begin
-		__temp[0] = in.amount[0] 
-			? {{1{1'b0}}, in.data[`MSB_POS__ALU_INOUT:1]} : in.data;
-		__temp[1] = in.amount[1] 
-			? {{2{1'b0}}, __temp[0][`MSB_POS__ALU_INOUT:2]} : __temp[0];
-		__temp[2] = in.amount[2] 
-			? {{4{1'b0}}, __temp[1][`MSB_POS__ALU_INOUT:4]} : __temp[1];
-		__temp[3] = in.amount[3] 
-			? {{8{1'b0}}, __temp[2][`MSB_POS__ALU_INOUT:8]} : __temp[2];
-		out.data = in.amount[4] 
-			? {{16{1'b0}}, __temp[3][`MSB_POS__ALU_INOUT:16]} : __temp[3];
-	end
-endmodule
-
-module ArithmeticShiftRight32(input PkgAlu::PortIn_Shift in,
-	output PkgAlu::PortOut_Shift out);
-
-	import PkgAlu::*;
-
-	PkgAlu::PortOut_Shift __temp[0 : `ARR_SIZE_TO_LAST_INDEX(4)];
-
-	always_comb
-	begin
-		if (!in.data[31])
-		begin
-			__temp[0] = in.amount[0] 
-				? {{1{1'd0}}, in.data[`MSB_POS__ALU_INOUT:1]}
-				: in.data;
-			__temp[1] = in.amount[1] 
-				? {{2{1'd0}}, __temp[0][`MSB_POS__ALU_INOUT:2]}
-				: __temp[0];
-			__temp[2] = in.amount[2] 
-				? {{4{1'd0}}, __temp[1][`MSB_POS__ALU_INOUT:4]}
-				: __temp[1];
-			__temp[3] = in.amount[3] 
-				? {{8{1'd0}}, __temp[2][`MSB_POS__ALU_INOUT:8]}
-				: __temp[2];
-			out.data = in.amount[4] 
-				? {{16{1'd0}}, __temp[3][`MSB_POS__ALU_INOUT:16]}
-				: __temp[3];
-		end
-
-		else // if (in.data[31])
-		begin
-			__temp[0] = in.amount[0] 
-				? {{1{1'b1}}, in.data[`MSB_POS__ALU_INOUT:1]} 
-				: in.data;
-			__temp[1] = in.amount[1] 
-				? {{2{1'b1}}, __temp[0][`MSB_POS__ALU_INOUT:2]} 
-				: __temp[0];
-			__temp[2] = in.amount[2] 
-				? {{4{1'b1}}, __temp[1][`MSB_POS__ALU_INOUT:4]} 
-				: __temp[1];
-			__temp[3] = in.amount[3] 
-				? {{8{1'b1}}, __temp[2][`MSB_POS__ALU_INOUT:8]} 
-				: __temp[2];
-			out.data = in.amount[4] 
-				? {{16{1'b1}}, __temp[3][`MSB_POS__ALU_INOUT:16]} 
-				: __temp[3];
-		end
-	end
-
-endmodule
+//// Barrel shifters
+//module LogicalShiftLeft32(input PkgAlu::PortIn_Shift in, 
+//	output PkgAlu::PortOut_Shift out);
+//
+//	import PkgAlu::*;
+//
+//	PkgAlu::PortOut_Shift __temp[0 : `ARR_SIZE_TO_LAST_INDEX(4)];
+//
+//	always_comb
+//	begin
+//		__temp[0] = in.amount[0] 
+//			? {in.data[`MSB_POS__ALU_INOUT - 1:0], {1{1'b0}}}
+//			: in.data;
+//		__temp[1] = in.amount[1] 
+//			? {__temp[0][`MSB_POS__ALU_INOUT - 2:0], {2{1'b0}}}
+//			: __temp[0];
+//		__temp[2] = in.amount[2] 
+//			? {__temp[1][`MSB_POS__ALU_INOUT - 4:0], {4{1'b0}}}
+//			: __temp[1];
+//		__temp[3] = in.amount[3] 
+//			? {__temp[2][`MSB_POS__ALU_INOUT - 8:0], {8{1'b0}}}
+//			: __temp[2];
+//		out.data = in.amount[4] 
+//			? {__temp[3][`MSB_POS__ALU_INOUT - 16:0], {16{1'b0}}}
+//			: __temp[3];
+//	end
+//endmodule
+//
+//module LogicalShiftRight32(input PkgAlu::PortIn_Shift in,
+//	output PkgAlu::PortOut_Shift out);
+//
+//	import PkgAlu::*;
+//
+//	PkgAlu::PortOut_Shift __temp[0 : `ARR_SIZE_TO_LAST_INDEX(4)];
+//
+//	always_comb
+//	begin
+//		__temp[0] = in.amount[0] 
+//			? {{1{1'b0}}, in.data[`MSB_POS__ALU_INOUT:1]} : in.data;
+//		__temp[1] = in.amount[1] 
+//			? {{2{1'b0}}, __temp[0][`MSB_POS__ALU_INOUT:2]} : __temp[0];
+//		__temp[2] = in.amount[2] 
+//			? {{4{1'b0}}, __temp[1][`MSB_POS__ALU_INOUT:4]} : __temp[1];
+//		__temp[3] = in.amount[3] 
+//			? {{8{1'b0}}, __temp[2][`MSB_POS__ALU_INOUT:8]} : __temp[2];
+//		out.data = in.amount[4] 
+//			? {{16{1'b0}}, __temp[3][`MSB_POS__ALU_INOUT:16]} : __temp[3];
+//	end
+//endmodule
+//
+//module ArithmeticShiftRight32(input PkgAlu::PortIn_Shift in,
+//	output PkgAlu::PortOut_Shift out);
+//
+//	import PkgAlu::*;
+//
+//	PkgAlu::PortOut_Shift __temp[0 : `ARR_SIZE_TO_LAST_INDEX(4)];
+//
+//	always_comb
+//	begin
+//		if (!in.data[31])
+//		begin
+//			__temp[0] = in.amount[0] 
+//				? {{1{1'd0}}, in.data[`MSB_POS__ALU_INOUT:1]}
+//				: in.data;
+//			__temp[1] = in.amount[1] 
+//				? {{2{1'd0}}, __temp[0][`MSB_POS__ALU_INOUT:2]}
+//				: __temp[0];
+//			__temp[2] = in.amount[2] 
+//				? {{4{1'd0}}, __temp[1][`MSB_POS__ALU_INOUT:4]}
+//				: __temp[1];
+//			__temp[3] = in.amount[3] 
+//				? {{8{1'd0}}, __temp[2][`MSB_POS__ALU_INOUT:8]}
+//				: __temp[2];
+//			out.data = in.amount[4] 
+//				? {{16{1'd0}}, __temp[3][`MSB_POS__ALU_INOUT:16]}
+//				: __temp[3];
+//		end
+//
+//		else // if (in.data[31])
+//		begin
+//			__temp[0] = in.amount[0] 
+//				? {{1{1'b1}}, in.data[`MSB_POS__ALU_INOUT:1]} 
+//				: in.data;
+//			__temp[1] = in.amount[1] 
+//				? {{2{1'b1}}, __temp[0][`MSB_POS__ALU_INOUT:2]} 
+//				: __temp[0];
+//			__temp[2] = in.amount[2] 
+//				? {{4{1'b1}}, __temp[1][`MSB_POS__ALU_INOUT:4]} 
+//				: __temp[1];
+//			__temp[3] = in.amount[3] 
+//				? {{8{1'b1}}, __temp[2][`MSB_POS__ALU_INOUT:8]} 
+//				: __temp[2];
+//			out.data = in.amount[4] 
+//				? {{16{1'b1}}, __temp[3][`MSB_POS__ALU_INOUT:16]} 
+//				: __temp[3];
+//		end
+//	end
+//
+//endmodule
 
 // This is not a generic module because the algorithm used here is specific
 // to the operand sizes.  
@@ -486,7 +486,7 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32,
 
 
 	// Tasks
-	task iterate;
+	task iterate_blocking;
 		// if (__P >= 0)
 		if (!__P[TEMP_MSB_POS] || (__P == 0))
 		begin
@@ -501,6 +501,23 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32,
 		end
 
 		__counter = __counter - 1;
+	endtask
+
+	task iterate_non_blocking;
+		// if (__P >= 0)
+		if (!__P[TEMP_MSB_POS] || (__P == 0))
+		begin
+			__quot_buf[__counter] <= 1;
+			__P <= (__P << 1) - __D;
+		end
+
+		else
+		begin
+			__quot_buf[__counter] <= 0;
+			__P <= (__P << 1) + __D;
+		end
+
+		__counter <= __counter - 1;
 	endtask
 
 
@@ -536,68 +553,69 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32,
 	always @ (posedge clk)
 	//always_ff @ (posedge clk)
 	begin
-		if (__state_counter[COUNTER_MSB_POS])
+		//if (NUM_ITERATIONS_PER_CYCLE > 1)
+		//case (NUM_ITERATIONS_PER_CYCLE)
+		//default:
+		//if (NUM_ITERATIONS_PER_CYCLE != 1)
 		begin
-			__quot_buf = 0;
-			__rem_buf = 0;
-
-			__counter = ARGS_MSB_POS;
-
-
-			__P = __num_buf;
-			__D = __denom_buf << ARGS_WIDTH;
-		end
-
-		else if (__busy)
-		begin
-			//if (!__state_counter[COUNTER_MSB_POS])
-			if ($signed(__counter) > $signed(-1))
+			if (__state_counter[COUNTER_MSB_POS])
 			begin
-				// At some clock rates, some FPGAs may be able to handle
-				// more than one iteration per clock cycle, which is why
-				// iterate() is a task.  Feel free to try more than one
-				// iteration per clock cycle.
+				__quot_buf = 0;
+				__rem_buf = 0;
 
-				for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
+				__counter = ARGS_MSB_POS;
+
+
+				__P = __num_buf;
+				__D = __denom_buf << ARGS_WIDTH;
+			end
+
+			else if (__busy)
+			begin
+				if (!__state_counter[COUNTER_MSB_POS])
+				//if ($signed(__counter) > $signed(-1))
 				begin
-					iterate();
+					// At some clock rates, some FPGAs may be able to handle
+					// more than one iteration per clock cycle, which is why
+					// iterate() is a task.  Feel free to try more than one
+					// iteration per clock cycle.
+
+
+					for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
+					begin
+						iterate_blocking();
+					end
 				end
-				//case (NUM_ITERATIONS_PER_CYCLE)
-				//	1:
-				//	begin
-				//		iterate();
-				//	end
-
-				//	2:
-				//	begin
-				//		iterate();
-				//		iterate();
-				//	end
-
-				//	3:
-				//	begin
-				//		iterate();
-				//		iterate();
-				//		iterate();
-				//	end
-
-				//	4:
-				//	begin
-				//		iterate();
-				//		iterate();
-				//		iterate();
-				//		iterate();
-				//	end
-
-				//	default:
-				//	begin
-				//		iterate();
-				//	end
-
-				//endcase
 			end
 		end
 
+		////else // if (NUM_ITERATIONS_PER_CYCLE <= 1)
+		////1:
+		//else
+		//begin
+		//	if (__state_counter[COUNTER_MSB_POS])
+		//	begin
+		//		__quot_buf <= 0;
+		//		__rem_buf <= 0;
+
+		//		__counter <= ARGS_MSB_POS;
+
+
+		//		__P <= __num_buf;
+		//		__D <= __denom_buf << ARGS_WIDTH;
+		//	end
+
+		//	//else if (__busy && !__state_counter[COUNTER_MSB_POS])
+		//	else if (__busy)
+		//	begin
+		//		//if (!__state_counter[COUNTER_MSB_POS])
+		//		////if ($signed(__counter) > $signed(-1))
+		//		//begin
+		//		//end
+		//			iterate_non_blocking();
+		//	end
+		//end
+		////endcase
 	end
 
 
