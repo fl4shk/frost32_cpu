@@ -123,12 +123,16 @@ module RegisterFile(input logic clk,
 	output PkgRegisterFile::PortOut_RegFile out
 	`ifdef OPT_DEBUG_REGISTER_FILE
 	,
+	`ifndef ICARUS
+	output logic [`MSB_POS__REG_FILE_DATA:0] out_debug_u7
+	`else
 	output logic [`MSB_POS__REG_FILE_DATA:0] 
 		out_debug_zero, 
 		out_debug_u0, out_debug_u1, out_debug_u2, out_debug_u3,
 		out_debug_u4, out_debug_u5, out_debug_u6, out_debug_u7,
 		out_debug_u8, out_debug_u9, out_debug_u10, 
 		out_debug_temp, out_debug_lr, out_debug_fp, out_debug_sp
+	`endif		// !ICARUS
 	`endif		// OPT_DEBUG_REGISTER_FILE
 	);
 
@@ -152,6 +156,24 @@ module RegisterFile(input logic clk,
 
 
 	`ifdef OPT_DEBUG_REGISTER_FILE
+	`ifndef ICARUS
+	//assign out_debug_zero = __regfile[0];
+	//assign out_debug_u0 = __regfile[1];
+	//assign out_debug_u1 = __regfile[2];
+	//assign out_debug_u2 = __regfile[3];
+	//assign out_debug_u3 = __regfile[4];
+	//assign out_debug_u4 = __regfile[5];
+	//assign out_debug_u5 = __regfile[6];
+	//assign out_debug_u6 = __regfile[7];
+	assign out_debug_u7 = __regfile[8];
+	//assign out_debug_u8 = __regfile[9];
+	//assign out_debug_u9 = __regfile[10];
+	//assign out_debug_u10 = __regfile[11];
+	//assign out_debug_temp = __regfile[12];
+	//assign out_debug_lr = __regfile[13];
+	//assign out_debug_fp = __regfile[14];
+	//assign out_debug_sp = __regfile[15];
+	`else
 	assign out_debug_zero = __regfile[0];
 	assign out_debug_u0 = __regfile[1];
 	assign out_debug_u1 = __regfile[2];
@@ -168,6 +190,7 @@ module RegisterFile(input logic clk,
 	assign out_debug_lr = __regfile[13];
 	assign out_debug_fp = __regfile[14];
 	assign out_debug_sp = __regfile[15];
+	`endif		// !ICARUS
 	`endif		// OPT_DEBUG_REGISTER_FILE
 
 	initial

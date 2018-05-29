@@ -8,13 +8,13 @@
 //`define OPT_HAVE_SINGLE_CYCLE_MULTIPLY
 `endif		// ICARUS
 
-//// Temporary
+// Temporary
 //`define OPT_DEBUG_REGISTER_FILE
 
 // Two bits per clock cycle of divide
-//`define OPT_FAST_DIV
+`define OPT_FAST_DIV
 
-// For lower clock rates (such as 80 MHz)
+// For lower clock rates:  four bits per clock cycle of divide
 //`define OPT_VERY_FAST_DIV
 
 //`define OPT_HAVE_STAGE_REGISTER_READ

@@ -13,6 +13,8 @@ module TestBench;
 	{
 		logic interrupt;
 		logic can_interrupt;
+
+		logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] addr_0_data;
 	} __locals;
 
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;
@@ -60,6 +62,21 @@ module TestBench;
 	//	$display("TestBench:  %h", __in_frost32_cpu.wait_for_mem);
 	//end
 
+	always @ (posedge __clk)
+	begin
+		//$display("TestBench __out_main_mem.addr_0_data:  %h",
+		//	__out_main_mem.addr_0_data);
+		
+		if ((__out_frost32_cpu.data_inout_access_type
+			== PkgFrost32Cpu::DiatWrite)
+			&& (__out_frost32_cpu.addr == 0))
+		begin
+			__locals.addr_0_data <= __out_frost32_cpu.data;
+		end
+		$display("TestBench __locals.addr_0_data:  %h",
+			__locals.addr_0_data);
+	end
+
 
 	initial
 	begin
@@ -76,26 +93,30 @@ module TestBench;
 		//#1000
 		//$finish;
 
-		#1000
-		#104
-		__locals.interrupt = 1;
+		//for (int i=0; i<5; i=i+1)
+		//begin
+		//	#1000
+		//	#104
+		//	__locals.interrupt = 1;
 
-		//__locals.interrupt = 0;
+		//	//__locals.interrupt = 0;
 
-		//#160
-		#60
-		__locals.interrupt = 0;
+		//	//#160
+		//	#60
+		//	__locals.interrupt = 0;
 
-		#2000
+		//	#2000
 
-		#104
-		__locals.interrupt = 1;
+		//	#104
+		//	__locals.interrupt = 1;
 
-		#60
-		__locals.interrupt = 0;
+		//	#60
+		//	__locals.interrupt = 0;
 
-		#1000
-		$finish;
+		//	#1000
+		//	$display("TestBench:  end of loop:  %h", i);
+		//end
+		//$finish;
 	end
 
 	//always @ (posedge __clk)

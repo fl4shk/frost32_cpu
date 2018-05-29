@@ -439,6 +439,263 @@ endmodule
 //
 //endmodule
 
+//module RestoringDivider # (parameter ARGS_WIDTH=32)
+//	(input logic clk, in_enable, in_unsgn_or_sgn,
+//
+//	// Numerator, Denominator
+//	input logic [`WIDTH_TO_MSB_POS(ARGS_WIDTH):0] in_num, in_denom,
+//
+//	// Quotient, Remainder
+//	output logic [`WIDTH_TO_MSB_POS(ARGS_WIDTH):0] out_quot, out_rem,
+//
+//	output logic out_can_accept_cmd, out_data_ready);
+//
+//	localparam __ARGS_MSB_POS = `WIDTH_TO_MSB_POS(ARGS_WIDTH);
+//
+//
+//	localparam TEMP_WIDTH = (ARGS_WIDTH << 1) + 1;
+//
+//	localparam __TEMP_MSB_POS = `WIDTH_TO_MSB_POS(TEMP_WIDTH);
+//
+//
+//	// This assumes you aren't trying to do division of numbers larger than
+//	// 128-bit.
+//	localparam __COUNTER_MSB_POS = 7;
+//
+//
+//
+//
+//	bit [__COUNTER_MSB_POS:0] __counter, __state_counter;
+//
+//	bit [__ARGS_MSB_POS:0] __num_buf, __denom_buf;
+//	bit [__ARGS_MSB_POS:0] __quot_buf, __rem_buf;
+//
+//
+//	wire __busy;
+//	//wire __num_is_negative, __denom_is_negative;
+//	//bit __num_was_negative, __denom_was_negative;
+//	//bit __unsgn_or_sgn_buf;
+//
+//
+//
+//	// Temporaries
+//	bit [__TEMP_MSB_POS:0] __P;
+//	bit [__TEMP_MSB_POS:0] __D;
+//
+//
+//
+//	// Tasks
+//	task iterate;
+//		input [__COUNTER_MSB_POS:0] i;
+//
+//		__P = (__P << 1) - __D;
+//		if (!__P[__TEMP_MSB_POS] || (__P == 0))
+//		begin
+//			__quot_buf[i] = 1;
+//			//__P = (__P << 1) - __D;
+//		end
+//
+//		else
+//		begin
+//			//__quot_buf[i] = 0;
+//			//__P = (__P << 1) + __D;
+//			__P = __P + __D;
+//		end
+//
+//		//__counter = __counter - 1;
+//	endtask
+//
+//
+//
+//	// Assignments
+//	assign __busy = !out_can_accept_cmd;
+//
+//	//assign __num_is_negative = $signed(in_num) < $signed(0);
+//	//assign __denom_is_negative = $signed(in_denom) < $signed(0);
+//
+//
+//
+//	initial
+//	begin
+//		__counter = 0;
+//		__state_counter = 0;
+//		__P = 0;
+//		__D = 0;
+//
+//		__state_counter = 0;
+//
+//		out_quot = 0;
+//		//out_rem = 0;
+//
+//		out_can_accept_cmd = 1;
+//		out_data_ready = 0;
+//	end
+//
+//
+//	always @ (posedge clk)
+//	begin
+//		if (__state_counter[__COUNTER_MSB_POS])
+//		begin
+//			__quot_buf = 0;
+//			__rem_buf = 0;
+//
+//			__counter = __ARGS_MSB_POS;
+//
+//
+//			__P = __num_buf;
+//			__D = __denom_buf << ARGS_WIDTH;
+//		end
+//
+//		else if (__busy)
+//		begin
+//			//if (!__state_counter[__COUNTER_MSB_POS])
+//			//if ($signed(__counter) > $signed(-1))
+//			//if (!__counter[__COUNTER_MSB_POS])
+//			begin
+//				// At some clock rates, some FPGAs may be able to handle
+//				// more than one iteration per clock cycle, which is why
+//				// iterate() is a task.  Feel free to try more than one
+//				// iteration per clock cycle.
+//
+//
+//				//if (NUM_ITERATIONS_PER_CYCLE > 1)
+//				//begin
+//				//	for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
+//				//	begin
+//				//		iterate();
+//				//	end
+//				//end
+//
+//				//else
+//				//begin
+//				//	iterate();
+//				//end
+//
+//				//case (NUM_ITERATIONS_PER_CYCLE)
+//				//	1:
+//				//	begin
+//				//		iterate();
+//				//	end
+//
+//				//	2:
+//				//	begin
+//				//		iterate();
+//				//		iterate();
+//				//	end
+//
+//				//	4:
+//				//	begin
+//				//		iterate();
+//				//		iterate();
+//				//		iterate();
+//				//		iterate();
+//				//	end
+//
+//				//	default:
+//				//	begin
+//				//		for (int i=0; i<NUM_ITERATIONS_PER_CYCLE; i=i+1)
+//				//		begin
+//				//			iterate();
+//				//		end
+//				//	end
+//				//endcase
+//				`ifdef OPT_VERY_FAST_DIV
+//				iterate(__counter);
+//				iterate(__counter - 1);
+//				iterate(__counter - 2);
+//				iterate(__counter - 3);
+//				__counter = __counter - 4;
+//				`else
+//				`ifdef OPT_FAST_DIV
+//				iterate(__counter);
+//				iterate(__counter - 1);
+//				__counter = __counter - 2;
+//				`else
+//				iterate(__counter);
+//				__counter = __counter - 1;
+//				`endif		// OPT_FAST_DIV
+//				`endif		// OPT_VERY_FAST_DIV
+//			end
+//		end
+//
+//	end
+//
+//
+//	always @ (posedge clk)
+//	begin
+//		if (in_enable && out_can_accept_cmd)
+//		begin
+//			out_can_accept_cmd <= 0;
+//			out_data_ready <= 0;
+//			__state_counter <= -1;
+//
+//			__num_buf <= in_num;
+//			__denom_buf <= in_denom;
+//
+//			//__num_buf <= (in_unsgn_or_sgn && __num_is_negative)
+//			//	? (-in_num) : in_num;
+//			//__denom_buf <= (in_unsgn_or_sgn && __denom_is_negative)
+//			//	? (-in_denom) : in_denom;
+//
+//			//__unsgn_or_sgn_buf <= in_unsgn_or_sgn;
+//
+//			//__num_was_negative <= __num_is_negative;
+//			//__denom_was_negative <= __denom_is_negative;
+//		end
+//
+//		else if (__busy)
+//		begin
+//			if (!__counter[__COUNTER_MSB_POS])
+//			begin
+//				__state_counter <= __state_counter + 1;
+//			end
+//
+//			else
+//			begin
+//				out_can_accept_cmd <= 1;
+//				__state_counter <= -1;
+//				out_data_ready <= 1;
+//				out_quot <= __quot_buf;
+//
+//				////$display("end:  %d, %d %d, %d",
+//				////	__unsgn_or_sgn_buf, 
+//				////	__num_was_negative, __denom_was_negative,
+//				////	(__num_was_negative ^ __denom_was_negative));
+//				//if (__P[__TEMP_MSB_POS])
+//				//begin
+//				//	//out_quot <= (__unsgn_or_sgn_buf 
+//				//	//	&& (__num_was_negative  ^ __denom_was_negative))
+//				//	//	?  (-((__quot_buf - (~__quot_buf)) - 1))
+//				//	//	: ((__quot_buf - (~__quot_buf)) - 1);
+//				//	out_quot <= __quot_buf;
+//				//	out_rem <= (__unsgn_or_sgn_buf && __num_was_negative)
+//				//		? (-((__P + __D) >> ARGS_WIDTH))
+//				//		: ((__P + __D) >> ARGS_WIDTH);
+//				//end
+//
+//				//else
+//				//begin
+//				//	//out_quot <= (__unsgn_or_sgn_buf
+//				//	//	&& (__num_was_negative ^ __denom_was_negative))
+//				//	//	? (-((__quot_buf - (~__quot_buf))))
+//				//	//	: ((__quot_buf - (~__quot_buf)));
+//				//	out_quot <= __quot_buf;
+//				//	out_rem <= (__unsgn_or_sgn_buf && __num_was_negative)
+//				//		? (-((__P) >> ARGS_WIDTH))
+//				//		: ((__P) >> ARGS_WIDTH);
+//				//end
+//			end
+//		end
+//
+//		else
+//		begin
+//			$display("out_quot, out_rem:  %h, %h", out_quot, out_rem);
+//		end
+//	end
+//
+//
+//endmodule
+
 //module NonRestoringDivider #(parameter ARGS_WIDTH=32, 
 //	parameter NUM_ITERATIONS_PER_CYCLE=1)
 module NonRestoringDivider #(parameter ARGS_WIDTH=32)
@@ -473,9 +730,11 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 
 
 	wire __busy;
-	wire __num_is_negative, __denom_is_negative;
+	//wire __num_is_negative, __denom_is_negative;
 	bit __num_was_negative, __denom_was_negative;
 	bit __unsgn_or_sgn_buf;
+
+	bit __start_state;
 
 
 
@@ -487,20 +746,24 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 
 	// Tasks
 	task iterate;
+		input [__COUNTER_MSB_POS:0] i;
+
 		// if (__P >= 0)
 		if (!__P[__TEMP_MSB_POS] || (__P == 0))
 		begin
-			__quot_buf[__counter] = 1;
+			//__quot_buf[__counter] = 1;
+			__quot_buf[i] = 1;
 			__P = (__P << 1) - __D;
 		end
 
 		else
 		begin
-			//__quot_buf[__counter] = 0;
+			////__quot_buf[__counter] = 0;
+			//__quot_buf[i] = 0;
 			__P = (__P << 1) + __D;
 		end
 
-		__counter = __counter - 1;
+		//__counter = __counter - 1;
 	endtask
 
 
@@ -508,8 +771,8 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 	// Assignments
 	assign __busy = !out_can_accept_cmd;
 
-	assign __num_is_negative = $signed(in_num) < $signed(0);
-	assign __denom_is_negative = $signed(in_denom) < $signed(0);
+	//assign __num_is_negative = $signed(in_num) < $signed(0);
+	//assign __denom_is_negative = $signed(in_denom) < $signed(0);
 
 
 
@@ -521,6 +784,8 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 		__D = 0;
 
 		__state_counter = 0;
+
+		__start_state = 1;
 
 		out_quot = 0;
 		out_rem = 0;
@@ -597,17 +862,33 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 				//		end
 				//	end
 				//endcase
+				//`ifdef OPT_VERY_FAST_DIV
+				//iterate();
+				//iterate();
+				//iterate();
+				//iterate();
+				//`else
+				//`ifdef OPT_FAST_DIV
+				//iterate();
+				//iterate();
+				//`else
+				//iterate();
+				//`endif		// OPT_FAST_DIV
+				//`endif		// OPT_VERY_FAST_DIV
 				`ifdef OPT_VERY_FAST_DIV
-				iterate();
-				iterate();
-				iterate();
-				iterate();
+				iterate(__counter);
+				iterate(__counter - 1);
+				iterate(__counter - 2);
+				iterate(__counter - 3);
+				__counter = __counter - 4;
 				`else
 				`ifdef OPT_FAST_DIV
-				iterate();
-				iterate();
+				iterate(__counter);
+				iterate(__counter - 1);
+				__counter = __counter - 2;
 				`else
-				iterate();
+				iterate(__counter);
+				__counter = __counter - 1;
 				`endif		// OPT_FAST_DIV
 				`endif		// OPT_VERY_FAST_DIV
 			end
@@ -624,16 +905,33 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 			out_data_ready <= 0;
 			__state_counter <= -1;
 
+			__num_buf <= in_num;
+			__denom_buf <= in_denom;
 
-			__num_buf <= (in_unsgn_or_sgn && __num_is_negative)
-				? (-in_num) : in_num;
-			__denom_buf <= (in_unsgn_or_sgn && __denom_is_negative)
-				? (-in_denom) : in_denom;
+
+			//__num_buf <= (in_unsgn_or_sgn && __num_is_negative)
+			//	? (-in_num) : in_num;
+			//__denom_buf <= (in_unsgn_or_sgn && __denom_is_negative)
+			//	? (-in_denom) : in_denom;
 
 			__unsgn_or_sgn_buf <= in_unsgn_or_sgn;
 
-			__num_was_negative <= __num_is_negative;
-			__denom_was_negative <= __denom_is_negative;
+			//__num_was_negative <= __num_is_negative;
+			//__denom_was_negative <= __denom_is_negative;
+			__num_was_negative <= in_num[__ARGS_MSB_POS];
+			__denom_was_negative <= in_denom[__ARGS_MSB_POS];
+
+			__start_state <= 0;
+		end
+
+		else if (__start_state == 0)
+		begin
+			__start_state <= 1;
+
+			__num_buf <= (__unsgn_or_sgn_buf && __num_was_negative)
+				? (-__num_buf) : __num_buf;
+			__denom_buf <= (__unsgn_or_sgn_buf && __denom_was_negative)
+				? (-__denom_buf) : __denom_buf;
 		end
 
 		else if (__busy)

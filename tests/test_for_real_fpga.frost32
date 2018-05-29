@@ -1,4 +1,6 @@
 .org 0x0000
+var:
+
 main:
 {
 	; Assume top of available memory is here.
@@ -21,9 +23,9 @@ main:
 
 	; I really need a pseudo instruction for non-indexed loads and stores.
 	; That will probably be coming....
-	cpyi u3, data_for_subtract_from_u1
+	cpyi u3, data_for_modify_u7_outside_interrupt
 	ldr u3, [u3, zero]
-	cpyi u4, data_for_add_to_u1
+	cpyi u4, data_for_modify_u7_in_interrupt
 	ldr u4, [u4, zero]
 
 	; For calling the subroutine
@@ -105,25 +107,21 @@ code_to_modify:
 	jmp lr
 
 
-;data_for_dec_u1:
-data_for_subtract_from_u1:
+data_for_modify_u7_outside_interrupt:
 {
-	;dec u1
+	add zero, zero, zero
 	;subi u1, 20
 	;subi u7, u9, 20
-	udiv u7, zero, zero
+	;udiv u7, zero, zero
 	;dec u1
 }
 
-data_for_add_to_u1:
+data_for_modify_u7_in_interrupt:
 {
 	;addi u1, 20
 	addi u7, u9, 20
 	;muli u1, u5, 20
 }
-
-var:
-	.space 4
 
 ;.org 0x6000 
 

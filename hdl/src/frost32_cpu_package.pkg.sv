@@ -80,29 +80,34 @@ typedef struct packed
 	`MAKE_LIST_OF_MEMBERS__FROST32_CPU_PORTOUT_MEM_ACCESS
 
 	`ifdef OPT_DEBUG_REGISTER_FILE
-	logic [`MSB_POS__REG_FILE_DATA:0] debug_reg_zero, debug_reg_u0,
-		debug_reg_u1, debug_reg_u2, debug_reg_u3, debug_reg_u4,
-		debug_reg_u5, debug_reg_u6, debug_reg_u7, debug_reg_u8,
-		debug_reg_u9, debug_reg_u10, debug_reg_temp, debug_reg_lr,
-		debug_reg_fp, debug_reg_sp;
+	`ifndef ICARUS
+	logic [`MSB_POS__REG_FILE_DATA:0] debug_reg_u7;
+	`else
+	logic [`MSB_POS__REG_FILE_DATA:0] 
+		debug_reg_zero, 
+		debug_reg_u0, debug_reg_u1, debug_reg_u2, debug_reg_u3,
+		debug_reg_u4, debug_reg_u5, debug_reg_u6, debug_reg_u7,
+		debug_reg_u8, debug_reg_u9, debug_reg_u10, 
+		debug_reg_temp, debug_reg_lr, debug_reg_fp, debug_reg_sp;
+	`endif		// !ICARUS
 	`endif		// OPT_DEBUG_REGISTER_FILE
 } PortOut_Frost32Cpu;
 
-typedef struct packed
-{
-	logic [`MSB_POS__REG_FILE_SEL:0] write_sel;
-	logic [`MSB_POS__REG_FILE_DATA:0] write_data;
-
-	logic [`MSB_POS__REG_FILE_SEL:0] 
-		instr_ra_index, instr_rb_index, instr_rc_index;
-	logic [`MSB_POS__REG_FILE_DATA:0] 
-		raw_rfile_data_ra, raw_rfile_data_rb, raw_rfile_data_rc;
-} PortIn_OperandForwarder;
-
-typedef struct packed
-{
-	//logic [`MSB_POS__REG_FILE_DATA:0] data;
-	logic [`MSB_POS__REG_FILE_DATA:0] data_ra, data_rb, data_rc;
-} PortOut_OperandForwarder;
+//typedef struct packed
+//{
+//	logic [`MSB_POS__REG_FILE_SEL:0] write_sel;
+//	logic [`MSB_POS__REG_FILE_DATA:0] write_data;
+//
+//	logic [`MSB_POS__REG_FILE_SEL:0] 
+//		instr_ra_index, instr_rb_index, instr_rc_index;
+//	logic [`MSB_POS__REG_FILE_DATA:0] 
+//		raw_rfile_data_ra, raw_rfile_data_rb, raw_rfile_data_rc;
+//} PortIn_OperandForwarder;
+//
+//typedef struct packed
+//{
+//	//logic [`MSB_POS__REG_FILE_DATA:0] data;
+//	logic [`MSB_POS__REG_FILE_DATA:0] data_ra, data_rb, data_rc;
+//} PortOut_OperandForwarder;
 
 endpackage : PkgFrost32Cpu
