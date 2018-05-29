@@ -9,13 +9,15 @@ main:
 	cpyi u1, 0x9000
 
 	mul u3, u0, u1
-	;udiv u4, u0, u1
+	udiv u4, u0, u1
 	;sdiv u5, u0, u1
 	sdiv u5, u1, u0
 
 	;addi u4, u3, 0x20
 
 	subi u2, zero, 20		; 0x8
+
+	cpyi u6, loop
 
 	;cpyi u3, loop
 
@@ -38,16 +40,12 @@ loop:
 	;dec u0				; 0x10
 	;addi u0, 7
 
-	;add zero, zero, zero
-	;add zero, zero, zero
-	;add zero, zero, zero
-	;add zero, zero, zero
-
 	bges u0, u2, loop	; 0x14
-
-	; Branch to subroutine
-	addsi lr, pc, 8
-	bra test_call
+;	jges u0, u2, u6
+;
+;	; Branch to subroutine
+;	addsi lr, pc, 8
+;	bra test_call
 
 
 	;bra quit
@@ -56,7 +54,7 @@ loop:
 
 test_call:
 {
-	cpyi u3, 6
+	cpyi u7, 6
 	jmp lr
 }
 

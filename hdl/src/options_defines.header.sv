@@ -8,8 +8,8 @@
 //`define OPT_HAVE_SINGLE_CYCLE_MULTIPLY
 `endif		// ICARUS
 
-// Temporary
-`define OPT_DEBUG_REGISTER_FILE
+//// Temporary
+//`define OPT_DEBUG_REGISTER_FILE
 
 // Two bits per clock cycle of divide
 //`define OPT_FAST_DIV

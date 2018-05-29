@@ -3,12 +3,18 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
-//// Operand forwarding thing (keeps that bit out of this
-//module OperandForwarder(input bit clk,
-//	input PkgFrost32Cpu::PortIn_OperandForwarder in,
-//	output PkgFrost32Cpu::PortOut_OperandForwarder out);
-//
-//endmodule
+// Forwarder unit
+module OperandForwarder(input bit clk,
+	input PkgFrost32Cpu::PortIn_OperandForwarder in,
+	output PkgFrost32Cpu::PortOut_OperandForwarder out);
+
+	import PkgFrost32Cpu::*;
+
+	parameter __ARR_SIZE__NUM_STAGES_TO_FORWARD = 3;
+	parameter __LAST_INDEX__NUM_STAGES_TO_FORWARD
+		= `ARR_SIZE_TO_LAST_INDEX(__LAST_INDEX__NUM_STAGES_TO_FORWARD);
+
+endmodule
 
 
 module Frost32Cpu(input logic clk,
@@ -1267,6 +1273,7 @@ module Frost32Cpu(input logic clk,
 
 	task stop_operand_forwarding_or_write_back;
 		__stage_execute_output_data.prev_written_reg_index <= 0;
+		__stage_execute_output_data.n_reg_data <= 0;
 	endtask
 
 	//task stop_reg_write;
@@ -1409,55 +1416,6 @@ module Frost32Cpu(input logic clk,
 		//end
 	endtask
 
-	//task perform_multiply_32;
-	//	input [`MSB_POS__MUL32_INOUT:0] x, y;
-
-	//	//case (__stage_instr_decode_data.stall_counter)
-	//	//case (__stage_instr_decode_data.stall_counter[2:0])
-	//	case (__stage_instr_decode_data.stall_counter[1:0])
-	//		//0:
-	//		//begin
-	//		//	
-	//		//end
-
-	//		//if (__stage_instr_decode_data.stall_counter == 1)
-	//		1:
-	//		begin
-	//			prep_ra_wb(__locals.mul32_result);
-	//		end
-
-	//		//else if (__stage_instr_decode_data.stall_counter == 2)
-	//		2:
-	//		begin
-	//			__locals.mul32_result
-	//				<= {(__locals.mul32_partial_result_x1_y0
-	//				+ __locals.mul32_partial_result_x0_y1), 16'h0000}
-	//				+ __locals.mul32_partial_result_x0_y0;
-	//		end
-
-	//		////else if (__stage_instr_decode_data.stall_counter == 3)
-	//		//3:
-	//		//begin
-	//		//	__locals.mul32_result
-	//		//		<= ;
-	//		//end
-
-	//		//else
-	//		//4:
-	//		default:
-	//		begin
-	//			__locals.mul32_partial_result_x0_y0 <= x[15:0] * y[15:0];
-	//			__locals.mul32_partial_result_x0_y1 <= x[15:0] * y[31:16];
-	//			__locals.mul32_partial_result_x1_y0 <= x[31:16] * y[15:0];
-	//		end
-
-	//		//default:
-	//		//begin
-	//		//end
-	//	endcase
-
-	//endtask
-
 	task ctrl_multiply_32;
 		input [`MSB_POS__MUL32_INOUT:0] x, y;
 
@@ -1503,8 +1461,10 @@ module Frost32Cpu(input logic clk,
 				__in_div_32.enable <= 1;
 				//__in_div_32.unsgn_or_sgn <= 0;
 				__in_div_32.unsgn_or_sgn <= n_unsgn_or_sgn;
-				__in_div_32.num <= __stage_execute_input_data.rfile_rb_data;
-				__in_div_32.denom <= __stage_execute_input_data.rfile_rc_data;
+				__in_div_32.num
+					<= __stage_execute_input_data.rfile_rb_data;
+				__in_div_32.denom
+					<= __stage_execute_input_data.rfile_rc_data;
 
 				stop_operand_forwarding_or_write_back();
 			end

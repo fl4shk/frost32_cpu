@@ -88,16 +88,19 @@ typedef struct packed
 	`endif		// OPT_DEBUG_REGISTER_FILE
 } PortOut_Frost32Cpu;
 
-//typedef struct packed
-//{
-//	logic [`MSB_POS__REG_FILE_SEL:0] n_sel;
-//	logic [`MSB_POS__REG_FILE_DATA:0] n_data;
-//	logic [`MSB_POS__REG_FILE_DATA:0] raw_rfile_data;
-//} PortIn_OperandForwarder;
-//
-//typedef struct packed
-//{
-//	logic [`MSB_POS__REG_FILE_DATA:0] data;
-//} PortOut_OperandForwarder;
+typedef struct packed
+{
+	logic [`MSB_POS__REG_FILE_SEL:0] write_sel;
+	logic [`MSB_POS__REG_FILE_DATA:0] write_data;
+
+	logic [`MSB_POS__REG_FILE_DATA:0] 
+		raw_rfile_data_ra, raw_rfile_data_rb, raw_rfile_data_rc;
+} PortIn_OperandForwarder;
+
+typedef struct packed
+{
+	//logic [`MSB_POS__REG_FILE_DATA:0] data;
+	logic [`MSB_POS__REG_FILE_DATA:0] data_ra, data_rb, data_rc;
+} PortOut_OperandForwarder;
 
 endpackage : PkgFrost32Cpu
