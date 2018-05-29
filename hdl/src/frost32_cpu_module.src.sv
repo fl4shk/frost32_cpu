@@ -3,18 +3,62 @@
 `include "src/alu_defines.header.sv"
 `include "src/register_file_defines.header.sv"
 
-// Forwarder unit
-module OperandForwarder(input bit clk,
-	input PkgFrost32Cpu::PortIn_OperandForwarder in,
-	output PkgFrost32Cpu::PortOut_OperandForwarder out);
-
-	import PkgFrost32Cpu::*;
-
-	parameter __ARR_SIZE__NUM_STAGES_TO_FORWARD = 3;
-	parameter __LAST_INDEX__NUM_STAGES_TO_FORWARD
-		= `ARR_SIZE_TO_LAST_INDEX(__LAST_INDEX__NUM_STAGES_TO_FORWARD);
-
-endmodule
+//// Forwarder unit
+//module OperandForwarder(input bit clk,
+//	input PkgFrost32Cpu::PortIn_OperandForwarder in,
+//	output PkgFrost32Cpu::PortOut_OperandForwarder out);
+//
+//	import PkgFrost32Cpu::*;
+//
+//	// Forward from up to three instructions ago
+//	parameter __ARR_SIZE__NUM_STAGES_TO_FORWARD = 3;
+//	parameter __LAST_INDEX__NUM_STAGES_TO_FORWARD
+//		= `ARR_SIZE_TO_LAST_INDEX(__LAST_INDEX__NUM_STAGES_TO_FORWARD);
+//
+//
+//	// Use parallel arrays because Icarus Verilog doesn't let me make an
+//	// array of packed structs.
+//	logic [`MSB_POS__REG_FILE_SEL:0]
+//		__prev_sel_ra[0 : __LAST_INDEX__NUM_STAGES_TO_FORWARD],
+//		__prev_sel_rb[0 : __LAST_INDEX__NUM_STAGES_TO_FORWARD],
+//		__prev_sel_rc[0 : __LAST_INDEX__NUM_STAGES_TO_FORWARD];
+//
+//	logic [`MSB_POS__REG_FILE_DATA:0]
+//		__prev_data_ra[0 : __LAST_INDEX__NUM_STAGES_TO_FORWARD],
+//		__prev_data_rb[0 : __LAST_INDEX__NUM_STAGES_TO_FORWARD],
+//		__prev_data_rc[0 : __LAST_INDEX__NUM_STAGES_TO_FORWARD];
+//
+//	initial
+//	begin
+//		for (int i=0; i<__ARR_SIZE__NUM_STAGES_TO_FORWARD; i=i+1)
+//		begin
+//			__prev_sel_ra[i] = 0;
+//			__prev_sel_rb[i] = 0;
+//			__prev_sel_rc[i] = 0;
+//
+//			__prev_data_ra[i] = 0;
+//			__prev_data_rb[i] = 0;
+//			__prev_data_rc[i] = 0;
+//		end
+//
+//		out = 0;
+//	end
+//
+//	// Synchronous reads, asynchronous writes
+//
+//	`define gen_operand_forwarder_write(INDEX) \
+//	/* Update the arrays */
+//	always_comb
+//	begin
+//		if (in.write_sel == in.instr_``INDEX``_index)
+//		begin
+//			__prev_data_``INDEX[0] <= in.write_data
+//		end
+//
+//		__prev_data_``INDEX``
+//	end
+//
+//endmodule
 
 
 module Frost32Cpu(input logic clk,
@@ -142,16 +186,17 @@ module Frost32Cpu(input logic clk,
 		// program counter in the case of these instructions)
 		//logic [`MSB_POS__FROST32_CPU_ADDR:0] next_pc_after_ldst;
 
-		logic [`MSB_POS__REG_FILE_SEL:0] prev_written_reg_index;
+		logic [`MSB_POS__REG_FILE_SEL:0] 
+			prev_written_reg_index_0, prev_written_reg_index_1;
 
-		logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data;
+		logic [`MSB_POS__REG_FILE_DATA:0] n_reg_data_0, n_reg_data_1;
 
 		//logic do_write_lr;
 
 		//logic perform_operand_forwarding;
 	}
-		__stage_execute_output_data,
-		__stage_write_back_output_data;
+		__stage_execute_output_data;
+		//__stage_write_back_output_data;
 		//__stage_write_back_prev_output_data;
 
 
@@ -617,44 +662,6 @@ module Frost32Cpu(input logic clk,
 	// This is the operand forwarding.  It's so simple!
 	// We only write to one register at a time, so we only need one
 	// multiplexer per rfile_r..._data
-//	`define perform_operand_forwarding(INDEX) \
-//	always_comb \
-//	begin \
-//		/* Forward from last instruction */ \
-//		if (__multi_stage_data_execute.instr_``INDEX``_index \
-//			== __stage_execute_output_data.prev_written_reg_index \
-//			&& __multi_stage_data_execute.instr_``INDEX``_index) \
-//		begin \
-//			__stage_execute_input_data.rfile_``INDEX``_data \
-//				= __stage_execute_output_data.n_reg_data; \
-//		end \
-//\
-//		/* Forward from two instructions ago */ \
-//		else if (__multi_stage_data_execute.instr_``INDEX``_index \
-//			== __stage_write_back_output_data.prev_written_reg_index \
-//			&& __multi_stage_data_execute.instr_``INDEX``_index) \
-//		begin \
-//			__stage_execute_input_data.rfile_``INDEX``_data \
-//				= __stage_write_back_output_data.n_reg_data; \
-//		end \
-//\
-//		/* Forward from three instructions ago */ \
-//		else if (__multi_stage_data_execute.instr_``INDEX``_index \
-//			== __stage_write_back_prev_output_data \
-//			.prev_written_reg_index \
-//			&& __multi_stage_data_execute.instr_``INDEX``_index) \
-//		begin \
-//			__stage_execute_input_data.rfile_``INDEX``_data \
-//				= __stage_write_back_prev_output_data.n_reg_data; \
-//		end \
-//\
-//		/* No forwarding */ \
-//		else \
-//		begin \
-//			__stage_execute_input_data.rfile_``INDEX``_data \
-//				= __out_reg_file.read_data_``INDEX``; \
-//		end \
-//	end
 
 	`define perform_operand_forwarding(INDEX) \
 	always_comb \
@@ -667,18 +674,18 @@ module Frost32Cpu(input logic clk,
 		\
 		/* Forward from last instruction */ \
 		else if (__multi_stage_data_execute.instr_``INDEX``_index \
-			== __stage_execute_output_data.prev_written_reg_index) \
+			== __stage_execute_output_data.prev_written_reg_index_0) \
 		begin \
 			__stage_execute_input_data.rfile_``INDEX``_data \
-				= __stage_execute_output_data.n_reg_data; \
+				= __stage_execute_output_data.n_reg_data_0; \
 		end \
 		\
 		/* Forward from two instructions ago */ \
 		else if (__multi_stage_data_execute.instr_``INDEX``_index \
-			== __stage_write_back_output_data.prev_written_reg_index) \
+			== __stage_execute_output_data.prev_written_reg_index_1) \
 		begin \
 			__stage_execute_input_data.rfile_``INDEX``_data \
-				= __stage_write_back_output_data.n_reg_data; \
+				= __stage_execute_output_data.n_reg_data_1; \
 		end \
 		\
 		/* No forwarding */ \
@@ -1184,8 +1191,10 @@ module Frost32Cpu(input logic clk,
 		input [`MSB_POS__REG_FILE_SEL:0] n_sel;
 		input [`MSB_POS__REG_FILE_DATA:0] n_data;
 
-		__stage_execute_output_data.prev_written_reg_index <= n_sel;
-		__stage_execute_output_data.n_reg_data <= n_data;
+		//__stage_execute_output_data.prev_written_reg_index <= n_sel;
+		//__stage_execute_output_data.n_reg_data <= n_data;
+		__stage_execute_output_data.prev_written_reg_index_0 <= n_sel;
+		__stage_execute_output_data.n_reg_data_0 <= n_data;
 
 		$display("prep_reg_wb:  %h %h", n_sel, n_data);
 	endtask
@@ -1219,8 +1228,8 @@ module Frost32Cpu(input logic clk,
 
 		//__stage_execute_output_data.prev_written_reg_index <= n_sel;
 		//__stage_execute_output_data.n_reg_data <= n_data;
-		__stage_write_back_output_data.prev_written_reg_index <= n_sel;
-		__stage_write_back_output_data.n_reg_data <= n_data;
+		//__stage_write_back_output_data.prev_written_reg_index <= n_sel;
+		//__stage_write_back_output_data.n_reg_data <= n_data;
 
 		//__stage_write_back_prev_output_data
 		//	<= __stage_write_back_output_data;
@@ -1272,8 +1281,10 @@ module Frost32Cpu(input logic clk,
 	//endtask
 
 	task stop_operand_forwarding_or_write_back;
-		__stage_execute_output_data.prev_written_reg_index <= 0;
-		__stage_execute_output_data.n_reg_data <= 0;
+		//__stage_execute_output_data.prev_written_reg_index <= 0;
+		//__stage_execute_output_data.n_reg_data <= 0;
+		__stage_execute_output_data.prev_written_reg_index_0 <= 0;
+		//__stage_execute_output_data.n_reg_data_0 <= 0;
 	endtask
 
 	//task stop_reg_write;
@@ -1384,36 +1395,14 @@ module Frost32Cpu(input logic clk,
 	task handle_call_in_execute_stage;
 		input condition;
 
-		//__stage_write_back_input_data.n_reg_data <= __following_pc;
-		//__stage_write_back_input_data.do_write_lr <= condition;
-		__stage_execute_output_data.n_reg_data 
-			<= __following_pc_stage_execute;
-		//__stage_execute_generated_data.n_reg_data 
-		//	= __following_pc_stage_execute;
-		//__stage_execute_output_data.do_write_lr
-		//	<= condition;
-		__stage_execute_output_data.prev_written_reg_index
-			<= condition ? __REG_LR_INDEX : 0;
+		//__stage_execute_output_data.prev_written_reg_index
+		//	<= condition ? __REG_LR_INDEX : 0;
 		//__stage_execute_generated_data.to_write_reg_index
 		//	= condition ? __REG_LR_INDEX : 0;
-
-		//if (condition)
-		//begin
-		//	// We want to store the value of __following_pc in "lr".
-		//	__stage_write_back_input_data.n_reg_data <= __following_pc;
-		//	__stage_write_back_input_data.do_write_lr <= 1;
-		//end
-
-		//else
-		//begin
-		//	// We want to leave "lr" alone.
-		//	__stage_write_back_input_data.do_write_lr <= 0;
-		//end
-
-		//if (condition)
-		//begin
-		//	prep_reg_write(__REG_LR_INDEX, __following_pc_stage_execute);
-		//end
+		__stage_execute_output_data.n_reg_data_0
+			<= __following_pc_stage_execute;
+		__stage_execute_output_data.prev_written_reg_index_0
+			<= condition ? __REG_LR_INDEX : 0;
 	endtask
 
 	task ctrl_multiply_32;
@@ -1425,7 +1414,8 @@ module Frost32Cpu(input logic clk,
 			__in_mul_32.enable <= 1;
 			__in_mul_32.x <= x;
 			__in_mul_32.y <= y;
-			stop_operand_forwarding_or_write_back();
+			//stop_operand_forwarding_or_write_back();
+			prep_ra_wb(0);
 		end
 
 		else
@@ -1433,11 +1423,11 @@ module Frost32Cpu(input logic clk,
 			__in_mul_32.enable <= 0;
 			//$display("ctrl_multiply_32:  stuff 1");
 
-			if (__stage_instr_decode_data.stall_counter
-				!= __STALL_COUNTER_MULTIPLY_32 - 1)
+			//if (__stage_instr_decode_data.stall_counter
+			//	!= __STALL_COUNTER_MULTIPLY_32 - 1)
 			begin
 			//$display("ctrl_multiply_32:  stuff 2");
-				if (__out_mul_32.data_ready)
+				//if (__out_mul_32.data_ready)
 				begin
 			//$display("ctrl_multiply_32:  stuff 3");
 					prep_ra_wb(__out_mul_32.prod);
@@ -1466,7 +1456,8 @@ module Frost32Cpu(input logic clk,
 				__in_div_32.denom
 					<= __stage_execute_input_data.rfile_rc_data;
 
-				stop_operand_forwarding_or_write_back();
+				//stop_operand_forwarding_or_write_back();
+				prep_ra_wb(0);
 			end
 		end
 
@@ -1474,11 +1465,11 @@ module Frost32Cpu(input logic clk,
 		begin
 			__in_div_32.enable <= 0;
 
-			if (__stage_instr_decode_data.stall_counter 
-				!= __STALL_COUNTER_DIVIDE_32 - 1)
+			//if (__stage_instr_decode_data.stall_counter 
+			//	!= __STALL_COUNTER_DIVIDE_32 - 1)
 			begin
-				//stop_operand_forwarding_or_write_back();
-				if (__out_div_32.data_ready)
+				////stop_operand_forwarding_or_write_back();
+				//if (__out_div_32.data_ready)
 				begin
 					if (__in_div_32.denom != 0)
 					begin
@@ -2202,6 +2193,11 @@ module Frost32Cpu(input logic clk,
 	begin
 	if (!in.wait_for_mem)
 	begin
+		__stage_execute_output_data.prev_written_reg_index_1 
+			<= __stage_execute_output_data.prev_written_reg_index_0;
+		__stage_execute_output_data.n_reg_data_1 
+			<= __stage_execute_output_data.n_reg_data_0;
+
 		__multi_stage_data_write_back <= __multi_stage_data_execute;
 		case (__multi_stage_data_execute.instr_group)
 			// Group 0:  Three register ALU operations
@@ -2511,9 +2507,12 @@ module Frost32Cpu(input logic clk,
 	if (!in.wait_for_mem)
 	begin
 		// It's okay if we try to write to register zero.
+		//prep_reg_write(__stage_execute_output_data
+		//	.prev_written_reg_index,
+		//	__stage_execute_output_data.n_reg_data);
 		prep_reg_write(__stage_execute_output_data
-			.prev_written_reg_index,
-			__stage_execute_output_data.n_reg_data);
+			.prev_written_reg_index_0,
+			__stage_execute_output_data.n_reg_data_0);
 	end
 	end
 

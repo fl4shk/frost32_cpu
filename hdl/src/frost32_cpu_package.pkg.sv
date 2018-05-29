@@ -93,6 +93,8 @@ typedef struct packed
 	logic [`MSB_POS__REG_FILE_SEL:0] write_sel;
 	logic [`MSB_POS__REG_FILE_DATA:0] write_data;
 
+	logic [`MSB_POS__REG_FILE_SEL:0] 
+		instr_ra_index, instr_rb_index, instr_rc_index;
 	logic [`MSB_POS__REG_FILE_DATA:0] 
 		raw_rfile_data_ra, raw_rfile_data_rb, raw_rfile_data_rc;
 } PortIn_OperandForwarder;

@@ -34,25 +34,25 @@
 //			out.read_data_name <= __regfile[in.read_sel_name]; \
 //		end \
 //	end
-//`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
-//	always_ff @ (posedge clk) \
-//	begin \
-//		if (in.write_en && (in.write_sel == in.read_sel_name) \
-//			&& in.write_sel) \
-//		begin \
-//			out.read_data_name <= in.write_data; \
-//		end \
-//		\
-//		else \
-//		begin \
-//			out.read_data_name <= __regfile[in.read_sel_name]; \
-//		end \
-//	end
 `define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
 	always_ff @ (posedge clk) \
 	begin \
-		out.read_data_name <= __regfile[in.read_sel_name]; \
+		if (in.write_en && (in.write_sel == in.read_sel_name) \
+			&& in.write_sel) \
+		begin \
+			out.read_data_name <= in.write_data; \
+		end \
+		\
+		else \
+		begin \
+			out.read_data_name <= __regfile[in.read_sel_name]; \
+		end \
 	end
+//`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
+//	always_ff @ (posedge clk) \
+//	begin \
+//		out.read_data_name <= __regfile[in.read_sel_name]; \
+//	end
 //`define GEN_REG_FILE_READ_SYNCHRONOUS(read_sel_name, read_data_name) \
 //	always_ff @ (posedge clk) \
 //	begin \
