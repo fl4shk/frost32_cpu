@@ -9,13 +9,14 @@ module TestBench;
 	MainClockGenerator __inst_main_clk_gen(.clk(__clk));
 	HalfClockGenerator __inst_half_clk_gen(.clk(__half_clk));
 
-	struct packed
-	{
-		logic interrupt;
-		logic can_interrupt;
+	//struct packed
+	//{
+	//	logic can_interrupt;
 
-		logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] addr_0_data;
-	} __locals;
+	//} __locals;
+
+	logic __interrupt;
+	logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] __addr_0_data;
 
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;
 	PkgFrost32Cpu::PortOut_Frost32Cpu __out_frost32_cpu;
@@ -50,7 +51,7 @@ module TestBench;
 	//	= __out_frost32_cpu.req_mem_access || __out_main_mem.wait_for_mem;
 	assign __in_frost32_cpu.wait_for_mem = __out_main_mem.wait_for_mem;
 
-	assign __in_frost32_cpu.interrupt = __locals.interrupt;
+	assign __in_frost32_cpu.interrupt = __interrupt;
 
 	//always @ (posedge __clk)
 	//begin
@@ -71,10 +72,10 @@ module TestBench;
 			== PkgFrost32Cpu::DiatWrite)
 			&& (__out_frost32_cpu.addr == 0))
 		begin
-			__locals.addr_0_data <= __out_frost32_cpu.data;
+			__addr_0_data <= __out_frost32_cpu.data;
 		end
-		$display("TestBench __locals.addr_0_data:  %h",
-			__locals.addr_0_data);
+		$display("TestBench __addr_0_data:  %h",
+			__addr_0_data);
 	end
 
 
@@ -83,7 +84,9 @@ module TestBench;
 		$dumpfile("test.vcd");
 		$dumpvars(0, TestBench);
 
-		__locals = 0;
+		//__locals = 0;
+		__interrupt = 0;
+		__addr_0_data = 0;
 
 		////#500
 		////#50
@@ -95,35 +98,51 @@ module TestBench;
 
 		//for (int i=0; i<5; i=i+1)
 		//begin
-		//	#1000
+			//#1000
+			#10000
 		//	#104
-		//	__locals.interrupt = 1;
+		//	__interrupt = $random % 2;
 
-		//	//__locals.interrupt = 0;
+		//	//__interrupt = 0;
 
 		//	//#160
 		//	#60
-		//	__locals.interrupt = 0;
+		//	__interrupt = $random % 2;
 
-		//	#2000
+		//	#20
+		//	__interrupt = $random % 2;
+		//	#20
+		//	__interrupt = $random % 2;
+		//	#20
+		//	__interrupt = $random % 2;
+
+		//	#20
+		//	__interrupt = $random % 2;
+
 
 		//	#104
-		//	__locals.interrupt = 1;
+		//	__interrupt = $random % 2;
 
 		//	#60
-		//	__locals.interrupt = 0;
+		//	__interrupt = $random % 2;
 
 		//	#1000
-		//	$display("TestBench:  end of loop:  %h", i);
+			//$display("TestBench:  end of loop:  %h", i);
 		//end
-		//$finish;
+		$finish;
+	end
+
+	always @ (posedge __clk)
+	begin
+		#100
+		__interrupt = $random % 2;
 	end
 
 	//always @ (posedge __clk)
 	//begin
-	//	//if (__locals.can_interrupt && !__in_frost32_cpu.wait_for_mem)
+	//	//if (__can_interrupt && !__in_frost32_cpu.wait_for_mem)
 	//	//begin
-	//	//	if (!__locals.interrupt)
+	//	//	if (!__interrupt)
 	//	//	begin
 	//	//		
 	//	//	end

@@ -7,7 +7,7 @@ There's a four-stage pipeline:
 The processor reaches about 96 MHz in the worst case temperature (85
 degrees C) in my Cyclone IV FPGA, but can potentially run more quickly than
 that if the FPGA isn't at a high temperature (in practice it seems to work
-at 100 MHz).
+at around 100 MHz).
 
 
 ## Stuff that takes more than one cycle
@@ -22,21 +22,13 @@ at 100 MHz).
   more effort to figure out whether or not it will work).
   * Multiplication:  32-bit by 32-bit -> 32-bit results, 5 cycles.  (Need
   to add in 32-bit by 32-bit -> 64-bit results multiply)
-  * Division:  32-bit by 32-bit -> 32-bit results
+  * Division:  32-bit by 32-bit -> 32-bit results (though 64-bit by 32-bit 
+  -> 64-bit division may be added in later)
     * Note that there is both unsigned and signed division, computed by the
     same division module.  There is not an integer remainder instruction,
     but a multiplication can be performed to get the remainder.
     * Of note is that division by zero will simply return zero.  Software
     will need to check if division by zero is going to occur. 
-    * Number of cycles:
-      * When 32-bit division is *very* fast (four bits computed per cycle,
-      at the expense of lowered clock rate and increased logic usage):
-      13 cycles
-      * When 32-bit division is fast (two bits computed per cycle, the
-      default):  21
-      cycles
-      * When 32-bit division is slow (one bit computed per cycle):  37 
-      cycles
 
 
 ## Interrupts

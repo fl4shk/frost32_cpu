@@ -727,6 +727,7 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 
 	bit [__ARGS_MSB_POS:0] __num_buf, __denom_buf;
 	bit [__ARGS_MSB_POS:0] __quot_buf, __rem_buf;
+	bit [__ARGS_MSB_POS:0] __quot_buf_2, __rem_buf_2;
 
 
 	wire __busy;
@@ -734,7 +735,7 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 	bit __num_was_negative, __denom_was_negative;
 	bit __unsgn_or_sgn_buf;
 
-	bit __start_state;
+	bit __start_state, __end_state;
 
 
 
@@ -786,6 +787,7 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 		__state_counter = 0;
 
 		__start_state = 1;
+		__end_state = 1;
 
 		out_quot = 0;
 		out_rem = 0;
@@ -922,6 +924,7 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 			__denom_was_negative <= in_denom[__ARGS_MSB_POS];
 
 			__start_state <= 0;
+			__end_state <= 0;
 		end
 
 		else if (__start_state == 0)
@@ -939,39 +942,72 @@ module NonRestoringDivider #(parameter ARGS_WIDTH=32)
 			if (!__counter[__COUNTER_MSB_POS])
 			begin
 				__state_counter <= __state_counter + 1;
+				__end_state <= 0;
 			end
 
-			else
+			else if (__end_state == 0)
 			begin
-				out_can_accept_cmd <= 1;
-				__state_counter <= -1;
-				out_data_ready <= 1;
+				__end_state <= 1;
 
-				//$display("end:  %d, %d %d, %d",
-				//	__unsgn_or_sgn_buf, 
-				//	__num_was_negative, __denom_was_negative,
-				//	(__num_was_negative ^ __denom_was_negative));
 				if (__P[__TEMP_MSB_POS])
 				begin
-					out_quot <= (__unsgn_or_sgn_buf 
+					__quot_buf_2 <= (__unsgn_or_sgn_buf 
 						&& (__num_was_negative  ^ __denom_was_negative))
 						?  (-((__quot_buf - (~__quot_buf)) - 1))
 						: ((__quot_buf - (~__quot_buf)) - 1);
-					out_rem <= (__unsgn_or_sgn_buf && __num_was_negative)
+					__rem_buf_2
+						<= (__unsgn_or_sgn_buf && __num_was_negative)
 						? (-((__P + __D) >> ARGS_WIDTH))
 						: ((__P + __D) >> ARGS_WIDTH);
 				end
 
 				else
 				begin
-					out_quot <= (__unsgn_or_sgn_buf
+					__quot_buf_2 <= (__unsgn_or_sgn_buf
 						&& (__num_was_negative ^ __denom_was_negative))
 						? (-((__quot_buf - (~__quot_buf))))
 						: ((__quot_buf - (~__quot_buf)));
-					out_rem <= (__unsgn_or_sgn_buf && __num_was_negative)
+					__rem_buf_2 
+						<= (__unsgn_or_sgn_buf && __num_was_negative)
 						? (-((__P) >> ARGS_WIDTH))
 						: ((__P) >> ARGS_WIDTH);
 				end
+				
+			end
+
+			else // if (__end_state == 1)
+			begin
+				out_can_accept_cmd <= 1;
+				__state_counter <= -1;
+				out_data_ready <= 1;
+
+				////$display("end:  %d, %d %d, %d",
+				////	__unsgn_or_sgn_buf, 
+				////	__num_was_negative, __denom_was_negative,
+				////	(__num_was_negative ^ __denom_was_negative));
+				//if (__P[__TEMP_MSB_POS])
+				//begin
+				//	out_quot <= (__unsgn_or_sgn_buf 
+				//		&& (__num_was_negative  ^ __denom_was_negative))
+				//		?  (-((__quot_buf - (~__quot_buf)) - 1))
+				//		: ((__quot_buf - (~__quot_buf)) - 1);
+				//	out_rem <= (__unsgn_or_sgn_buf && __num_was_negative)
+				//		? (-((__P + __D) >> ARGS_WIDTH))
+				//		: ((__P + __D) >> ARGS_WIDTH);
+				//end
+
+				//else
+				//begin
+				//	out_quot <= (__unsgn_or_sgn_buf
+				//		&& (__num_was_negative ^ __denom_was_negative))
+				//		? (-((__quot_buf - (~__quot_buf))))
+				//		: ((__quot_buf - (~__quot_buf)));
+				//	out_rem <= (__unsgn_or_sgn_buf && __num_was_negative)
+				//		? (-((__P) >> ARGS_WIDTH))
+				//		: ((__P) >> ARGS_WIDTH);
+				//end
+				out_quot <= __quot_buf_2;
+				out_rem <= __rem_buf_2;
 			end
 		end
 

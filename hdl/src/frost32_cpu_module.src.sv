@@ -19,14 +19,21 @@ module Frost32Cpu(input logic clk,
 
 	//parameter __STALL_COUNTER_RELATIVE_BRANCH = 4;
 	//parameter __STALL_COUNTER_RELATIVE_BRANCH = 3;
-	parameter __STALL_COUNTER_RELATIVE_BRANCH = 2;
-	parameter __STALL_COUNTER_JUMP_OR_CALL = 4;
+	//parameter __STALL_COUNTER_RELATIVE_BRANCH = 2;
+	//parameter __STALL_COUNTER_JUMP_OR_CALL = 4;
+
+	parameter __STALL_COUNTER_REL_BRANCH_UNSIGNED = 2;
+	parameter __STALL_COUNTER_REL_BRANCH_SIGNED
+		= __STALL_COUNTER_REL_BRANCH_UNSIGNED + 1;
+	parameter __STALL_COUNTER_JUMP_CALL_UNSIGNED = 3;
+	parameter __STALL_COUNTER_JUMP_CALL_SIGNED
+		= __STALL_COUNTER_JUMP_CALL_UNSIGNED + 1;
 
 	// Memory access is unfortunately going to have to be a little slower.
 	parameter __STALL_COUNTER_MEM_ACCESS = 3;
 	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
-	//parameter __STALL_COUNTER_RETI = 2;
-	parameter __STALL_COUNTER_RETI = 3;
+	parameter __STALL_COUNTER_RETI = 2;
+	//parameter __STALL_COUNTER_RETI = 3;
 	parameter __STALL_COUNTER_EEK = 3;
 	parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 1;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
@@ -49,8 +56,10 @@ module Frost32Cpu(input logic clk,
 	`endif		// OPT_FAST_DIV
 	`endif		// OPT_VERY_FAST_DIV
 
+	//parameter __STALL_COUNTER_DIVIDE_32 
+	//	= (32 / __NUM_ITERATIONS_PER_DIVIDE_32_CYCLE) + 6;
 	parameter __STALL_COUNTER_DIVIDE_32 
-		= (32 / __NUM_ITERATIONS_PER_DIVIDE_32_CYCLE) + 6;
+		= (32 / __NUM_ITERATIONS_PER_DIVIDE_32_CYCLE) + 7;
 	//parameter __STALL_COUNTER_DIVIDE_32 = 64;
 
 
@@ -191,6 +200,8 @@ module Frost32Cpu(input logic clk,
 		//logic cond_ne, cond_eq, 
 		//	cond_ltu, cond_geu, cond_leu, cond_gtu,
 		//	cond_lts, cond_ges, cond_les, cond_gts;
+
+		logic cond_lts, cond_ges, cond_les, cond_gts;
 
 		//logic cond_branch_ne, cond_branch_eq, 
 		//	cond_branch_ltu, cond_branch_geu, 
@@ -492,8 +503,23 @@ module Frost32Cpu(input logic clk,
 
 	always_comb
 	begin
-		__locals.should_service_interrupt_if_not_in_stall
-			= !((in.interrupt && !__locals.ie) || (!in.interrupt));
+		//__locals.should_service_interrupt_if_not_in_stall
+		//	= !((in.interrupt && !__locals.ie) || (!in.interrupt));
+
+		if (!__locals.ie)
+		begin
+			__locals.should_service_interrupt_if_not_in_stall = 0;
+		end
+
+		else if (in.interrupt)
+		begin
+			__locals.should_service_interrupt_if_not_in_stall = 1;
+		end
+
+		else
+		begin
+			__locals.should_service_interrupt_if_not_in_stall = 0;
+		end
 	end
 
 	always_comb
@@ -1547,6 +1573,13 @@ module Frost32Cpu(input logic clk,
 			PkgFrost32Cpu::StCtrlFlowBranch:
 			begin
 				case (__stage_instr_decode_data.stall_counter)
+					3:
+					begin
+						__locals.cond_lts <= compare_lts();
+						__locals.cond_ges <= compare_ges();
+						__locals.cond_les <= compare_les();
+						__locals.cond_gts <= compare_gts();
+					end
 					2:
 					begin
 						case (__multi_stage_data_execute
@@ -1589,24 +1622,32 @@ module Frost32Cpu(input logic clk,
 
 							PkgInstrDecoder::CtLts:
 							begin
+								//handle_branch_in_fetch_stage
+								//	(compare_lts());
 								handle_branch_in_fetch_stage
-									(compare_lts());
+									(__locals.cond_lts);
 							end
 							PkgInstrDecoder::CtGes:
 							begin
+								//handle_branch_in_fetch_stage
+								//	(compare_ges());
 								handle_branch_in_fetch_stage
-									(compare_ges());
+									(__locals.cond_ges);
 							end
 
 							PkgInstrDecoder::CtLes:
 							begin
+								//handle_branch_in_fetch_stage
+								//	(compare_les());
 								handle_branch_in_fetch_stage
-									(compare_les());
+									(__locals.cond_les);
 							end
 							PkgInstrDecoder::CtGts:
 							begin
+								//handle_branch_in_fetch_stage
+								//	(compare_gts());
 								handle_branch_in_fetch_stage
-									(compare_gts());
+									(__locals.cond_gts);
 							end
 
 							default:
@@ -1630,6 +1671,13 @@ module Frost32Cpu(input logic clk,
 			PkgFrost32Cpu::StCtrlFlowJumpCall:
 			begin
 				case (__stage_instr_decode_data.stall_counter)
+					3:
+					begin
+						__locals.cond_lts <= compare_lts();
+						__locals.cond_ges <= compare_ges();
+						__locals.cond_les <= compare_les();
+						__locals.cond_gts <= compare_gts();
+					end
 					2:
 					begin
 						$display("in StCtrlFlowJumpCall");
@@ -1671,26 +1719,55 @@ module Frost32Cpu(input logic clk,
 									(compare_gtu());
 							end
 
+							//PkgInstrDecoder::CtLts:
+							//begin
+							//	handle_jump_or_call_in_fetch_stage
+							//		(compare_lts());
+							//end
+							//PkgInstrDecoder::CtGes:
+							//begin
+							//	handle_jump_or_call_in_fetch_stage
+							//		(compare_ges());
+							//end
+
+							//PkgInstrDecoder::CtLes:
+							//begin
+							//	handle_jump_or_call_in_fetch_stage
+							//		(compare_les());
+							//end
+							//PkgInstrDecoder::CtGts:
+							//begin
+							//	handle_jump_or_call_in_fetch_stage
+							//		(compare_gts());
+							//end
 							PkgInstrDecoder::CtLts:
 							begin
+								//handle_jump_or_call_in_fetch_stage
+								//	(compare_lts());
 								handle_jump_or_call_in_fetch_stage
-									(compare_lts());
+									(__locals.cond_lts);
 							end
 							PkgInstrDecoder::CtGes:
 							begin
+								//handle_jump_or_call_in_fetch_stage
+								//	(compare_ges());
 								handle_jump_or_call_in_fetch_stage
-									(compare_ges());
+									(__locals.cond_ges);
 							end
 
 							PkgInstrDecoder::CtLes:
 							begin
+								//handle_jump_or_call_in_fetch_stage
+								//	(compare_les());
 								handle_jump_or_call_in_fetch_stage
-									(compare_les());
+									(__locals.cond_les);
 							end
 							PkgInstrDecoder::CtGts:
 							begin
+								//handle_jump_or_call_in_fetch_stage
+								//	(compare_gts());
 								handle_jump_or_call_in_fetch_stage
-									(compare_gts());
+									(__locals.cond_gts);
 							end
 
 							default:
@@ -1729,7 +1806,6 @@ module Frost32Cpu(input logic clk,
 				case (__stage_instr_decode_data.stall_counter)
 					2:
 					begin
-						//__locals.ie <= 1;
 						//$display("StReti:  %h", __locals.ireta);
 						prep_load_instruction(__locals.ireta);
 					end
@@ -1864,6 +1940,16 @@ module Frost32Cpu(input logic clk,
 					endcase
 				end
 
+				PkgFrost32Cpu::StReti:
+				begin
+					__locals.ie <= 1;
+					//case (__stage_instr_decode_data.stall_counter)
+					//1:
+					//begin
+					//	__locals.ie <= 1;
+					//end
+					//endcase
+				end
 			endcase
 		end
 
@@ -1912,15 +1998,25 @@ module Frost32Cpu(input logic clk,
 					// Conditional branch 
 					2:
 					begin
-						$display("Stage 1:  conditional branch:  %h",
-							__STALL_COUNTER_RELATIVE_BRANCH);
 						__stage_instr_decode_data.stall_state
 							<= PkgFrost32Cpu::StCtrlFlowBranch;
 
-						//__stage_instr_decode_data.stall_counter <= 1;
-						__stage_instr_decode_data.stall_counter
-							<= __STALL_COUNTER_RELATIVE_BRANCH;
-						//__stage_instr_decode_data.stall_counter <= 2;
+						if ((__multi_stage_data_instr_decode
+							.instr_condition_type
+							>= PkgInstrDecoder::CtLts)
+							&& (__multi_stage_data_instr_decode
+							.instr_condition_type
+							<= PkgInstrDecoder::CtGts))
+						begin
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_REL_BRANCH_SIGNED;
+						end
+
+						else
+						begin
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_REL_BRANCH_UNSIGNED;
+						end
 					end
 
 					// Conditional jump or conditional call
@@ -1929,19 +2025,44 @@ module Frost32Cpu(input logic clk,
 						__stage_instr_decode_data.stall_state
 							<= PkgFrost32Cpu::StCtrlFlowJumpCall;
 
-						//__stage_instr_decode_data.stall_counter <= 2;
-						__stage_instr_decode_data.stall_counter
-							<= __STALL_COUNTER_JUMP_OR_CALL;
+						if ((__multi_stage_data_instr_decode
+							.instr_condition_type
+							>= PkgInstrDecoder::CtLts)
+							&& (__multi_stage_data_instr_decode
+							.instr_condition_type
+							<= PkgInstrDecoder::CtGts))
+						begin
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_JUMP_CALL_SIGNED;
+						end
+
+						else
+						begin
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_JUMP_CALL_UNSIGNED;
+						end
 					end
 					4:
 					begin
-						$display("The instruction stalls:  call");
 						__stage_instr_decode_data.stall_state
 							<= PkgFrost32Cpu::StCtrlFlowJumpCall;
 
-						//__stage_instr_decode_data.stall_counter <= 2;
-						__stage_instr_decode_data.stall_counter
-							<= __STALL_COUNTER_JUMP_OR_CALL;
+						if ((__multi_stage_data_instr_decode
+							.instr_condition_type
+							>= PkgInstrDecoder::CtLts)
+							&& (__multi_stage_data_instr_decode
+							.instr_condition_type
+							<= PkgInstrDecoder::CtGts))
+						begin
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_JUMP_CALL_SIGNED;
+						end
+
+						else
+						begin
+							__stage_instr_decode_data.stall_counter
+								<= __STALL_COUNTER_JUMP_CALL_UNSIGNED;
+						end
 					end
 
 					// All loads and stores are in group 5
@@ -1974,7 +2095,7 @@ module Frost32Cpu(input logic clk,
 								<= PkgFrost32Cpu::StReti;
 							__stage_instr_decode_data.stall_counter
 								<= __STALL_COUNTER_RETI;
-							__locals.ie <= 1;
+							//__locals.ie <= 1;
 							//$display("StReti:  %h %h", __locals.ireta,
 							//	__out_debug_reg_sp);
 						end
@@ -2236,20 +2357,24 @@ module Frost32Cpu(input logic clk,
 
 					PkgInstrDecoder::CtLts:
 					begin
-						handle_call_in_execute_stage(compare_lts());
+						//handle_call_in_execute_stage(compare_lts());
+						handle_call_in_execute_stage(__locals.cond_lts);
 					end
 					PkgInstrDecoder::CtGes:
 					begin
-						handle_call_in_execute_stage(compare_ges());
+						//handle_call_in_execute_stage(compare_ges());
+						handle_call_in_execute_stage(__locals.cond_ges);
 					end
 
 					PkgInstrDecoder::CtLes:
 					begin
-						handle_call_in_execute_stage(compare_les());
+						//handle_call_in_execute_stage(compare_les());
+						handle_call_in_execute_stage(__locals.cond_les);
 					end
 					PkgInstrDecoder::CtGts:
 					begin
-						handle_call_in_execute_stage(compare_gts());
+						//handle_call_in_execute_stage(compare_gts());
+						handle_call_in_execute_stage(__locals.cond_gts);
 					end
 
 					default:
@@ -2373,11 +2498,11 @@ module Frost32Cpu(input logic clk,
 		endcase
 	end
 
-	else // if (in.wait_for_mem)
-	begin
-		stop_operand_forwarding_or_write_back();
-		//stop_register_read_operand_forwarding();
-	end
+	//else // if (in.wait_for_mem)
+	//begin
+	//	stop_operand_forwarding_or_write_back();
+	//	//stop_register_read_operand_forwarding();
+	//end
 	end
 
 

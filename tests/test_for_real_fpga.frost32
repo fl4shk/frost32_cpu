@@ -21,18 +21,23 @@ main:
 	; Just so we don't have to change this register later
 	cpyi u2, code_to_modify
 
-	; I really need a pseudo instruction for non-indexed loads and stores.
-	; That will probably be coming....
-	cpyi u3, data_for_modify_u7_outside_interrupt
-	ldr u3, [u3, zero]
-	cpyi u4, data_for_modify_u7_in_interrupt
-	ldr u4, [u4, zero]
+	;; I really need a pseudo instruction for non-indexed loads and stores.
+	;; That will probably be coming....
+	;cpyi u3, data_for_modify_u7_outside_interrupt
+	;ldr u3, [u3, zero]
+	;cpyi u4, data_for_modify_u7_in_interrupt
+	;ldr u4, [u4, zero]
 
-	; For calling the subroutine
-	cpyi u5, change_var
+	;; For calling the subroutine
+	;cpyi u5, change_var
 
-	; Store a sub here
-	str u3, [u2, zero]
+	;str u3, [u2, zero]
+
+	;cpyi u5, var
+	cpyi u5, test_subroutine
+
+	subi u3, zero, 1
+	str zero, [zero, zero]
 
 
 
@@ -47,23 +52,34 @@ main:
 ;.org 0x1000
 interrupt_handler:
 {
-	; Preserve lr because it gets overwritten by "call u5"
-	subi sp, 4
-	stri lr, [sp, 4]
+	;; Preserve lr because it gets overwritten by "call u5"
+	;subi sp, 4
+	;stri lr, [sp, 4]
 
 
-	; Switch to an add
-	str u4, [u2, zero]
+	;;; Switch to an add
+	;;str u4, [u2, zero]
 
-	; Change the variable
-	call u5
+	;;; Change the variable
+	;;call u5
 
-	; Switch back to a sub
-	str u3, [u2, zero]
+	;;; Switch back to a sub
+	;;str u3, [u2, zero]
+
+	;call u5
 
 
-	ldri lr, [sp, 4]
-	addi sp, 4
+	ldr u4, [zero, zero]
+
+	; Flip the bits of var
+	xor u4, u3
+
+	str u4, [zero, zero]
+
+
+
+	;ldri lr, [sp, 4]
+	;addi sp, 4
 
 	reti
 }
@@ -72,13 +88,26 @@ interrupt_handler:
 ;.org 0x1800
 wait_for_interrupt:
 {
-	; The high 8 bits of u7 are shown on the LEDs of my FPGA 
-	call u5
+	;call u5
 	bra wait_for_interrupt
 }
 
 
 ;.org 0x2000
+test_subroutine:
+{
+	subi sp, __change_var_sp_addsub_amount
+	stri u8, [sp, __change_var_preserve_u8_amount]
+	stri u9, [sp, __change_var_preserve_u9_amount]
+	;stri lr, [sp, __change_var_preserve_lr_amount]
+
+	ldri u8, [sp, __change_var_preserve_u8_amount]
+	ldri u9, [sp, __change_var_preserve_u9_amount]
+	;ldri lr, [sp, __change_var_preserve_lr_amount]
+	addi sp, __change_var_sp_addsub_amount
+	jmp lr
+}
+
 change_var:
 	subi sp, __change_var_sp_addsub_amount
 	stri u8, [sp, __change_var_preserve_u8_amount]

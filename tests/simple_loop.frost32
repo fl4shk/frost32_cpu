@@ -40,8 +40,8 @@ loop:
 	;dec u0				; 0x10
 	;addi u0, 7
 
-	bges u0, u2, loop	; 0x14
-;	jges u0, u2, u6
+;	bges u0, u2, loop	; 0x14
+	jges u0, u2, u6
 ;
 ;	; Branch to subroutine
 ;	addsi lr, pc, 8
