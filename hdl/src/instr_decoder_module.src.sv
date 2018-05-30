@@ -174,10 +174,10 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				// Instructions that stall (prevent interrupts)
 				out.causes_stall 
 					= ((out.opcode == PkgInstrDecoder::Cpy_OneIretaOneReg)
-					|| (out.opcode 
-					== PkgInstrDecoder::Cpy_OneIdstaOneReg)
-					|| (out.opcode
-					== PkgInstrDecoder::Reti_NoArgs));
+					|| (out.opcode == PkgInstrDecoder::Cpy_OneIdstaOneReg)
+					|| (out.opcode == PkgInstrDecoder::Reti_NoArgs)
+					|| (out.opcode == PkgInstrDecoder::Ei_NoArgs)
+					|| (out.opcode == PkgInstrDecoder::Di_NoArgs));
 
 				out.condition_type = 0;
 			end

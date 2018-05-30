@@ -31,7 +31,8 @@ module Frost32Cpu(input logic clk,
 
 	// Memory access is unfortunately going to have to be a little slower.
 	parameter __STALL_COUNTER_MEM_ACCESS = 3;
-	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
+	parameter __STALL_COUNTER_INTERRUPTS_STUFF = 2;
+	//parameter __STALL_COUNTER_INTERRUPTS_STUFF = 3;
 	parameter __STALL_COUNTER_RETI = 2;
 	//parameter __STALL_COUNTER_RETI = 3;
 	parameter __STALL_COUNTER_EEK = 3;
@@ -1489,7 +1490,7 @@ module Frost32Cpu(input logic clk,
 
 			//case (__stage_instr_decode_data.stall_counter)
 			case (__stage_instr_decode_data.stall_state)
-			PkgFrost32Cpu::StCpyRaToInterruptsRelatedAddr:
+			PkgFrost32Cpu::StOtherInterruptsStuff:
 			begin
 				case (__stage_instr_decode_data.stall_counter)
 					2:
@@ -1851,6 +1852,7 @@ module Frost32Cpu(input logic clk,
 				endcase
 			end
 
+
 			//PkgFrost32Cpu::StMul:
 			//begin
 			//	
@@ -1933,7 +1935,7 @@ module Frost32Cpu(input logic clk,
 			//end
 
 			case (__stage_instr_decode_data.stall_state)
-				PkgFrost32Cpu::StCpyRaToInterruptsRelatedAddr:
+				PkgFrost32Cpu::StOtherInterruptsStuff:
 				begin
 					case (__stage_instr_decode_data.stall_counter)
 					2:
@@ -1948,11 +1950,20 @@ module Frost32Cpu(input logic clk,
 						end
 
 						// "cpy idsta, rA"
-						else
+						else if (__multi_stage_data_execute.instr_opcode
+							== PkgInstrDecoder::Cpy_OneIdstaOneReg)
 						begin
 							__locals.idsta 
 								<= __stage_instr_decode_data
 								.from_stage_execute_rfile_ra_data;
+						end
+
+						// "ei", "di"
+						else
+						begin
+							__locals.ie <= __multi_stage_data_instr_decode
+								.instr_opcode 
+								== PkgInstrDecoder::Ei_NoArgs;
 						end
 
 						////prep_load_instruction(__following_pc);
@@ -1969,18 +1980,22 @@ module Frost32Cpu(input logic clk,
 
 				PkgFrost32Cpu::StReti:
 				begin
-					__locals.ie <= 1;
-					//case (__stage_instr_decode_data.stall_counter)
-					//1:
-					//begin
-					//	__locals.ie <= 1;
-					//end
-					//endcase
+					case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						__locals.ie <= 1;
+					end
+					endcase
 				end
 
 				PkgFrost32Cpu::StRespondToInterrupt:
 				begin
-					__locals.ie <= 0;
+					case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						__locals.ie <= 0;
+					end
+					endcase
 				end
 			endcase
 		end
@@ -2115,8 +2130,7 @@ module Frost32Cpu(input logic clk,
 							!= PkgInstrDecoder::Reti_NoArgs)
 						begin
 							__stage_instr_decode_data.stall_state
-								<= PkgFrost32Cpu
-								::StCpyRaToInterruptsRelatedAddr;
+								<= PkgFrost32Cpu::StOtherInterruptsStuff;
 							__stage_instr_decode_data.stall_counter
 								<= __STALL_COUNTER_INTERRUPTS_STUFF;
 						end
@@ -2127,7 +2141,6 @@ module Frost32Cpu(input logic clk,
 								<= PkgFrost32Cpu::StReti;
 							__stage_instr_decode_data.stall_counter
 								<= __STALL_COUNTER_RETI;
-							__locals.ie <= 1;
 							//$display("StReti:  %h %h", __locals.ireta,
 							//	__out_debug_reg_sp);
 						end
@@ -2147,26 +2160,27 @@ module Frost32Cpu(input logic clk,
 					endcase
 				end
 
-				// Handle what the execute stage sees next
-				if ((__multi_stage_data_instr_decode.instr_group == 6)
-					&& ((__multi_stage_data_instr_decode.instr_opcode 
-					== PkgInstrDecoder::Ei_NoArgs)
-					|| (__multi_stage_data_instr_decode.instr_opcode
-					== PkgInstrDecoder::Di_NoArgs)))
-				begin
-					__locals.ie <= (__multi_stage_data_instr_decode
-						.instr_opcode == PkgInstrDecoder::Ei_NoArgs);
+				//// Handle what the execute stage sees next
+				//if ((__multi_stage_data_instr_decode.instr_group == 6)
+				//	&& ((__multi_stage_data_instr_decode.instr_opcode 
+				//	== PkgInstrDecoder::Ei_NoArgs)
+				//	|| (__multi_stage_data_instr_decode.instr_opcode
+				//	== PkgInstrDecoder::Di_NoArgs)))
+				//begin
+				//	__locals.ie <= (__multi_stage_data_instr_decode
+				//		.instr_opcode == PkgInstrDecoder::Ei_NoArgs);
 
-					// Just send a bubble through to the later stage(s)
-					// since they don't really need to know anything about
-					// "ei" and "di"
-					make_bubble();
-				end
+				//	//// Just send a bubble through to the later stage(s)
+				//	//// since they don't really need to know anything about
+				//	//// "ei" and "di"
+				//	//make_bubble();
+				//end
 
-				else
-				begin
-					send_instr_through();
-				end
+				//else
+				//begin
+				//	send_instr_through();
+				//end
+				send_instr_through();
 			end
 
 			else // if (__locals.should_service_interrupt_if_not_in_stall)
@@ -2181,7 +2195,6 @@ module Frost32Cpu(input logic clk,
 
 				__locals.ireta <= __multi_stage_data_instr_decode.pc_val;
 				//__locals.ireta <= __locals.pc;
-				__locals.ie <= 0;
 
 				__stage_instr_decode_data.stall_state
 					<= PkgFrost32Cpu::StRespondToInterrupt;
