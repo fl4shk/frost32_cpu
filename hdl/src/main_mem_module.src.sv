@@ -293,8 +293,10 @@
 `define MSB_POS__SINGLE_PORT_RAM_DATA_INOUT \
 	`WIDTH_TO_MSB_POS(`WIDTH__SINGLE_PORT_RAM_DATA_INOUT)
 
-// 32 kiB
-`define WIDTH__SINGLE_PORT_RAM_ADDR 13
+//// 32 kiB
+//`define WIDTH__SINGLE_PORT_RAM_ADDR 13
+// 8 kiB
+`define WIDTH__SINGLE_PORT_RAM_ADDR 11
 `define MSB_POS__SINGLE_PORT_RAM_ADDR \
 	`WIDTH_TO_MSB_POS(`WIDTH__SINGLE_PORT_RAM_ADDR)
 
@@ -344,9 +346,6 @@ module SinglePortRam(input logic clk,
 endmodule
 
 module MainMem(input logic clk,
-	`ifdef OPT_DEBUG_MEM_ACCESS
-	input logic half_clk,
-	`endif		// OPT_DEBUG_MEM_ACCESS
 	input PkgMainMem::PortIn_MainMem in,
 	output PkgMainMem::PortOut_MainMem out);
 

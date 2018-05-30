@@ -9,7 +9,7 @@
 `endif		// ICARUS
 
 // Temporary
-//`define OPT_DEBUG_REGISTER_FILE
+`define OPT_DEBUG_REGISTER_FILE
 
 // Two bits per clock cycle of divide
 `define OPT_FAST_DIV

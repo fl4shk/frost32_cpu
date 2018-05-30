@@ -18,21 +18,27 @@ module TestBench;
 	logic __interrupt;
 	logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] __addr_0_data;
 
+	logic [`MSB_POS__FROST32_CPU_DATA_INOUT:0] 
+		__debug_reg_u4, __debug_reg_u7,
+		__debug_reg_fp,
+		__debug_reg_pc,
+		__debug_reg_ireta, __debug_reg_idsta;
+	logic __debug_reg_ie;
+
 	PkgFrost32Cpu::PortIn_Frost32Cpu __in_frost32_cpu;
 	PkgFrost32Cpu::PortOut_Frost32Cpu __out_frost32_cpu;
 
-	//Frost32Cpu __inst_frost32_cpu(.clk(__half_clk), .in(__in_frost32_cpu),
-	//	.out(__out_frost32_cpu));
-	Frost32Cpu __inst_frost32_cpu(.clk(__clk), .in(__in_frost32_cpu),
+	Frost32Cpu __inst_frost32_cpu(.clk(__half_clk), .in(__in_frost32_cpu),
 		.out(__out_frost32_cpu));
+	//Frost32Cpu __inst_frost32_cpu(.clk(__clk), .in(__in_frost32_cpu),
+	//	.out(__out_frost32_cpu));
 
 	PkgMainMem::PortIn_MainMem __in_main_mem;
 	PkgMainMem::PortOut_MainMem __out_main_mem;
-	MainMem __inst_main_mem(.clk(__clk), 
-		`ifdef OPT_DEBUG_MEM_ACCESS
-		.half_clk(__half_clk),
-		`endif		// OPT_DEBUG_MEM_ACCESS
+	MainMem __inst_main_mem(.clk(__half_clk), 
 		.in(__in_main_mem), .out(__out_main_mem));
+	//MainMem __inst_main_mem(.clk(__clk), 
+	//	.in(__in_main_mem), .out(__out_main_mem));
 
 
 	assign __in_frost32_cpu.data = __out_main_mem.data;
@@ -63,6 +69,14 @@ module TestBench;
 	//	$display("TestBench:  %h", __in_frost32_cpu.wait_for_mem);
 	//end
 
+	assign __debug_reg_u4 = __out_frost32_cpu.debug_reg_u4;
+	assign __debug_reg_u7 = __out_frost32_cpu.debug_reg_u7;
+	assign __debug_reg_fp = __out_frost32_cpu.debug_reg_fp;
+	assign __debug_reg_pc = __out_frost32_cpu.debug_reg_pc;
+	assign __debug_reg_ireta = __out_frost32_cpu.debug_reg_ireta;
+	assign __debug_reg_idsta = __out_frost32_cpu.debug_reg_idsta;
+	assign __debug_reg_ie = __out_frost32_cpu.debug_reg_ie;
+
 	always @ (posedge __clk)
 	begin
 		//$display("TestBench __out_main_mem.addr_0_data:  %h",
@@ -74,8 +88,45 @@ module TestBench;
 		begin
 			__addr_0_data <= __out_frost32_cpu.data;
 		end
-		$display("TestBench __addr_0_data:  %h",
-			__addr_0_data);
+
+		//$display("TestBench stuff:  %h, %h",
+		//	__addr_0_data, __debug_reg_u4);
+	end
+
+	//always @ (posedge __clk)
+	//always @ (posedge __half_clk)
+	always
+	begin
+		//#100
+
+		//#20
+		//#24
+		//#28
+		//#32
+		if (__debug_reg_ie)
+		begin
+			//#52
+			//#100
+			if (__interrupt)
+			begin
+				#100
+				__interrupt = $random % 2;
+			end
+
+			else
+			begin
+				#4
+				__interrupt = $random % 2;
+			end
+		end
+
+		else
+		begin
+			//#100
+			//#1
+			#4
+			__interrupt = $random % 2;
+		end
 	end
 
 
@@ -99,7 +150,8 @@ module TestBench;
 		//for (int i=0; i<5; i=i+1)
 		//begin
 			//#1000
-			#10000
+			//#10000
+			#100000
 		//	#104
 		//	__interrupt = $random % 2;
 
@@ -132,11 +184,6 @@ module TestBench;
 		$finish;
 	end
 
-	always @ (posedge __clk)
-	begin
-		#100
-		__interrupt = $random % 2;
-	end
 
 	//always @ (posedge __clk)
 	//begin

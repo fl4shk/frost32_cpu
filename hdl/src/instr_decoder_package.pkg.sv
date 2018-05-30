@@ -38,8 +38,8 @@ typedef enum logic [`MSB_POS__INSTR_CONDITION_TYPE:0]
 
 	CtLes,
 	CtGts,
-	CtBad0,
-	CtBad1,
+	CtIntsEnabled,
+	CtIntsDisabled,
 
 	CtBad2,
 	CtBad3,
@@ -202,8 +202,8 @@ typedef enum logic [`MSB_POS__INSTR_OPER:0]
 
 	Bles_TwoRegsOneSimm,
 	Bgts_TwoRegsOneSimm,
-	Bad0_Iog2,
-	Bad1_Iog2,
+	Bintsenabled_TwoRegsOneSimm,
+	Bintsdisabled_TwoRegsOneSimm,
 
 	Bad2_Iog2,
 	Bad3_Iog2,

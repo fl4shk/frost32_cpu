@@ -35,7 +35,7 @@ module Frost32Cpu(input logic clk,
 	parameter __STALL_COUNTER_RETI = 2;
 	//parameter __STALL_COUNTER_RETI = 3;
 	parameter __STALL_COUNTER_EEK = 3;
-	parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 1;
+	parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 3;
 	//parameter __STALL_COUNTER_RESPOND_TO_INTERRUPTS = 2;
 
@@ -359,7 +359,9 @@ module Frost32Cpu(input logic clk,
 		`ifdef OPT_DEBUG_REGISTER_FILE
 		,
 		`ifndef ICARUS
-		.out_debug_u7(__out_debug_reg_u7)
+		.out_debug_u4(__out_debug_reg_u4),
+		.out_debug_u7(__out_debug_reg_u7),
+		.out_debug_fp(__out_debug_reg_fp)
 		`else
 		.out_debug_zero(__out_debug_reg_zero), 
 		.out_debug_u0(__out_debug_reg_u0),
@@ -382,30 +384,40 @@ module Frost32Cpu(input logic clk,
 		);
 
 	`ifdef OPT_DEBUG_REGISTER_FILE
-	always_comb
+	//always_comb
+	always @ (*)
 	begin
+		out.debug_stall_counter <= __stage_instr_decode_data.stall_counter;
+		out.debug_stall_state <= __stage_instr_decode_data.stall_state;
+		out.debug_reg_pc <= __locals.pc;
+		out.debug_reg_ireta <= __locals.ireta;
+		out.debug_reg_idsta <= __locals.idsta;
+		out.debug_reg_ie <= __locals.ie;
+
 		`ifndef ICARUS
-		out.debug_reg_u7 = __out_debug_reg_u7;
+		out.debug_reg_u4 <= __out_debug_reg_u4;
+		out.debug_reg_u7 <= __out_debug_reg_u7;
+		out.debug_reg_fp <= __out_debug_reg_fp;
 		`else
-		out.debug_reg_zero = __out_debug_reg_zero;
-		out.debug_reg_u0 = __out_debug_reg_u0;
-		out.debug_reg_u1 = __out_debug_reg_u1;
-		out.debug_reg_u2 = __out_debug_reg_u2;
+		out.debug_reg_zero <= __out_debug_reg_zero;
+		out.debug_reg_u0 <= __out_debug_reg_u0;
+		out.debug_reg_u1 <= __out_debug_reg_u1;
+		out.debug_reg_u2 <= __out_debug_reg_u2;
 
-		out.debug_reg_u3 = __out_debug_reg_u3;
-		out.debug_reg_u4 = __out_debug_reg_u4;
-		out.debug_reg_u5 = __out_debug_reg_u5;
-		out.debug_reg_u6 = __out_debug_reg_u6;
+		out.debug_reg_u3 <= __out_debug_reg_u3;
+		out.debug_reg_u4 <= __out_debug_reg_u4;
+		out.debug_reg_u5 <= __out_debug_reg_u5;
+		out.debug_reg_u6 <= __out_debug_reg_u6;
 
-		out.debug_reg_u7 = __out_debug_reg_u7;
-		out.debug_reg_u8 = __out_debug_reg_u8;
-		out.debug_reg_u9 = __out_debug_reg_u9;
-		out.debug_reg_u10 = __out_debug_reg_u10;
+		out.debug_reg_u7 <= __out_debug_reg_u7;
+		out.debug_reg_u8 <= __out_debug_reg_u8;
+		out.debug_reg_u9 <= __out_debug_reg_u9;
+		out.debug_reg_u10 <= __out_debug_reg_u10;
 
-		out.debug_reg_temp = __out_debug_reg_temp;
-		out.debug_reg_lr = __out_debug_reg_lr;
-		out.debug_reg_fp = __out_debug_reg_fp;
-		out.debug_reg_sp = __out_debug_reg_sp;
+		out.debug_reg_temp <= __out_debug_reg_temp;
+		out.debug_reg_lr <= __out_debug_reg_lr;
+		out.debug_reg_fp <= __out_debug_reg_fp;
+		out.debug_reg_sp <= __out_debug_reg_sp;
 		`endif		// !ICARUS
 	end
 	`endif		// OPT_DEBUG_REGISTER_FILE
@@ -528,6 +540,9 @@ module Frost32Cpu(input logic clk,
 	begin
 		// Keep old instruction whenever we're in a stall, which prevents
 		// new instructions from coming into the decode stage.
+		//if (in_stall()
+		//	|| (!in_stall() 
+		//	&& __locals.should_service_interrupt_if_not_in_stall))
 		if (in_stall())
 		begin
 			//__in_instr_decoder
@@ -1650,6 +1665,18 @@ module Frost32Cpu(input logic clk,
 									(__locals.cond_gts);
 							end
 
+							PkgInstrDecoder::CtIntsEnabled:
+							begin
+								handle_branch_in_fetch_stage
+									(__locals.ie);
+							end
+
+							PkgInstrDecoder::CtIntsDisabled:
+							begin
+								handle_branch_in_fetch_stage
+									(!__locals.ie);
+							end
+
 							default:
 							begin
 								//// Eek!
@@ -1816,12 +1843,12 @@ module Frost32Cpu(input logic clk,
 				$display("StRespondToInterrupt");
 				//prep_load_instruction(__locals.pc + 4);
 				//prep_load_following_instruction();
-				//case (__stage_instr_decode_data.stall_counter)
-				//	2:
-				//	begin
-				//		
-				//	end
-				//endcase
+				case (__stage_instr_decode_data.stall_counter)
+					2:
+					begin
+						prep_load_instruction(__locals.idsta);
+					end
+				endcase
 			end
 
 			//PkgFrost32Cpu::StMul:
@@ -1871,7 +1898,7 @@ module Frost32Cpu(input logic clk,
 				//__locals.pc <= __locals.idsta;
 				$display("fetch stage:  Servicing interrupt:  %h",
 					__locals.idsta);
-				prep_load_instruction(__locals.idsta);
+				//prep_load_instruction(__locals.idsta);
 			end
 		end
 	end
@@ -1949,6 +1976,11 @@ module Frost32Cpu(input logic clk,
 					//	__locals.ie <= 1;
 					//end
 					//endcase
+				end
+
+				PkgFrost32Cpu::StRespondToInterrupt:
+				begin
+					__locals.ie <= 0;
 				end
 			endcase
 		end
@@ -2095,7 +2127,7 @@ module Frost32Cpu(input logic clk,
 								<= PkgFrost32Cpu::StReti;
 							__stage_instr_decode_data.stall_counter
 								<= __STALL_COUNTER_RETI;
-							//__locals.ie <= 1;
+							__locals.ie <= 1;
 							//$display("StReti:  %h %h", __locals.ireta,
 							//	__out_debug_reg_sp);
 						end

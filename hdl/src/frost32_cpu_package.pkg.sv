@@ -80,8 +80,12 @@ typedef struct packed
 	`MAKE_LIST_OF_MEMBERS__FROST32_CPU_PORTOUT_MEM_ACCESS
 
 	`ifdef OPT_DEBUG_REGISTER_FILE
+	logic [`MSB_POS__FROST32_CPU_DECODE_STAGE_STALL_COUNTER:0]
+		debug_stall_counter;
+	logic [`MSB_POS__FROST32_CPU_STATE:0] debug_stall_state;
 	`ifndef ICARUS
-	logic [`MSB_POS__REG_FILE_DATA:0] debug_reg_u7;
+	logic [`MSB_POS__REG_FILE_DATA:0] debug_reg_u4, debug_reg_u7,
+		debug_reg_fp;
 	`else
 	logic [`MSB_POS__REG_FILE_DATA:0] 
 		debug_reg_zero, 
@@ -90,6 +94,9 @@ typedef struct packed
 		debug_reg_u8, debug_reg_u9, debug_reg_u10, 
 		debug_reg_temp, debug_reg_lr, debug_reg_fp, debug_reg_sp;
 	`endif		// !ICARUS
+	logic [`MSB_POS__REG_FILE_DATA:0]
+		debug_reg_pc, debug_reg_ireta, debug_reg_idsta;
+	logic debug_reg_ie;
 	`endif		// OPT_DEBUG_REGISTER_FILE
 } PortOut_Frost32Cpu;
 

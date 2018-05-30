@@ -6,6 +6,11 @@ main:
 	; Assume top of available memory is here.
 	cpyi sp, 0x7fff
 
+
+	addsi lr, pc, 8
+	bra modify_wait_for_interrupts
+
+
 	cpyi u1, 0
 
 	; Set the interrupt handler
@@ -14,12 +19,12 @@ main:
 
 	;sub u7, u7
 
-	cpy u7, zero
-	cpyi u0, var
-	str zero, [u0, zero]
+	;cpy u7, zero
+	;cpyi u0, var
+	;str zero, [u0, zero]
 
-	; Just so we don't have to change this register later
-	cpyi u2, code_to_modify
+	;; Just so we don't have to change this register later
+	;cpyi u2, code_to_modify
 
 	;; I really need a pseudo instruction for non-indexed loads and stores.
 	;; That will probably be coming....
@@ -39,17 +44,63 @@ main:
 	subi u3, zero, 1
 	str zero, [zero, zero]
 
+	cpy u4, zero
 
+
+	cpyi u10, wait_for_interrupt
+
+	cpyi fp, 1
 
 
 	ei
 	bra wait_for_interrupt
+}
 
+; Increment the opcode of the branch at
+; __wait_for_interrupts_code_to_change because I'm too lazy to edit the
+; assembler 
+modify_wait_for_interrupts:
+{
+	cpyi u0, __wait_for_interrupts_code_to_change
+
+	
+	ldr u1, [u0, zero]
+
+
+	; Work with 16-bit values since they yield smaller code
+	lsri u2, u1, 16
+
+	; Zero the opcode
+	andi u2, 0xfff0
+
+	; Convert the opcode to "bintsenabled" or whatever the mnemonic would
+	; be.
+	orri u2, 0x000a
+	;orri u2, 0x000b
+
+	; Shift u2 back to the left
+	lsli u2, 16
+
+	; Keep only the immediate value so that we can | it back into u2
+	andi u1, 0xffff
+
+	; u2 = ((((orig_u1 >> 16) & 0xfff0) | 0xa) << 16) | (orig_u1 & 0xffff)
+	orr u2, u1
+
+
+	str u2, [u0, zero]
+
+
+	; Just clear these registers again.
+	cpy u0, zero
+	cpy u1, zero
+	cpy u2, zero
+	jmp lr
 }
 
 
 
-;.org 0x1000
+.org 0x800
 interrupt_handler:
 {
 	;; Preserve lr because it gets overwritten by "call u5"
@@ -69,6 +120,7 @@ interrupt_handler:
 	;call u5
 
 
+	; Var is at address zero now
 	ldr u4, [zero, zero]
 
 	; Flip the bits of var
@@ -85,15 +137,34 @@ interrupt_handler:
 }
 
 
-;.org 0x1800
+.org 0x1000
 wait_for_interrupt:
-{
 	;call u5
-	bra wait_for_interrupt
-}
+	;bra wait_for_interrupt
+
+	;bints interrupts_enabled
 
 
-;.org 0x2000
+	; Use self-modifying code to change the opcode of this instruction
+	; because I am too lazy to modify the assembler for an instruction that
+	; is just for debugging the CPU
+__wait_for_interrupts_code_to_change:
+	bne zero, zero, interrupts_enabled
+
+interrupts_disabled:
+	;cpyi fp, 0x14
+	cpyi fp, 0
+	bra continue
+
+interrupts_enabled:
+	;cpyi fp, 0x42
+
+continue:
+
+	jmp u10
+
+
+.org 0x1800
 test_subroutine:
 {
 	subi sp, __change_var_sp_addsub_amount
@@ -108,49 +179,49 @@ test_subroutine:
 	jmp lr
 }
 
-change_var:
-	subi sp, __change_var_sp_addsub_amount
-	stri u8, [sp, __change_var_preserve_u8_amount]
-	stri u9, [sp, __change_var_preserve_u9_amount]
-	;stri lr, [sp, __change_var_preserve_lr_amount]
-
-	cpyi u8, var
-	ldr u9, [u8, zero]
-
-code_to_modify:
-	;dec u1
-	;subi u1, 20
-	add zero, zero, zero
-	;subi u1, u9, 20
-	;subi u7, u9, 20
-
-	;cpy u7, u1
-
-	str u7, [u0, zero]
-
-	ldri u8, [sp, __change_var_preserve_u8_amount]
-	ldri u9, [sp, __change_var_preserve_u9_amount]
-	;ldri lr, [sp, __change_var_preserve_lr_amount]
-	addi sp, __change_var_sp_addsub_amount
-
-	jmp lr
-
-
-data_for_modify_u7_outside_interrupt:
-{
-	add zero, zero, zero
-	;subi u1, 20
-	;subi u7, u9, 20
-	;udiv u7, zero, zero
-	;dec u1
-}
-
-data_for_modify_u7_in_interrupt:
-{
-	;addi u1, 20
-	addi u7, u9, 20
-	;muli u1, u5, 20
-}
+;change_var:
+;	subi sp, __change_var_sp_addsub_amount
+;	stri u8, [sp, __change_var_preserve_u8_amount]
+;	stri u9, [sp, __change_var_preserve_u9_amount]
+;	;stri lr, [sp, __change_var_preserve_lr_amount]
+;
+;	cpyi u8, var
+;	ldr u9, [u8, zero]
+;
+;code_to_modify:
+;	;dec u1
+;	;subi u1, 20
+;	add zero, zero, zero
+;	;subi u1, u9, 20
+;	;subi u7, u9, 20
+;
+;	;cpy u7, u1
+;
+;	str u7, [u0, zero]
+;
+;	ldri u8, [sp, __change_var_preserve_u8_amount]
+;	ldri u9, [sp, __change_var_preserve_u9_amount]
+;	;ldri lr, [sp, __change_var_preserve_lr_amount]
+;	addi sp, __change_var_sp_addsub_amount
+;
+;	jmp lr
+;
+;
+;data_for_modify_u7_outside_interrupt:
+;{
+;	add zero, zero, zero
+;	;subi u1, 20
+;	;subi u7, u9, 20
+;	;udiv u7, zero, zero
+;	;dec u1
+;}
+;
+;data_for_modify_u7_in_interrupt:
+;{
+;	;addi u1, 20
+;	addi u7, u9, 20
+;	;muli u1, u5, 20
+;}
 
 ;.org 0x6000 
 

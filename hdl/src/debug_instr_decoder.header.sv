@@ -328,13 +328,23 @@
 						__out_instr_decoder.rb_index, 
 						__out_instr_decoder.imm_val);
 				end
-				PkgInstrDecoder::Bad0_Iog2:
+				//PkgInstrDecoder::Bad0_Iog2:
+				//begin
+				//	$display("bad0_iog2");
+				//end
+				//PkgInstrDecoder::Bad1_Iog2:
+				//begin
+				//	$display("bad1_iog2");
+				//end
+				PkgInstrDecoder::Bintsenabled_TwoRegsOneSimm:
 				begin
-					$display("bad0_iog2");
+					$display("bintsenabled 0x%x",
+						__out_instr_decoder.imm_val);
 				end
-				PkgInstrDecoder::Bad1_Iog2:
+				PkgInstrDecoder::Bintsdisabled_TwoRegsOneSimm:
 				begin
-					$display("bad1_iog2");
+					$display("bintsdisabled 0x%x",
+						__out_instr_decoder.imm_val);
 				end
 
 				PkgInstrDecoder::Bad2_Iog2:

@@ -13,7 +13,8 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 	// This works because of symmetry between the control flow instructions
 	// Bad instructions don't cause stalls
 	//assign __in_compare_ctrl_flow_b = PkgInstrDecoder::Bad0_Iog0;
-	assign __in_compare_ctrl_flow_b = PkgInstrDecoder::Bad0_Iog2;
+	//assign __in_compare_ctrl_flow_b = PkgInstrDecoder::Bad0_Iog2;
+	assign __in_compare_ctrl_flow_b = PkgInstrDecoder::Bad0_Iog3;
 	PkgAlu::PortOut_Compare __out_compare_ctrl_flow;
 
 	Compare #(.DATA_WIDTH(`WIDTH__INSTR_OPER)) __inst_compare_ctrl_flow
@@ -95,7 +96,9 @@ module InstrDecoder(input logic [`MSB_POS__INSTRUCTION:0] in,
 				out.ldst_type = 0;
 
 				// Bad instructions don't cause stalls
-				out.causes_stall = __out_compare_ctrl_flow.ltu;
+				//out.causes_stall = __out_compare_ctrl_flow.ltu;
+				out.causes_stall
+					= (__iog2_instr.opcode < PkgInstrDecoder::Bad2_Iog2);
 				out.condition_type = __iog2_instr.opcode;
 
 			end
